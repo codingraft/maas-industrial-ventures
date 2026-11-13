@@ -1834,6 +1834,144 @@ input:checked + .slider:before {
 }
 
 /* ==========================================================================
+   ADMIN INPUTS & BUTTON SYSTEM (Content Studio, SEO, & Settings)
+   ========================================================================== */
+.admin-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 100%;
+}
+
+.admin-input-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--admin-text-muted);
+  letter-spacing: 0.02em;
+}
+
+.admin-input,
+.admin-textarea,
+.admin-input-field {
+  width: 100%;
+  background: #080b13 !important;
+  color: var(--admin-text-main) !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  box-sizing: border-box;
+  font-family: inherit;
+}
+
+.admin-input:focus,
+.admin-textarea:focus,
+.admin-input-field:focus {
+  border-color: var(--admin-gold) !important;
+  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.18) !important;
+}
+
+.admin-input::placeholder,
+.admin-textarea::placeholder,
+.admin-input-field::placeholder {
+  color: var(--admin-text-dim) !important;
+}
+
+/* Admin Generic Buttons */
+.admin-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  border-radius: 6px;
+  padding: 8px 16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border: 1px solid transparent;
+  outline: none;
+  text-decoration: none;
+  font-family: inherit;
+}
+
+.admin-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.admin-btn-primary {
+  background: var(--admin-gold) !important;
+  color: #0b0f1a !important;
+  border-color: var(--admin-gold) !important;
+  font-weight: 700;
+}
+
+.admin-btn-primary:hover:not(:disabled) {
+  background: var(--admin-gold-hover) !important;
+  border-color: var(--admin-gold-hover) !important;
+  transform: translateY(-1px);
+}
+
+.admin-btn-secondary {
+  background: rgba(255, 255, 255, 0.06) !important;
+  color: var(--admin-text-main) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.admin-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.12) !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+}
+
+.admin-card-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid var(--admin-border);
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.content-studio-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--admin-border);
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.content-subtab-btn {
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--admin-text-muted);
+  border: 1px solid var(--admin-border);
+  padding: 8px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.content-subtab-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--admin-text-main);
+}
+
+.content-subtab-btn.is-active {
+  background: var(--admin-gold-soft);
+  color: var(--admin-gold);
+  border-color: rgba(212, 175, 55, 0.4);
+}
+
+/* ==========================================================================
    SEO & SOCIAL METADATA STUDIO
    ========================================================================== */
 .serp-preview-box,

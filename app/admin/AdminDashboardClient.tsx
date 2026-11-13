@@ -232,7 +232,7 @@ export function AdminDashboardClient({
             <span className="sidebar-item-label">Ad Pixels &amp; Tags</span>
           </button>
 
-          {/* <button
+          <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "seo" ? "is-active" : ""}`}
             onClick={() => {
@@ -247,7 +247,7 @@ export function AdminDashboardClient({
               </svg>
             </span>
             <span className="sidebar-item-label">SEO &amp; Social Meta</span>
-          </button> */}
+          </button>
         </nav>
 
         {/* Sidebar Footer */}
