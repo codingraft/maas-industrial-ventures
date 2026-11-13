@@ -1,0 +1,641 @@
+"use client";
+
+import { useState, useEffect, useCallback, useRef } from "react";
+import { Lead } from "@/lib/types";
+import { Pagination } from "@/components/ui/Pagination";
+import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
+
+export function LeadsTable() {
+  const [leads, setLeads] = useState<Lead[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalLeads, setTotalLeads] = useState(0);
+
+  const [activeNotesLead, setActiveNotesLead] = useState<Lead | null>(null);
+  const [notesText, setNotesText] = useState("");
+  const [savingNotes, setSavingNotes] = useState(false);
+
+  // In-app toasts & confirm dialog
+  const [toasts, setToasts] = useState<ToastMessage[]>([]);
+  const [deleteDialog, setDeleteDialog] = useState<{
+    isOpen: boolean;
+    leadId: number | null;
+    leadName: string;
+    isDeleting: boolean;
+  }>({
+    isOpen: false,
+    leadId: null,
+    leadName: "",
+    isDeleting: false,
+  });
+
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  function addToast(type: "success" | "error" | "info", title: string, message?: string) {
+    const id = "toast-" + Date.now() + Math.random().toString(36).substring(2, 6);
+    setToasts((prev) => [...prev, { id, type, title, message }]);
+    setTimeout(() => {
+      setToasts((prev) => prev.filter((t) => t.id !== id));
+    }, 4000);
+  }
+
+  function dismissToast(id: string) {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }
+
+  const fetchLeads = useCallback(async () => {
+    // Abort previous in-flight request if user is still typing or changing page
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+    }
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
+    setLoading(true);
+    setFetchError(null);
+
+    try {
+      const params = new URLSearchParams();
+      if (search) params.set("search", search);
+      if (statusFilter !== "all") params.set("status", statusFilter);
+      params.set("page", String(currentPage));
+      params.set("limit", String(pageSize));
+
+      const res = await fetch(`/api/admin/leads?${params.toString()}`, {
+        signal: controller.signal,
+      });
+
+      if (!res.ok) throw new Error("Server responded with error status " + res.status);
+      const data = await res.json();
+      setLeads(data.leads || []);
+      if (data.pagination) {
+        setTotalPages(data.pagination.totalPages || 1);
+        setTotalLeads(data.pagination.total || 0);
+      }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        // Request intentionally aborted; ignore
+        return;
+      }
+      console.error("Failed to load leads:", err);
+      setFetchError(err instanceof Error ? err.message : "Failed to load leads. Please check connection.");
+      addToast("error", "Error loading leads", "Could not fetch leads from database.");
+    } finally {
+      setLoading(false);
+    }
+  }, [search, statusFilter, currentPage, pageSize]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchLeads();
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [fetchLeads]);
+
+  // Reset to page 1 on search or filter change
+  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
+    setSearch(e.target.value);
+    setCurrentPage(1);
+  }
+
+  function handleFilterChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setStatusFilter(e.target.value);
+    setCurrentPage(1);
+  }
+
+  function handlePageSizeChange(e: React.ChangeEvent<HTMLSelectElement>) {
+    setPageSize(parseInt(e.target.value, 10));
+    setCurrentPage(1);
+  }
+
+  async function handleStatusChange(id: number, nextStatus: string) {
+    try {
+      const res = await fetch("/api/admin/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id, status: nextStatus }),
+      });
+      if (!res.ok) throw new Error("Failed to update status");
+      setLeads((prev) =>
+        prev.map((l) => (l.id === id ? { ...l, status: nextStatus as Lead["status"] } : l))
+      );
+      addToast("success", "Status updated", `Lead #${id} marked as ${nextStatus}.`);
+    } catch (err) {
+      console.error(err);
+      addToast("error", "Status update failed", "Could not update lead status in database.");
+    }
+  }
+
+  function promptDelete(id: number, name: string) {
+    setDeleteDialog({
+      isOpen: true,
+      leadId: id,
+      leadName: name,
+      isDeleting: false,
+    });
+  }
+
+  async function confirmDeleteLead() {
+    if (!deleteDialog.leadId) return;
+    setDeleteDialog((prev) => ({ ...prev, isDeleting: true }));
+
+    try {
+      const res = await fetch(`/api/admin/leads?id=${deleteDialog.leadId}`, { method: "DELETE" });
+      if (!res.ok) throw new Error("Failed to delete lead");
+      addToast("success", "Lead deleted", `Record for ${deleteDialog.leadName} has been permanently deleted.`);
+      setDeleteDialog({ isOpen: false, leadId: null, leadName: "", isDeleting: false });
+      fetchLeads();
+    } catch (err) {
+      console.error(err);
+      addToast("error", "Delete failed", "Could not delete lead.");
+      setDeleteDialog((prev) => ({ ...prev, isDeleting: false }));
+    }
+  }
+
+  async function handleSaveNotes() {
+    if (!activeNotesLead) return;
+    setSavingNotes(true);
+    try {
+      const res = await fetch("/api/admin/leads", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: activeNotesLead.id, notes: notesText }),
+      });
+      if (!res.ok) throw new Error("Failed to save notes");
+      setLeads((prev) =>
+        prev.map((l) => (l.id === activeNotesLead.id ? { ...l, notes: notesText } : l))
+      );
+      addToast("success", "Notes updated", `Saved internal notes for ${activeNotesLead.name}.`);
+      setActiveNotesLead(null);
+    } catch (err) {
+      console.error(err);
+      addToast("error", "Failed to save notes", "Could not persist notes.");
+    } finally {
+      setSavingNotes(false);
+    }
+  }
+
+  function handleExportCsv() {
+    const params = new URLSearchParams();
+    if (search) params.set("search", search);
+    if (statusFilter !== "all") params.set("status", statusFilter);
+    params.set("export", "csv");
+    window.open(`/api/admin/leads?${params.toString()}`, "_blank");
+  }
+
+  function cleanPhoneForWhatsApp(phone: string): string {
+    const digits = phone.replace(/\D/g, "");
+    if (digits.length === 10) return "91" + digits;
+    return digits;
+  }
+
+  return (
+    <div>
+      <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      <ConfirmModal
+        isOpen={deleteDialog.isOpen}
+        title="Delete Inbound Lead Record"
+        message={`Are you sure you want to delete lead #${deleteDialog.leadId} (${deleteDialog.leadName})? This action cannot be undone.`}
+        confirmLabel="Delete Lead"
+        isDanger={true}
+        isLoading={deleteDialog.isDeleting}
+        onConfirm={confirmDeleteLead}
+        onCancel={() => setDeleteDialog({ isOpen: false, leadId: null, leadName: "", isDeleting: false })}
+      />
+
+      {fetchError && (
+        <div style={{
+          background: "rgba(239, 68, 68, 0.12)",
+          border: "1px solid rgba(239, 68, 68, 0.3)",
+          color: "#fca5a5",
+          padding: "12px 18px",
+          borderRadius: "8px",
+          marginBottom: "16px",
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center"
+        }}>
+          <div>
+            <strong>Unable to load leads:</strong> {fetchError}
+          </div>
+          <button
+            type="button"
+            className="admin-btn admin-btn-secondary"
+            onClick={() => fetchLeads()}
+            style={{ padding: "6px 14px", fontSize: "12px" }}
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {/* Search and Action Toolbar */}
+      <div className="table-toolbar">
+        <div className="toolbar-filters">
+          <input
+            type="search"
+            className="search-input"
+            placeholder="Search leads by name, phone, email, plot…"
+            value={search}
+            onChange={handleSearchChange}
+          />
+          <select
+            className="filter-select"
+            value={statusFilter}
+            onChange={handleFilterChange}
+          >
+            <option value="all">All Statuses</option>
+            <option value="new">New</option>
+            <option value="contacted">Contacted</option>
+            <option value="qualified">Qualified</option>
+            <option value="converted">Converted</option>
+            <option value="archived">Archived</option>
+          </select>
+          <select
+            className="filter-select"
+            value={pageSize}
+            onChange={handlePageSizeChange}
+            title="Rows per page"
+          >
+            <option value={10}>10 per page</option>
+            <option value={25}>25 per page</option>
+            <option value={50}>50 per page</option>
+          </select>
+        </div>
+
+        <button className="btn-gold" onClick={handleExportCsv} title="Download leads for CRM or Excel">
+          ↓ Export All (CSV)
+        </button>
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="admin-table-wrapper desktop-only">
+        <table className="admin-table">
+          <thead>
+            <tr>
+              <th>ID &amp; Date</th>
+              <th>Lead Contact</th>
+              <th>Requirement</th>
+              <th>Ad Attribution (UTM)</th>
+              <th>Status</th>
+              <th>Quick Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {loading ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+                  Loading leads…
+                </td>
+              </tr>
+            ) : leads.length === 0 ? (
+              <tr>
+                <td colSpan={6} style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+                  No leads found matching your criteria.
+                </td>
+              </tr>
+            ) : (
+              leads.map((lead) => {
+                const waPhone = cleanPhoneForWhatsApp(lead.phone);
+                const waMessage = encodeURIComponent(
+                  `Hello ${lead.name}, thank you for enquiring about MAAS Industrial Ventures Pvt Ltd. I am contacting you regarding your space requirements.`
+                );
+
+                return (
+                  <tr key={lead.id}>
+                    <td>
+                      <div style={{ fontWeight: 600, color: "#fff" }}>#{lead.id}</div>
+                      <div style={{ fontSize: "11px", color: "#64748b" }}>{lead.created_at}</div>
+                    </td>
+
+                    <td>
+                      <div style={{ fontWeight: 600, color: "#f8fafc" }}>{lead.name}</div>
+                      <div style={{ fontSize: "12px", color: "#cbd5e1" }}>
+                        <a href={`tel:${lead.phone}`} style={{ color: "#d4af37" }}>
+                          {lead.phone}
+                        </a>
+                      </div>
+                      <div style={{ fontSize: "11px", color: "#94a3b8" }}>
+                        <a href={`mailto:${lead.email}`} style={{ color: "#94a3b8" }}>
+                          {lead.email}
+                        </a>
+                      </div>
+                    </td>
+
+                    <td>
+                      {lead.industry && (
+                        <div style={{ fontSize: "12px", color: "#e2e8f0" }}>
+                          <b>Industry:</b> {lead.industry}
+                        </div>
+                      )}
+                      {lead.requirement && (
+                        <div style={{ fontSize: "12px", color: "#e2e8f0" }}>
+                          <b>Area:</b> {lead.requirement}
+                        </div>
+                      )}
+                      {lead.message && (
+                        <div
+                          style={{
+                            fontSize: "11px",
+                            color: "#94a3b8",
+                            marginTop: "4px",
+                            maxWidth: "260px",
+                          }}
+                        >
+                          &ldquo;{lead.message}&rdquo;
+                        </div>
+                      )}
+                      {lead.notes && (
+                        <div
+                          style={{
+                            marginTop: "6px",
+                            padding: "4px 8px",
+                            background: "#242c3d",
+                            borderRadius: "4px",
+                            fontSize: "11px",
+                            color: "#d4af37",
+                          }}
+                        >
+                          <b>Note:</b> {lead.notes}
+                        </div>
+                      )}
+                    </td>
+
+                    <td>
+                      {lead.utm_source || lead.utm_campaign ? (
+                        <div style={{ fontSize: "11px" }}>
+                          <span
+                            style={{
+                              background: "#1e3a5f",
+                              color: "#60a5fa",
+                              padding: "2px 6px",
+                              borderRadius: "3px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {lead.utm_source || "Ad Campaign"}
+                          </span>
+                          {lead.utm_campaign && (
+                            <div style={{ color: "#94a3b8", marginTop: "3px" }}>
+                              <b>Camp:</b> {lead.utm_campaign}
+                            </div>
+                          )}
+                          {lead.utm_medium && (
+                            <div style={{ color: "#64748b" }}>Med: {lead.utm_medium}</div>
+                          )}
+                          {lead.gclid && (
+                            <div style={{ color: "#38bdf8", fontSize: "10px" }}>Google Ads Click</div>
+                          )}
+                          {lead.fbclid && (
+                            <div style={{ color: "#818cf8", fontSize: "10px" }}>Meta Ads Click</div>
+                          )}
+                        </div>
+                      ) : (
+                        <span style={{ fontSize: "11px", color: "#64748b" }}>Direct / Organic</span>
+                      )}
+                    </td>
+
+                    <td>
+                      <select
+                        value={lead.status}
+                        onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                        className={`badge badge-${lead.status}`}
+                        style={{
+                          background: "#171c26",
+                          border: "1px solid #334155",
+                          cursor: "pointer",
+                          color: "#fff",
+                        }}
+                      >
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="qualified">Qualified</option>
+                        <option value="converted">Converted</option>
+                        <option value="archived">Archived</option>
+                      </select>
+                    </td>
+
+                    <td>
+                      <div className="lead-quick-actions">
+                        <a
+                          href={`https://wa.me/${waPhone}?text=${waMessage}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="action-icon-btn action-icon-whatsapp"
+                          title="Chat on WhatsApp"
+                        >
+                          💬 WhatsApp
+                        </a>
+                        <a
+                          href={`tel:${lead.phone}`}
+                          className="action-icon-btn"
+                          title="Call Lead"
+                        >
+                          📞 Call
+                        </a>
+                        <button
+                          type="button"
+                          className="action-icon-btn"
+                          onClick={() => {
+                            setActiveNotesLead(lead);
+                            setNotesText(lead.notes || "");
+                          }}
+                          title="Add internal note"
+                        >
+                          📝 Note
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-danger"
+                          onClick={() => promptDelete(lead.id, lead.name)}
+                          title="Delete Lead"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Mobile Responsive Cards View */}
+      <div className="mobile-cards-list mobile-only">
+        {loading ? (
+          <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+            Loading leads…
+          </div>
+        ) : leads.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
+            No leads found.
+          </div>
+        ) : (
+          leads.map((lead) => {
+            const waPhone = cleanPhoneForWhatsApp(lead.phone);
+            const waMessage = encodeURIComponent(
+              `Hello ${lead.name}, thank you for enquiring about MAAS Industrial Ventures Pvt Ltd. I am contacting you regarding your space requirements.`
+            );
+
+            return (
+              <div key={lead.id} className="mobile-lead-card">
+                <div className="mobile-lead-header">
+                  <div>
+                    <h3 className="mobile-lead-name">{lead.name}</h3>
+                    <span className="mobile-lead-time">#{lead.id} · {lead.created_at}</span>
+                  </div>
+                  <select
+                    value={lead.status}
+                    onChange={(e) => handleStatusChange(lead.id, e.target.value)}
+                    className={`badge badge-${lead.status}`}
+                  >
+                    <option value="new">New</option>
+                    <option value="contacted">Contacted</option>
+                    <option value="qualified">Qualified</option>
+                    <option value="converted">Converted</option>
+                    <option value="archived">Archived</option>
+                  </select>
+                </div>
+
+                <div className="mobile-lead-body">
+                  <div className="mobile-lead-contact">
+                    <a href={`tel:${lead.phone}`} className="mobile-phone-link">
+                      📞 {lead.phone}
+                    </a>
+                    <a href={`mailto:${lead.email}`} className="mobile-email-link">
+                      ✉ {lead.email}
+                    </a>
+                  </div>
+
+                  {(lead.requirement || lead.industry) && (
+                    <div className="mobile-lead-req">
+                      {lead.industry && <div><b>Sector:</b> {lead.industry}</div>}
+                      {lead.requirement && <div><b>Space:</b> {lead.requirement}</div>}
+                    </div>
+                  )}
+
+                  {lead.message && (
+                    <p className="mobile-lead-msg">&ldquo;{lead.message}&rdquo;</p>
+                  )}
+
+                  {lead.notes && (
+                    <div className="mobile-lead-note">
+                      <b>Internal Note:</b> {lead.notes}
+                    </div>
+                  )}
+
+                  {lead.utm_source && (
+                    <div className="mobile-lead-ad">
+                      <span>Ad Source: <b>{lead.utm_source}</b></span>
+                      {lead.utm_campaign && <span> · Camp: {lead.utm_campaign}</span>}
+                    </div>
+                  )}
+                </div>
+
+                <div className="mobile-lead-actions">
+                  <a
+                    href={`https://wa.me/${waPhone}?text=${waMessage}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-gold"
+                    style={{ flex: 1, justifyContent: "center", textDecoration: "none" }}
+                  >
+                    💬 WhatsApp
+                  </a>
+                  <a
+                    href={`tel:${lead.phone}`}
+                    className="btn-secondary"
+                    style={{ flex: 1, justifyContent: "center", textDecoration: "none" }}
+                  >
+                    📞 Call
+                  </a>
+                  <button
+                    type="button"
+                    className="btn-icon"
+                    onClick={() => {
+                      setActiveNotesLead(lead);
+                      setNotesText(lead.notes || "");
+                    }}
+                    title="Edit Note"
+                    aria-label="Edit Note"
+                  >
+                    📝
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-icon btn-danger"
+                    onClick={() => promptDelete(lead.id, lead.name)}
+                    title="Delete Lead"
+                    aria-label="Delete Lead"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            );
+          })
+        )}
+      </div>
+
+      {/* Pagination Controls */}
+      <Pagination
+        currentPage={currentPage}
+        totalPages={totalPages}
+        onPageChange={setCurrentPage}
+        totalItems={totalLeads}
+        pageSize={pageSize}
+      />
+
+      {/* Internal Notes Modal */}
+      {activeNotesLead && (
+        <div
+          className="admin-modal-overlay"
+          onClick={() => setActiveNotesLead(null)}
+        >
+          <div
+            className="admin-modal-card"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 style={{ margin: "0 0 8px", color: "#fff" }}>
+              Lead Notes: {activeNotesLead.name} (#{activeNotesLead.id})
+            </h3>
+            <p style={{ margin: "0 0 16px", color: "#94a3b8", fontSize: "12px" }}>
+              Record discussion summary, budget, site visit appointments, or specific infrastructure requests.
+            </p>
+            <textarea
+              className="form-control"
+              rows={4}
+              value={notesText}
+              onChange={(e) => setNotesText(e.target.value)}
+              placeholder="e.g. Requires 15-acre plot with 33kV dedicated power sub-station. Site visit scheduled for Friday."
+            />
+            <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "16px" }}>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() => setActiveNotesLead(null)}
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                className="btn-gold"
+                onClick={handleSaveNotes}
+                disabled={savingNotes}
+              >
+                {savingNotes ? "Saving…" : "Save Note"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
