@@ -6,7 +6,7 @@ import "./globals.css";
 export async function generateMetadata(): Promise<Metadata> {
   let settings;
   try {
-    settings = getAllSettings();
+    settings = await getAllSettings();
   } catch {
     return {
       title: "MAAS Industrial Ventures Pvt Limited | High-Capacity Industrial Infrastructure",
@@ -80,7 +80,7 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
@@ -88,7 +88,7 @@ export default function RootLayout({
   let settings;
   let tracking = { gtmId: "", googleAdsId: "", metaPixelId: "" };
   try {
-    settings = getAllSettings();
+    settings = await getAllSettings();
     if (settings.tracking) {
       tracking = settings.tracking;
     }

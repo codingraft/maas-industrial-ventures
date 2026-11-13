@@ -36,7 +36,7 @@ const securityHeaders = [
       "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://www.googletagmanager.com https://connect.facebook.net https://www.google-analytics.com",
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
       "font-src 'self' https://fonts.gstatic.com data:",
-      "img-src 'self' data: blob: https://images.unsplash.com https://www.facebook.com https://www.googletagmanager.com",
+      "img-src 'self' data: blob: https://images.unsplash.com https://res.cloudinary.com https://www.facebook.com https://www.googletagmanager.com",
       "connect-src 'self' https://www.google-analytics.com https://region1.google-analytics.com https://stats.g.doubleclick.net https://connect.facebook.net",
       "frame-ancestors 'none'",
       "base-uri 'self'",
@@ -53,6 +53,10 @@ const nextConfig: NextConfig = {
       {
         protocol: "https",
         hostname: "images.unsplash.com",
+      },
+      {
+        protocol: "https",
+        hostname: "res.cloudinary.com",
       },
     ],
   },

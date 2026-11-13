@@ -3,10 +3,10 @@ import { getAllSettings } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function sitemap(): MetadataRoute.Sitemap {
+export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   let baseUrl = "https://maasventures.com";
   try {
-    const settings = getAllSettings();
+    const settings = await getAllSettings();
     if (settings.seo?.canonicalUrl) {
       baseUrl = settings.seo.canonicalUrl;
     }

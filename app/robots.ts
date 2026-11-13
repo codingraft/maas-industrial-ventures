@@ -3,11 +3,11 @@ import { getAllSettings } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function robots(): MetadataRoute.Robots {
+export default async function robots(): Promise<MetadataRoute.Robots> {
   let baseUrl = "https://maasventures.com";
   let allowIndex = true;
   try {
-    const settings = getAllSettings();
+    const settings = await getAllSettings();
     if (settings.seo?.canonicalUrl) {
       baseUrl = settings.seo.canonicalUrl;
     }

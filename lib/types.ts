@@ -65,7 +65,7 @@ export type FaqItem = {
 };
 
 export type Lead = {
-  id: number;
+  id: number | string;
   name: string;
   phone: string;
   email: string;

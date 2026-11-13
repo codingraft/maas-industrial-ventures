@@ -11,8 +11,8 @@ import { getAllSettings, defaultContent } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
-export default function Home() {
-  const settings = getAllSettings();
+export default async function Home() {
+  const settings = await getAllSettings();
   const { site_info, sections, media, social_links, content } = settings;
 
   return (

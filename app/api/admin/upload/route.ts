@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
+import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
 import path from "node:path";
 import fs from "node:fs/promises";
 
@@ -43,10 +44,33 @@ export async function POST(request: Request) {
     }
 
     const bytes = await file.arrayBuffer();
+
+    // 1. Cloudinary upload if configured (production CDN)
+    if (isCloudinaryConfigured()) {
+      const buffer = Buffer.from(bytes);
+      const rawExt = path.extname(file.name) || ".jpg";
+      const sanitizedBase = path
+        .basename(file.name, rawExt)
+        .replace(/[^a-zA-Z0-9_-]/g, "_")
+        .slice(0, 30);
+      const publicId = `${sanitizedBase}_${Date.now()}`;
+
+      const uploaded = await uploadToCloudinary(buffer, {
+        folder: "maas_ventures",
+        public_id: publicId,
+      });
+
+      return NextResponse.json({
+        ok: true,
+        url: uploaded.secure_url,
+        fileName: file.name,
+      });
+    }
+
     const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-    // On Vercel serverless (where local filesystem is read-only), return base64 data URL
-    // so images upload seamlessly with zero external S3 / Cloudinary configuration required!
+    // 2. Fallback on Vercel serverless when Cloudinary is not yet configured:
+    // Return base64 data URL so uploads still work without external setup
     if (isVercel) {
       const mime = file.type || "image/jpeg";
       const base64 = Buffer.from(bytes).toString("base64");

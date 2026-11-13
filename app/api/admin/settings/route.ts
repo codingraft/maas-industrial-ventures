@@ -6,7 +6,7 @@ export const runtime = "nodejs";
 
 export async function GET() {
   try {
-    const settings = getAllSettings();
+    const settings = await getAllSettings();
     return NextResponse.json({ ok: true, settings });
   } catch (error) {
     console.error("Failed to fetch settings:", error);
@@ -39,10 +39,10 @@ export async function PATCH(request: Request) {
   try {
     for (const key of validKeys) {
       if (key in body && body[key] !== undefined) {
-        updateSetting(key, body[key]);
+        await updateSetting(key, body[key]);
       }
     }
-    const updated = getAllSettings();
+    const updated = await getAllSettings();
     return NextResponse.json({ ok: true, settings: updated });
   } catch (error) {
     console.error("Failed to update settings:", error);

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
+import { insertLead } from "@/lib/db";
 import { checkRateLimit, getClientIp } from "@/lib/rateLimit";
 
 export const runtime = "nodejs";
@@ -84,15 +84,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const db = getDb();
-    const insertStmt = db.prepare(`
-      INSERT INTO leads (
-        name, phone, email, industry, requirement, message,
-        utm_source, utm_medium, utm_campaign, utm_term, utm_content, gclid, fbclid
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const result = insertStmt.run(
+    const result = await insertLead({
       name,
       phone,
       email,
@@ -105,8 +97,8 @@ export async function POST(request: Request) {
       utm_term,
       utm_content,
       gclid,
-      fbclid
-    );
+      fbclid,
+    });
 
     // Optional webhook forwarding (non-blocking secondary notification)
     const webhookUrl = process.env.ENQUIRY_WEBHOOK_URL;
@@ -120,7 +112,7 @@ export async function POST(request: Request) {
             : {}),
         },
         body: JSON.stringify({
-          leadId: Number(result.lastInsertRowid),
+          leadId: result.id,
           name,
           phone,
           email,
@@ -144,7 +136,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      leadId: Number(result.lastInsertRowid),
+      leadId: result.id,
       message: "Thank you. Your enquiry has been received and our project director will contact you promptly.",
     });
   } catch (error) {

@@ -24,7 +24,7 @@ export function LeadsTable() {
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
   const [deleteDialog, setDeleteDialog] = useState<{
     isOpen: boolean;
-    leadId: number | null;
+    leadId: number | string | null;
     leadName: string;
     isDeleting: boolean;
   }>({
@@ -113,7 +113,7 @@ export function LeadsTable() {
     setCurrentPage(1);
   }
 
-  async function handleStatusChange(id: number, nextStatus: string) {
+  async function handleStatusChange(id: number | string, nextStatus: string) {
     try {
       const res = await fetch("/api/admin/leads", {
         method: "PATCH",
@@ -131,7 +131,7 @@ export function LeadsTable() {
     }
   }
 
-  function promptDelete(id: number, name: string) {
+  function promptDelete(id: number | string, name: string) {
     setDeleteDialog({
       isOpen: true,
       leadId: id,

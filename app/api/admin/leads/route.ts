@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { getDb, Lead } from "@/lib/db";
+import { getLeads, updateLead, deleteLead } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -16,29 +16,16 @@ export async function GET(request: Request) {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.max(1, Math.min(100, parseInt(searchParams.get("limit") || "10", 10)));
 
-  const db = getDb();
-  const conditions: string[] = [];
-  const params: unknown[] = [];
+  const result = await getLeads({
+    search,
+    status,
+    page,
+    limit,
+    exportCsv: isExport,
+  });
 
-  if (status && status !== "all") {
-    conditions.push("status = ?");
-    params.push(status);
-  }
-
-  if (search) {
-    conditions.push("(LOWER(name) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(email) LIKE ? OR LOWER(industry) LIKE ? OR LOWER(requirement) LIKE ?)");
-    const wild = `%${search}%`;
-    params.push(wild, wild, wild, wild, wild);
-  }
-
-  const whereClause = conditions.length > 0 ? " WHERE " + conditions.join(" AND ") : "";
-
-  // If CSV export is requested, return all filtered records without pagination limit
+  // If CSV export is requested, return all filtered records
   if (isExport) {
-    const query = `SELECT * FROM leads${whereClause} ORDER BY id DESC`;
-    const stmt = db.prepare(query);
-    const leads = stmt.all(...params) as Lead[];
-
     const csvRows: string[] = [
       [
         "ID",
@@ -63,7 +50,7 @@ export async function GET(request: Request) {
         .join(","),
     ];
 
-    for (const lead of leads) {
+    for (const lead of result.leads) {
       csvRows.push(
         [
           lead.id,
@@ -101,25 +88,13 @@ export async function GET(request: Request) {
     });
   }
 
-  // Count total matches for pagination
-  const countQuery = `SELECT COUNT(*) as total FROM leads${whereClause}`;
-  const countStmt = db.prepare(countQuery);
-  const total = (countStmt.get(...params) as { total: number }).total;
-  const totalPages = Math.max(1, Math.ceil(total / limit));
-
-  // Query paginated slice
-  const offset = (page - 1) * limit;
-  const dataQuery = `SELECT * FROM leads${whereClause} ORDER BY id DESC LIMIT ? OFFSET ?`;
-  const dataStmt = db.prepare(dataQuery);
-  const leads = dataStmt.all(...params, limit, offset) as Lead[];
-
   return NextResponse.json({
-    leads,
+    leads: result.leads,
     pagination: {
-      total,
-      page,
-      limit,
-      totalPages,
+      total: result.total,
+      page: result.page,
+      limit: result.limit,
+      totalPages: result.totalPages,
     },
   });
 }
@@ -129,7 +104,7 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
-  let body: { id?: number; status?: string; notes?: string };
+  let body: { id?: number | string; status?: string; notes?: string };
   try {
     body = await request.json();
   } catch {
@@ -140,17 +115,18 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ message: "Missing lead id" }, { status: 400 });
   }
 
-  const db = getDb();
   const validStatuses = ["new", "contacted", "qualified", "converted", "archived"];
+  const updates: { status?: string; notes?: string } = {};
 
   if (body.status && validStatuses.includes(body.status)) {
-    const stmt = db.prepare("UPDATE leads SET status = ? WHERE id = ?");
-    stmt.run(body.status, body.id);
+    updates.status = body.status;
+  }
+  if (typeof body.notes === "string") {
+    updates.notes = body.notes;
   }
 
-  if (typeof body.notes === "string") {
-    const stmt = db.prepare("UPDATE leads SET notes = ? WHERE id = ?");
-    stmt.run(body.notes, body.id);
+  if (Object.keys(updates).length > 0) {
+    await updateLead(body.id, updates);
   }
 
   return NextResponse.json({ ok: true });
@@ -163,15 +139,12 @@ export async function DELETE(request: Request) {
 
   const { searchParams } = new URL(request.url);
   const idStr = searchParams.get("id");
-  const id = idStr ? parseInt(idStr, 10) : null;
 
-  if (!id) {
+  if (!idStr) {
     return NextResponse.json({ message: "Missing lead id" }, { status: 400 });
   }
 
-  const db = getDb();
-  const stmt = db.prepare("DELETE FROM leads WHERE id = ?");
-  stmt.run(id);
+  await deleteLead(idStr);
 
   return NextResponse.json({ ok: true });
 }
