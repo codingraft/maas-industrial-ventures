@@ -20,11 +20,15 @@ export function SiteHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
 
-  // If a legacy jpeg was passed in from database, upgrade to the transparent SVG
-  const resolvedLogo =
-    logoSrc.endsWith(".jpg") || logoSrc.endsWith(".jpeg")
-      ? "/images/maas-logo-white.svg"
-      : logoSrc;
+  // Only override if it was the legacy mock factory photo from old seed data
+  const isLegacyPhoto =
+    logoSrc === "/images/hero-1.jpg" ||
+    logoSrc === "/images/hero-2.jpg" ||
+    logoSrc === "/images/overview.jpg";
+
+  const resolvedLogo = isLegacyPhoto
+    ? "/images/maas-logo-white.svg"
+    : (logoSrc || "/images/maas-logo-white.svg");
 
   useEffect(() => {
     const update = () => setScrolled(window.scrollY > 24);
@@ -59,10 +63,11 @@ export function SiteHeader({
         <div className="brand-logo-wrap">
           <Image
             src={resolvedLogo}
-            alt="MAAS Industrial Ventures Logo"
+            alt={`${brandName} Logo`}
             width={240}
             height={68}
             priority
+            unoptimized={resolvedLogo.endsWith(".svg") || resolvedLogo.startsWith("data:")}
             className="brand-logo-img"
           />
         </div>
