@@ -11,6 +11,7 @@ import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminToolbar, AdminSearchInput } from "@/components/admin/ui/AdminToolbar";
 import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
 import { uploadImage } from "@/lib/imageOptimizer";
+import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
 const RichMarkdownEditor = dynamic(
   () => import("@/components/admin/RichMarkdownEditor"),
@@ -37,6 +38,7 @@ export function BlogManager() {
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
   const [studioTab, setStudioTab] = useState<BlogStudioTab>("writing");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Pagination & Filtering state
@@ -561,6 +563,14 @@ export function BlogManager() {
                           style={{ display: "none" }}
                         />
                       </label>
+                      <button
+                        type="button"
+                        className="admin-btn admin-btn-outline"
+                        onClick={() => setMediaPickerOpen(true)}
+                        title="Choose from Media Library"
+                      >
+                        Media Library
+                      </button>
                     </div>
 
                     {editingBlog.coverImage && (
@@ -705,6 +715,18 @@ export function BlogManager() {
             {saving ? "Saving…" : "Save Article"}
           </button>
         </div>
+
+        {/* Media Picker Modal */}
+        <MediaPickerModal
+          isOpen={mediaPickerOpen}
+          onClose={() => setMediaPickerOpen(false)}
+          currentUrl={editingBlog.coverImage}
+          title="Select Cover Image from Media Library"
+          onSelect={(url) => {
+            setEditingBlog((prev) => (prev ? { ...prev, coverImage: url } : null));
+            addToast("success", "Cover image selected from Media Library!");
+          }}
+        />
 
         {/* In-app toasts */}
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />

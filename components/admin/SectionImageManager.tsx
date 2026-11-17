@@ -6,6 +6,7 @@ import { SiteSettings, HeroSlide, GalleryItem, SectionImage, MasterPlanItem, Gal
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
 import { AdminTabs } from "@/components/admin/ui/AdminTabs";
 import { uploadImage } from "@/lib/imageOptimizer";
+import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
 interface SectionImageManagerProps {
   initialMedia: SiteSettings["media"];
@@ -19,6 +20,15 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
   >("hero");
 
   const [uploadingField, setUploadingField] = useState<string | null>(null);
+  const [pickerModal, setPickerModal] = useState<{
+    isOpen: boolean;
+    onSelect: (url: string, alt?: string) => void;
+    currentUrl?: string;
+    title?: string;
+  }>({
+    isOpen: false,
+    onSelect: () => {},
+  });
 
   // In-app toasts & modal dialogs
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -115,6 +125,24 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
     setMedia(nextMedia);
     await onUpdate(nextMedia);
     notify("New Hero Slide created! You can now customize its copy or upload a custom photo.");
+  }
+
+  async function handleDirectSectionUrlChange(
+    field: "overviewImage" | "infraImage" | "locationImage",
+    url: string,
+    alt?: string
+  ) {
+    const nextMedia = {
+      ...media,
+      [field]: {
+        ...media[field],
+        src: url,
+        ...(alt ? { alt } : {}),
+      },
+    };
+    setMedia(nextMedia);
+    await onUpdate(nextMedia);
+    notify("Visual updated successfully from Media Library!");
   }
 
   async function handleDeleteHeroSlide(slideIndex: number) {
@@ -448,6 +476,24 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   </label>
                   <button
                     type="button"
+                    className="btn-secondary"
+                    style={{ marginTop: "6px", width: "100%", textAlign: "center", justifyContent: "center" }}
+                    onClick={() =>
+                      setPickerModal({
+                        isOpen: true,
+                        title: `Select Image for Hero Slide #${idx + 1}`,
+                        currentUrl: slide.src,
+                        onSelect: (url, alt) => {
+                          handleHeroSlideFieldChange(idx, "src", url);
+                          if (alt && !slide.alt) handleHeroSlideFieldChange(idx, "alt", alt);
+                        },
+                      })
+                    }
+                  >
+                    Choose from Library
+                  </button>
+                  <button
+                    type="button"
                     className="btn-danger"
                     style={{ marginTop: "8px" }}
                     onClick={() => handleDeleteHeroSlide(idx)}
@@ -538,16 +584,32 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </div>
 
             <div style={{ flex: 1 }}>
-              <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex", marginBottom: "14px" }}>
-                {uploadingField === "overviewImage" ? "Uploading…" : "📁 Replace Overview Photo"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => handleSectionImageUpload("overviewImage", e)}
-                  disabled={uploadingField === "overviewImage"}
-                />
-              </label>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
+                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
+                  {uploadingField === "overviewImage" ? "Uploading…" : "📁 Upload Overview Photo"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => handleSectionImageUpload("overviewImage", e)}
+                    disabled={uploadingField === "overviewImage"}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() =>
+                    setPickerModal({
+                      isOpen: true,
+                      title: "Select Overview Section Visual",
+                      currentUrl: media.overviewImage.src,
+                      onSelect: (url) => handleDirectSectionUrlChange("overviewImage", url),
+                    })
+                  }
+                >
+                  Choose from Library
+                </button>
+              </div>
               <div className="form-help">Recommended resolution: 1920x1080 or higher.</div>
             </div>
           </div>
@@ -575,16 +637,32 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </div>
 
             <div style={{ flex: 1 }}>
-              <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex", marginBottom: "14px" }}>
-                {uploadingField === "infraImage" ? "Uploading…" : "📁 Replace Infrastructure Visual"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => handleSectionImageUpload("infraImage", e)}
-                  disabled={uploadingField === "infraImage"}
-                />
-              </label>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
+                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
+                  {uploadingField === "infraImage" ? "Uploading…" : "📁 Upload Infrastructure Visual"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => handleSectionImageUpload("infraImage", e)}
+                    disabled={uploadingField === "infraImage"}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() =>
+                    setPickerModal({
+                      isOpen: true,
+                      title: "Select Infrastructure Framework Visual",
+                      currentUrl: media.infraImage.src,
+                      onSelect: (url) => handleDirectSectionUrlChange("infraImage", url),
+                    })
+                  }
+                >
+                  Choose from Library
+                </button>
+              </div>
               <div className="form-help">Recommended: High-voltage sub-stations, water plants, or clean machinery.</div>
             </div>
           </div>
@@ -619,19 +697,42 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                         style={{ objectFit: "contain", padding: "8px" }}
                       />
                     </div>
-                    <label
-                      className="btn-secondary"
-                      style={{ marginTop: "10px", width: "100%", textAlign: "center", cursor: "pointer", justifyContent: "center" }}
-                    >
-                      {uploadingField === `plan-${pIdx}` ? "Uploading…" : "Replace Blueprint File"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={(e) => handleReplacePlanImage(pIdx, e)}
-                        disabled={uploadingField === `plan-${pIdx}`}
-                      />
-                    </label>
+                    <div style={{ display: "flex", gap: "6px", marginTop: "10px", flexWrap: "wrap" }}>
+                      <label
+                        className="btn-secondary"
+                        style={{ flex: 1, textAlign: "center", cursor: "pointer", justifyContent: "center" }}
+                      >
+                        {uploadingField === `plan-${pIdx}` ? "Uploading…" : "Upload Blueprint"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          style={{ display: "none" }}
+                          onChange={(e) => handleReplacePlanImage(pIdx, e)}
+                          disabled={uploadingField === `plan-${pIdx}`}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        onClick={() =>
+                          setPickerModal({
+                            isOpen: true,
+                            title: `Select Blueprint for ${plan.title || `Perspective #${pIdx + 1}`}`,
+                            currentUrl: plan.src,
+                            onSelect: async (url) => {
+                              const updatedPlans = [...(media.masterplanPlans || [])];
+                              updatedPlans[pIdx] = { ...updatedPlans[pIdx], src: url };
+                              const nextMedia = { ...media, masterplanPlans: updatedPlans };
+                              setMedia(nextMedia);
+                              await onUpdate(nextMedia);
+                              notify("Master plan image updated from library!");
+                            },
+                          })
+                        }
+                      >
+                        Library
+                      </button>
+                    </div>
                     <button
                       type="button"
                       className="btn-danger"
@@ -745,16 +846,56 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 />
               </div>
 
-              <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
-                {uploadingField === "new-plan" ? "Uploading Plan…" : "📁 Choose Blueprint File & Add Perspective"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={handleAddMasterPlan}
-                  disabled={uploadingField === "new-plan"}
-                />
-              </label>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
+                  {uploadingField === "new-plan" ? "Uploading Plan…" : "📁 Upload Blueprint File"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleAddMasterPlan}
+                    disabled={uploadingField === "new-plan"}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    if (!newPlanTitle.trim()) {
+                      addToast("error", "Perspective title required", "Please enter a perspective title first.");
+                      return;
+                    }
+                    setPickerModal({
+                      isOpen: true,
+                      title: "Select Blueprint for New Perspective",
+                      onSelect: async (url) => {
+                        const newPlan: MasterPlanItem = {
+                          id: `plan-${Date.now()}`,
+                          title: newPlanTitle.trim(),
+                          subtitle: newPlanSubtitle.trim(),
+                          description: newPlanDesc.trim(),
+                          tag: newPlanTag.trim() || "Blueprint",
+                          src: url,
+                          alt: newPlanTitle.trim() || "Master Plan Perspective",
+                        };
+                        const nextMedia = {
+                          ...media,
+                          masterplanPlans: [...(media.masterplanPlans || []), newPlan],
+                        };
+                        setMedia(nextMedia);
+                        await onUpdate(nextMedia);
+                        setNewPlanTitle("");
+                        setNewPlanSubtitle("");
+                        setNewPlanDesc("");
+                        setNewPlanTag("");
+                        notify("New Master Plan perspective added!");
+                      },
+                    });
+                  }}
+                >
+                  Choose from Library
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -781,16 +922,32 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </div>
 
             <div style={{ flex: 1 }}>
-              <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex", marginBottom: "14px" }}>
-                {uploadingField === "locationImage" ? "Uploading…" : "📁 Replace Connectivity Map"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={(e) => handleSectionImageUpload("locationImage", e)}
-                  disabled={uploadingField === "locationImage"}
-                />
-              </label>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
+                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
+                  {uploadingField === "locationImage" ? "Uploading…" : "📁 Replace Connectivity Map"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={(e) => handleSectionImageUpload("locationImage", e)}
+                    disabled={uploadingField === "locationImage"}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() =>
+                    setPickerModal({
+                      isOpen: true,
+                      title: "Select Connectivity Map Image",
+                      currentUrl: media.locationImage.src,
+                      onSelect: (url) => handleDirectSectionUrlChange("locationImage", url),
+                    })
+                  }
+                >
+                  Choose from Library
+                </button>
+              </div>
               <div className="form-help">Annotated aerial highways, rail corridors, and ports work best.</div>
             </div>
           </div>
@@ -989,16 +1146,45 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 />
               </div>
 
-              <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
-                {uploadingField === "new-gal" ? "Uploading…" : "📁 Choose Image File & Add to Gallery"}
-                <input
-                  type="file"
-                  accept="image/*"
-                  style={{ display: "none" }}
-                  onChange={handleAddGalleryPhoto}
-                  disabled={uploadingField === "new-gal"}
-                />
-              </label>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
+                  {uploadingField === "new-gal" ? "Uploading…" : "📁 Choose Image File & Add to Gallery"}
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleAddGalleryPhoto}
+                    disabled={uploadingField === "new-gal"}
+                  />
+                </label>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => {
+                    setPickerModal({
+                      isOpen: true,
+                      title: "Select Photo for Project Gallery",
+                      onSelect: async (url) => {
+                        const newPhoto = {
+                          id: `gal-${Date.now()}`,
+                          src: url,
+                          alt: newGalAlt || newGalCaption || "Gallery Photo",
+                          caption: newGalCaption || "Project Gallery View",
+                          category: newGalCategory,
+                        };
+                        const nextMedia = { ...media, gallery: [...media.gallery, newPhoto] };
+                        setMedia(nextMedia);
+                        await onUpdate(nextMedia);
+                        setNewGalCaption("");
+                        setNewGalAlt("");
+                        notify("New photo added to gallery!");
+                      },
+                    });
+                  }}
+                >
+                  Choose from Library
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -1099,8 +1285,70 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
               </button>
             </div>
           </div>
+
+          {/* Custom Logo Upload or Choose from Library */}
+          <div style={{ marginTop: "24px", padding: "18px", background: "#0b0e14", border: "1px dashed #334155", borderRadius: "8px" }}>
+            <h3 style={{ margin: "0 0 10px", fontSize: "13px", color: "#d4af37" }}>
+              Upload or Select Custom Logo
+            </h3>
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+              <label className="btn-secondary" style={{ cursor: "pointer", display: "inline-flex" }}>
+                {uploadingField === "logo" ? "Uploading…" : "📁 Upload Custom Logo"}
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    setUploadingField("logo");
+                    try {
+                      const url = await uploadImage(file);
+                      const next = { ...media, logo: url };
+                      setMedia(next);
+                      await onUpdate(next);
+                      notify("Custom logo updated!");
+                    } catch (err: unknown) {
+                      addToast("error", "Logo upload error", err instanceof Error ? err.message : "Failed to upload logo");
+                    } finally {
+                      setUploadingField(null);
+                    }
+                  }}
+                  disabled={uploadingField === "logo"}
+                />
+              </label>
+              <button
+                type="button"
+                className="btn-secondary"
+                onClick={() =>
+                  setPickerModal({
+                    isOpen: true,
+                    title: "Select Brand Logo from Library",
+                    currentUrl: media.logo,
+                    onSelect: async (url) => {
+                      const next = { ...media, logo: url };
+                      setMedia(next);
+                      await onUpdate(next);
+                      notify("Brand logo updated from library!");
+                    },
+                  })
+                }
+              >
+                Choose from Library
+              </button>
+            </div>
+          </div>
         </div>
       )}
+
+      {/* Reusable Media Library Picker Modal */}
+      <MediaPickerModal
+        isOpen={pickerModal.isOpen}
+        onClose={() => setPickerModal((p) => ({ ...p, isOpen: false }))}
+        title={pickerModal.title || "Choose Image from Library"}
+        currentUrl={pickerModal.currentUrl}
+        onSelect={pickerModal.onSelect}
+      />
     </div>
   );
 }

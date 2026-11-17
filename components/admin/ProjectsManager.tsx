@@ -10,6 +10,7 @@ import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminToolbar, AdminSearchInput } from "@/components/admin/ui/AdminToolbar";
 import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
 import { uploadImage } from "@/lib/imageOptimizer";
+import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
 type ProjectStudioTab = "general" | "specs" | "media";
 
@@ -25,6 +26,7 @@ export function ProjectsManager() {
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
   const [studioTab, setStudioTab] = useState<ProjectStudioTab>("general");
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
 
   // Pagination & Filtering state
@@ -624,6 +626,14 @@ export function ProjectsManager() {
                             style={{ display: "none" }}
                           />
                         </label>
+                        <button
+                          type="button"
+                          className="admin-btn admin-btn-outline"
+                          onClick={() => setMediaPickerOpen(true)}
+                          title="Choose from Media Library"
+                        >
+                          Media Library
+                        </button>
                       </div>
 
                       {editingProject.coverImage && (
@@ -933,6 +943,18 @@ export function ProjectsManager() {
             {saving ? "Saving…" : "Save Project"}
           </button>
         </div>
+
+        {/* Media Picker Modal */}
+        <MediaPickerModal
+          isOpen={mediaPickerOpen}
+          onClose={() => setMediaPickerOpen(false)}
+          currentUrl={editingProject.coverImage}
+          title="Select Project Cover from Media Library"
+          onSelect={(url) => {
+            setEditingProject((prev) => (prev ? { ...prev, coverImage: url } : null));
+            addToast("success", "Cover image selected from Media Library!");
+          }}
+        />
 
         {/* In-app toasts */}
         <ToastContainer toasts={toasts} onDismiss={dismissToast} />

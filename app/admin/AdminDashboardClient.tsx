@@ -38,10 +38,19 @@ const SectionImageManager = dynamic(
   }
 );
 
+const MediaLibrary = dynamic(
+  () => import("@/components/admin/MediaLibrary").then((m) => m.MediaLibrary),
+  {
+    ssr: false,
+    loading: () => <CardSkeleton />,
+  }
+);
+
 export type AdminTab =
   | "leads"
   | "projects"
   | "blogs"
+  | "media_library"
   | "media"
   | "content"
   | "sections"
@@ -53,6 +62,7 @@ const VALID_TABS: AdminTab[] = [
   "leads",
   "projects",
   "blogs",
+  "media_library",
   "media",
   "content",
   "sections",
@@ -160,6 +170,7 @@ export function AdminDashboardClient({
     leads: { title: "Leads CRM & Inquiries", category: "Overview & CRM" },
     projects: { title: "Projects & Landmark Developments", category: "Portfolio & Media" },
     blogs: { title: "Insights & News Blog Studio", category: "Editorial & Content" },
+    media_library: { title: "Digital Asset & Media Library", category: "Portfolio & Media" },
     media: { title: "Section Media & Gallery Studio", category: "Portfolio & Media" },
     content: { title: "Township Content, Verticals & Vision", category: "Editorial & Content" },
     sections: { title: "Homepage Section Controls", category: "Site Architecture" },
@@ -273,9 +284,9 @@ export function AdminDashboardClient({
 
           <button
             type="button"
-            className={`sidebar-nav-item ${activeTab === "media" ? "is-active" : ""}`}
-            onClick={() => handleTabChange("media")}
-            title="Section Images"
+            className={`sidebar-nav-item ${activeTab === "media_library" ? "is-active" : ""}`}
+            onClick={() => handleTabChange("media_library")}
+            title="Media Library"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -284,7 +295,22 @@ export function AdminDashboardClient({
                 <path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />
               </svg>
             </span>
-            <span className="sidebar-item-label">Section Images</span>
+            <span className="sidebar-item-label">Media Library</span>
+          </button>
+
+          <button
+            type="button"
+            className={`sidebar-nav-item ${activeTab === "media" ? "is-active" : ""}`}
+            onClick={() => handleTabChange("media")}
+            title="Section Visuals Studio"
+          >
+            <span className="sidebar-item-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
+                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
+              </svg>
+            </span>
+            <span className="sidebar-item-label">Section Visuals</span>
           </button>
 
           <button
@@ -544,6 +570,8 @@ export function AdminDashboardClient({
             {activeTab === "projects" && <ProjectsManager />}
 
             {activeTab === "blogs" && <BlogManager />}
+
+            {activeTab === "media_library" && <MediaLibrary />}
 
             {activeTab === "media" && (
               <SectionImageManager

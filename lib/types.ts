@@ -38,6 +38,18 @@ export type SectionImage = {
   caption?: string;
 };
 
+export type MediaItem = {
+  id: string;
+  url: string;
+  fileName: string;
+  source: "uploads" | "hero" | "project" | "blog" | "gallery" | "branding" | "other";
+  format: string;
+  sizeBytes?: number;
+  createdAt: string;
+  alt?: string;
+  usageCount?: number;
+};
+
 export type FactItem = {
   id: string;
   label: string;

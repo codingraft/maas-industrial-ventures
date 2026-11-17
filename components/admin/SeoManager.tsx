@@ -6,6 +6,7 @@ import { SeoSettings } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
 import { AdminTabs } from "@/components/admin/ui/AdminTabs";
 import { uploadImage } from "@/lib/imageOptimizer";
+import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
 interface SeoManagerProps {
   initialSeo: SeoSettings;
@@ -17,6 +18,7 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
   const [activeSubTab, setActiveSubTab] = useState<"general" | "social" | "indexing" | "schema">("general");
   const [saving, setSaving] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // In-app toasts & confirmation
@@ -338,6 +340,14 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
                 >
                   {uploadingImage ? "Uploading..." : "↑ Upload New"}
                 </button>
+                <button
+                  type="button"
+                  className="btn-secondary"
+                  onClick={() => setMediaPickerOpen(true)}
+                  title="Choose from Media Library"
+                >
+                  Choose from Library
+                </button>
               </div>
 
               {/* Quick Image Presets */}
@@ -553,6 +563,17 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
           </button>
         </div>
       </div>
+
+      <MediaPickerModal
+        isOpen={mediaPickerOpen}
+        onClose={() => setMediaPickerOpen(false)}
+        currentUrl={seo.ogImage}
+        title="Select Social Share (OG) Image from Media Library"
+        onSelect={(url) => {
+          setSeo((prev) => ({ ...prev, ogImage: url }));
+          notify("Social Share (OG) image selected from Media Library!", "success");
+        }}
+      />
     </div>
   );
 }
