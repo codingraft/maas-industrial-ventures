@@ -110,31 +110,20 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
     await onUpdate(nextMedia);
   }
 
-  async function handleAddHeroSlide(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingField("new-hero");
-    try {
-      const url = await uploadFile(file);
-      const newSlide: HeroSlide = {
-        id: `slide-${Date.now()}`,
-        src: url,
-        alt: "MAAS Industrial infrastructure perspective",
-        eyebrow: "INDUSTRIAL INFRASTRUCTURE",
-        title: "Engineered for scale. Built for reliability.",
-        subtitle: "High-voltage power infrastructure, reinforced concrete freight corridors, and dedicated zoning.",
-      };
-      const nextSlides = [...media.heroSlides, newSlide];
-      const nextMedia = { ...media, heroSlides: nextSlides };
-      setMedia(nextMedia);
-      await onUpdate(nextMedia);
-      notify("New Hero Slide added successfully!");
-    } catch (err: unknown) {
-      addToast("error", "Upload error", err instanceof Error ? err.message : "Upload error");
-    } finally {
-      setUploadingField(null);
-    }
+  async function handleAddNewHeroSlide() {
+    const newSlide: HeroSlide = {
+      id: `slide-${Date.now()}`,
+      src: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1600&q=80",
+      alt: "MAAS Industrial infrastructure perspective",
+      eyebrow: "NEW DEVELOPMENT PERSPECTIVE",
+      title: "Developing Land. Building Opportunities.",
+      subtitle: "High-capacity industrial infrastructure engineered for modern manufacturing and enterprise growth.",
+    };
+    const nextSlides = [...media.heroSlides, newSlide];
+    const nextMedia = { ...media, heroSlides: nextSlides };
+    setMedia(nextMedia);
+    await onUpdate(nextMedia);
+    notify("New Hero Slide created! You can now customize its copy or upload a custom photo.");
   }
 
   async function handleDeleteHeroSlide(slideIndex: number) {
@@ -427,16 +416,18 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 Configure the multi-slide carousel displayed at the top of the homepage.
               </p>
             </div>
-            <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
-              {uploadingField === "new-hero" ? "Uploading…" : "+ Add New Slide"}
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                style={{ display: "none" }}
-                onChange={handleAddHeroSlide}
-                disabled={uploadingField === "new-hero"}
-              />
-            </label>
+            <button
+              type="button"
+              className="btn-gold"
+              onClick={handleAddNewHeroSlide}
+              style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="12" y1="5" x2="12" y2="19" />
+                <line x1="5" y1="12" x2="19" y2="12" />
+              </svg>
+              <span>+ Add New Slide</span>
+            </button>
           </div>
 
           <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "16px" }}>
@@ -477,6 +468,26 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 <div className="slide-editor-fields">
                   <div style={{ fontSize: "12px", fontWeight: 700, color: "#d4af37", marginBottom: "8px" }}>
                     SLIDE #{idx + 1} SPECIFICATIONS
+                  </div>
+                  <div className="form-row">
+                    <label className="form-label">Photo URL / Direct Link</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={slide.src}
+                      onChange={(e) => handleHeroSlideFieldChange(idx, "src", e.target.value)}
+                      placeholder="https://... or uploaded image URL"
+                    />
+                  </div>
+                  <div className="form-row">
+                    <label className="form-label">Image Alt Text (SEO & Accessibility)</label>
+                    <input
+                      type="text"
+                      className="form-control"
+                      value={slide.alt || ""}
+                      onChange={(e) => handleHeroSlideFieldChange(idx, "alt", e.target.value)}
+                      placeholder="e.g. MAAS Industrial infrastructure perspective"
+                    />
                   </div>
                   <div className="form-row">
                     <label className="form-label">Category Eyebrow</label>

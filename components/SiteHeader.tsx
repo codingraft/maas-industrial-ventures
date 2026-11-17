@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Arrow } from "@/components/ui/Arrow";
 
 interface SiteHeaderProps {
@@ -19,6 +20,7 @@ export function SiteHeader({
   phone = "+91 98765 43210",
   sections = {},
 }: SiteHeaderProps) {
+  const pathname = usePathname();
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -119,56 +121,74 @@ export function SiteHeader({
   return (
     <>
       <header className={`site-header ${scrolled ? "is-scrolled" : ""} ${menuOpen ? "menu-open" : ""}`}>
-        <Link href="/">
-          <div className="brand-logo-wrap">
-            <Image
-              src={resolvedLogo}
-              alt={`${brandName} Logo`}
-              width={240}
-              height={68}
-              priority
-              unoptimized={resolvedLogo.endsWith(".svg") || resolvedLogo.startsWith("data:")}
-              className="brand-logo-img"
-            />
-          </div>
-        </Link>
+        <div className="site-header-inner">
+          <Link href="/" className="brand-logo-link" aria-label={`${brandName} Home`}>
+            <div className="brand-logo-wrap">
+              <Image
+                src={resolvedLogo}
+                alt={`${brandName} Logo`}
+                width={240}
+                height={68}
+                priority
+                unoptimized={resolvedLogo.endsWith(".svg") || resolvedLogo.startsWith("data:")}
+                className="brand-logo-img"
+              />
+            </div>
+          </Link>
 
-        {/* Mobile Hamburger Trigger */}
-        <button
-          className="menu-toggle"
-          aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-          aria-expanded={menuOpen}
-          onClick={() => setMenuOpen(!menuOpen)}
-        >
-          <span />
-          <span />
-        </button>
-
-        {/* Desktop Navigation */}
-        <nav className="site-header-nav site-header-nav-desktop" aria-label="Main navigation">
-          {visibleNav.map((item) => (
-            <Link key={item.href} href={item.href}>
-              {item.label}
-            </Link>
-          ))}
-          {phone && (
-            <a className="nav-phone" href={`tel:${phone}`}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginRight: "6px" }}>
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-              </svg>
-              {phone}
-            </a>
-          )}
+          {/* Mobile Hamburger Trigger */}
           <button
-            type="button"
-            className="nav-cta"
-            onClick={handleOpenConsultation}
-            data-enquiry-trigger
-            data-enquiry-title="Schedule Consultation & Site Visit"
+            className="menu-toggle"
+            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+            aria-expanded={menuOpen}
+            onClick={() => setMenuOpen(!menuOpen)}
           >
-            Schedule Site Visit <Arrow diagonal />
+            <span />
+            <span />
           </button>
-        </nav>
+
+          {/* Desktop Navigation */}
+          <nav className="site-header-nav site-header-nav-desktop" aria-label="Main navigation">
+            <div className="site-header-links">
+              {visibleNav.map((item) => {
+                const isActive =
+                  item.href === "/"
+                    ? pathname === "/"
+                    : pathname === item.href || pathname?.startsWith(`${item.href}/`);
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`site-header-link ${isActive ? "is-active" : ""}`}
+                  >
+                    <span>{item.label}</span>
+                  </Link>
+                );
+              })}
+            </div>
+
+            <div className="site-header-actions">
+              {phone && (
+                <a className="nav-phone" href={`tel:${phone}`} title="Call Advisory Desk">
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                  </svg>
+                  <span>{phone}</span>
+                </a>
+              )}
+              <button
+                type="button"
+                className="nav-cta"
+                onClick={handleOpenConsultation}
+                data-enquiry-trigger
+                data-enquiry-title="Schedule Consultation & Site Visit"
+              >
+                <span>Schedule Site Visit</span>
+                <Arrow diagonal />
+              </button>
+            </div>
+          </nav>
+        </div>
       </header>
 
       {/* Full-Screen Mobile Navigation Drawer (Portaled directly to <body> for zero clipping) */}
@@ -206,18 +226,24 @@ export function SiteHeader({
 
             <div className="mobile-nav-body">
               <div className="mobile-nav-links">
-                {visibleNav.map((item, index) => (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    className="mobile-nav-link"
-                    onClick={() => setMenuOpen(false)}
-                  >
-                    <span className="mobile-nav-link-num">0{index + 1}</span>
-                    <span className="mobile-nav-link-text">{item.label}</span>
-                    <span className="mobile-nav-link-arrow">→</span>
-                  </Link>
-                ))}
+                {visibleNav.map((item, index) => {
+                  const isActive =
+                    item.href === "/"
+                      ? pathname === "/"
+                      : pathname === item.href || pathname?.startsWith(`${item.href}/`);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      className={`mobile-nav-link ${isActive ? "is-active" : ""}`}
+                      onClick={() => setMenuOpen(false)}
+                    >
+                      <span className="mobile-nav-link-num">0{index + 1}</span>
+                      <span className="mobile-nav-link-text">{item.label}</span>
+                      <span className="mobile-nav-link-arrow">→</span>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
 
@@ -238,7 +264,8 @@ export function SiteHeader({
                 data-enquiry-trigger
                 data-enquiry-title="Schedule Consultation & Site Visit"
               >
-                Schedule Site Visit <Arrow diagonal />
+                <span>Schedule Site Visit</span>
+                <Arrow diagonal />
               </button>
 
               <div className="mobile-nav-brand-footer">

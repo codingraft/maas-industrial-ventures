@@ -977,10 +977,12 @@
 :where(.vertical-card, .vm-card, .project-card-info, .blog-card-body, .form-panel) :where(p, small, .project-desc, .vertical-desc) { color: var(--muted); }
 .enquire h2 { color: #ffffff; }
 .enquire .section-label { color: var(--gold-light); }
-@media (max-width: 768px) {
-  .site-header { padding-inline: 20px; }
+@media (max-width: 1024px) {
+  .site-header { padding-inline: 0; }
   .site-header nav,
   .site-header nav.site-header-nav-desktop { display: none !important; }
+}
+@media (max-width: 768px) {
   .hero-actions { flex-direction: row; align-items: center; gap: 12px; }
   .hero-actions .button { width: auto; padding-inline: 18px; }
 }
