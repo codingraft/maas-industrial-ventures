@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { getAllSettings, updateSetting, SiteSettings } from "@/lib/db";
+import { getAllSettings, updateSettings, SiteSettings } from "@/lib/db";
 
 export const runtime = "nodejs";
 
 export async function GET() {
+  if (!(await isAuthenticated())) {
+    return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const settings = await getAllSettings();
     return NextResponse.json({ ok: true, settings });
@@ -34,14 +38,22 @@ export async function PATCH(request: Request) {
     "tracking",
     "seo",
     "content",
+    "verticals",
+    "vision_mission",
   ];
 
   try {
+    const updates: Partial<SiteSettings> = {};
     for (const key of validKeys) {
       if (key in body && body[key] !== undefined) {
-        await updateSetting(key, body[key]);
+        updates[key] = body[key] as any;
       }
     }
+
+    if (Object.keys(updates).length > 0) {
+      await updateSettings(updates);
+    }
+
     const updated = await getAllSettings();
     return NextResponse.json({ ok: true, settings: updated });
   } catch (error) {

@@ -1,0 +1,208 @@
+/* Public theme tokens: edit this palette once to recolor the site. */
+
+/* MAAS Industrial Ventures Luxury Architectural & Venture Palette */
+:root {
+  --paper: #f5f4ef;
+  --paper-deep: #ebe9e1;
+  --ink: #20352f;
+  --ink-2: #33483f;
+  --muted: #6e766d;
+  --line: #d9d9cf;
+  --gold: #ad7c3e;
+  --gold-dark: #875d2d;
+  --gold-light: #dbc39e;
+  --obsidian: #1b2b26;
+  --obsidian-card: #263a33;
+  --obsidian-border: #40554b;
+  --copper: var(--gold);
+  --copper-dark: var(--gold-dark);
+  --white: #ffffff;
+  --serif: Georgia, "Times New Roman", serif;
+  --font-serif: var(--serif);
+  --sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --fg: var(--ink);
+  --surface: #fffefa;
+  --surface-subtle: #eeede6;
+  --content: 1280px;
+  --content-wide: 1400px;
+  --gutter: 48px;
+
+  /* Legacy Swatch compatibility mapped to MAAS palette */
+  --swatch-hex-f3f1ea: var(--paper);
+  --swatch-hex-e9e5da: var(--paper-deep);
+  --swatch-hex-182c26: var(--ink);
+  --swatch-hex-253b33: var(--obsidian-card);
+  --swatch-hex-777c72: var(--muted);
+  --swatch-hex-d7d4ca: var(--line);
+  --swatch-hex-be8654: var(--gold);
+  --swatch-hex-a76e3c: var(--gold-dark);
+  --swatch-hex-fff: var(--white);
+  --swatch-rgba243-241-234-p97: color-mix(in srgb, var(--ink) 96%, transparent);
+  --swatch-rgba24-44-38-p1: color-mix(in srgb, var(--gold) 15%, transparent);
+  --swatch-rgba255-255-255-p55: color-mix(in srgb, var(--white) 55%, transparent);
+  --swatch-hex-304239: var(--obsidian);
+  --swatch-rgba13-28-24-p76: color-mix(in srgb, var(--ink) 88%, transparent);
+  --swatch-rgba13-28-24-p48: color-mix(in srgb, var(--ink) 65%, transparent);
+  --swatch-rgba13-28-24-p08: color-mix(in srgb, var(--ink) 15%, transparent);
+  --swatch-rgba13-28-24-p38: color-mix(in srgb, var(--ink) 45%, transparent);
+  --swatch-hex-e1b38b: var(--gold);
+  --swatch-rgba255-255-255-p82: color-mix(in srgb, var(--white) 85%, transparent);
+  --swatch-rgba225-179-139-p7: color-mix(in srgb, var(--gold) 70%, transparent);
+  --swatch-rgba255-255-255-p78: color-mix(in srgb, var(--white) 78%, transparent);
+  --swatch-hex-e9e6dd: var(--paper);
+  --swatch-hex-d1cdc2: var(--line);
+  --swatch-hex-32413a: var(--ink-2);
+  --swatch-hex-6f756d: var(--muted);
+  --swatch-hex-000: var(--paper);
+  --swatch-rgba255-255-255-p75: color-mix(in srgb, var(--white) 75%, transparent);
+  --swatch-hex-e7e4da: var(--paper);
+  --swatch-hex-70756c: var(--muted);
+  --swatch-hex-c9c5b9: var(--line);
+  --swatch-hex-74786f: var(--muted);
+  --swatch-hex-e8e5dc: var(--paper);
+  --swatch-hex-898c82: var(--muted);
+  --swatch-hex-1b332b: var(--obsidian);
+  --swatch-hex-d6a47a: var(--gold);
+  --swatch-rgba255-255-255-p62: color-mix(in srgb, var(--white) 62%, transparent);
+  --swatch-rgba13-28-24-p85: color-mix(in srgb, var(--ink) 85%, transparent);
+  --swatch-rgba13-28-24-p05: color-mix(in srgb, var(--ink) 5%, transparent);
+  --swatch-hex-bf885a: var(--gold);
+  --swatch-hex-1c3028: var(--obsidian);
+  --swatch-hex-253a32: var(--ink-2);
+  --swatch-hex-3c5148: var(--ink-2);
+  --swatch-hex-394b42: var(--ink-2);
+  --swatch-rgba24-44-38-p5: color-mix(in srgb, var(--ink) 50%, transparent);
+  --swatch-hex-f4f2eb: var(--paper);
+  --swatch-rgba255-255-255-p56: color-mix(in srgb, var(--white) 56%, transparent);
+  --swatch-rgba255-255-255-p66: color-mix(in srgb, var(--white) 66%, transparent);
+  --swatch-rgba255-255-255-p44: color-mix(in srgb, var(--white) 44%, transparent);
+  --swatch-hex-223e34: var(--ink-2);
+  --swatch-rgba241-239-232-p13: color-mix(in srgb, var(--white) 10%, transparent);
+  --swatch-hex-91aa96: var(--muted);
+  --swatch-rgba27-51-43-p84: color-mix(in srgb, var(--ink) 90%, transparent);
+  --swatch-rgba255-255-255-p3: color-mix(in srgb, var(--white) 30%, transparent);
+  --swatch-rgba255-255-255-p72: color-mix(in srgb, var(--white) 72%, transparent);
+  --swatch-rgba255-255-255-p52: color-mix(in srgb, var(--white) 52%, transparent);
+  --swatch-hex-70756d: var(--muted);
+  --swatch-hex-dcd8cd: var(--line);
+  --swatch-hex-c4c8bb: var(--line);
+  --swatch-hex-d2cfc3: var(--line);
+  --swatch-hex-fbfaf5: var(--white);
+  --swatch-hex-d1cfc3: var(--line);
+  --swatch-rgba255-255-255-p5: color-mix(in srgb, var(--white) 50%, transparent);
+  --swatch-hex-7c634d55: color-mix(in srgb, var(--gold) 30%, transparent);
+  --swatch-hex-b8b7ac: var(--muted);
+  --swatch-hex-f3f1eacc: color-mix(in srgb, var(--white) 85%, transparent);
+  --swatch-rgba243-241-234-p92: color-mix(in srgb, var(--white) 92%, transparent);
+  --swatch-hex-6e736b: var(--muted);
+  --swatch-hex-757970: var(--muted);
+  --swatch-hex-c4c5bb: var(--line);
+  --swatch-hex-cfcbc0: var(--line);
+  --swatch-hex-d8d5cc: var(--line);
+  --swatch-hex-73786f: var(--muted);
+  --swatch-rgba255-255-255-p68: color-mix(in srgb, var(--white) 68%, transparent);
+  --swatch-rgba255-255-255-p18: color-mix(in srgb, var(--white) 18%, transparent);
+  --swatch-rgba255-255-255-p8: color-mix(in srgb, var(--white) 80%, transparent);
+  --swatch-hex-c8c6bd: var(--line);
+  --swatch-hex-a0a097: var(--muted);
+  --swatch-hex-b54f3f: #ef4444;
+  --swatch-hex-a33e30: #dc2626;
+  --swatch-hex-192d26: var(--obsidian);
+  --swatch-hex-d39d6d: var(--gold);
+  --swatch-hex-85877f: var(--muted);
+  --swatch-hex-2d664a: #16a34a;
+  --swatch-hex-142821: var(--obsidian);
+  --swatch-rgba255-255-255-p16: color-mix(in srgb, var(--white) 16%, transparent);
+  --swatch-rgba255-255-255-p61: color-mix(in srgb, var(--white) 61%, transparent);
+  --swatch-rgba255-255-255-p54: color-mix(in srgb, var(--white) 54%, transparent);
+  --swatch-rgba12-21-18-p95: color-mix(in srgb, var(--ink) 96%, transparent);
+  --swatch-rgba255-255-255-p35: color-mix(in srgb, var(--white) 35%, transparent);
+  --swatch-hex-9a9d93: var(--muted);
+  --swatch-rgba13-28-24-p7: color-mix(in srgb, var(--ink) 85%, transparent);
+  --swatch-rgba13-28-24-p25: color-mix(in srgb, var(--ink) 35%, transparent);
+  --swatch-hex-d8d5cb: var(--ink-2);
+}
+
+* { box-sizing: border-box; }
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 88px;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+}
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--sans);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+  max-width: 100vw;
+  width: 100%;
+  position: relative;
+}
+body.menu-open { overflow: hidden; }
+a { color: inherit; text-decoration: none; }
+button, input, textarea, select { font: inherit; }
+button {
+  cursor: pointer;
+  background: transparent;
+  border: none;
+}
+button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visible, summary:focus-visible {
+  outline: 2px solid var(--gold);
+  outline-offset: 4px;
+}
+@media (max-width: 1024px) {
+  :root {
+    --gutter: 28px;
+  }
+}
+
+@media (max-width: 640px) {
+  :root {
+    --gutter: 18px;
+  }
+}
+
+.page-wrap {
+  width: min(calc(100% - (var(--gutter, 48px) * 2)), var(--content, 1280px));
+  margin-inline: auto;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Custom Executive Scrollbars */
+*::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+*::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: rgba(32, 53, 47, 0.25);
+  border-radius: 999px;
+  transition: background 0.2s;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: var(--gold);
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(32, 53, 47, 0.25) transparent;
+}
+
+
+

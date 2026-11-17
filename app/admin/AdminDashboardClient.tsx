@@ -11,6 +11,8 @@ import { ContentManager } from "@/components/admin/ContentManager";
 import { ContactSocialForm } from "@/components/admin/ContactSocialForm";
 import { TrackingConfig } from "@/components/admin/TrackingConfig";
 import { SeoManager } from "@/components/admin/SeoManager";
+import { ProjectsManager } from "@/components/admin/ProjectsManager";
+import { BlogManager } from "@/components/admin/BlogManager";
 
 interface AdminDashboardClientProps {
   initialSettings: SiteSettings;
@@ -27,7 +29,7 @@ export function AdminDashboardClient({
 }: AdminDashboardClientProps) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<
-    "leads" | "media" | "content" | "sections" | "contact" | "tracking" | "seo"
+    "leads" | "projects" | "blogs" | "media" | "content" | "sections" | "contact" | "tracking" | "seo"
   >("leads");
   const [settings, setSettings] = useState(initialSettings);
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -60,8 +62,10 @@ export function AdminDashboardClient({
 
   const tabLabels: Record<typeof activeTab, string> = {
     leads: "Leads CRM & Inquiries",
+    projects: "Projects & Landmark Developments",
+    blogs: "Insights & News Blog Studio",
     media: "Section Media Studio",
-    content: "Township Content & FAQs Studio",
+    content: "Township Content, Verticals & Vision Studio",
     sections: "Homepage Section Controls",
     contact: "Contact Information & Social Links",
     tracking: "Ad Pixels & Analytics Tracking",
@@ -132,9 +136,48 @@ export function AdminDashboardClient({
             )}
           </button>
 
-          <div className="sidebar-group-label" style={{ marginTop: "16px" }}>
+          <div className="sidebar-group-label">
             Site Content &amp; Media
           </div>
+
+          <button
+            type="button"
+            className={`sidebar-nav-item ${activeTab === "projects" ? "is-active" : ""}`}
+            onClick={() => {
+              setActiveTab("projects");
+              setSidebarOpen(false);
+            }}
+          >
+            <span className="sidebar-item-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 21h18" />
+                <path d="M5 21V7l8-4v18" />
+                <path d="M19 21V11l-6-3" />
+                <path d="M9 9h1" />
+                <path d="M9 13h1" />
+                <path d="M9 17h1" />
+              </svg>
+            </span>
+            <span className="sidebar-item-label">Projects Portfolio</span>
+          </button>
+
+          <button
+            type="button"
+            className={`sidebar-nav-item ${activeTab === "blogs" ? "is-active" : ""}`}
+            onClick={() => {
+              setActiveTab("blogs");
+              setSidebarOpen(false);
+            }}
+          >
+            <span className="sidebar-item-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M4 19.5v-15A2.5 2.5 0 0 1 6.5 2H20v20H6.5a2.5 2.5 0 0 1-2.5-2.5Z" />
+                <path d="M6 6h10" />
+                <path d="M6 10h10" />
+              </svg>
+            </span>
+            <span className="sidebar-item-label">Insights &amp; Blog</span>
+          </button>
 
           <button
             type="button"
@@ -210,7 +253,7 @@ export function AdminDashboardClient({
             <span className="sidebar-item-label">Contact &amp; Social</span>
           </button>
 
-          <div className="sidebar-group-label" style={{ marginTop: "16px" }}>
+          <div className="sidebar-group-label">
             Marketing &amp; Ads
           </div>
 
@@ -369,6 +412,10 @@ export function AdminDashboardClient({
           <div className="admin-tab-body">
             {activeTab === "leads" && <LeadsTable />}
 
+            {activeTab === "projects" && <ProjectsManager />}
+
+            {activeTab === "blogs" && <BlogManager />}
+
             {activeTab === "media" && (
               <SectionImageManager
                 initialMedia={settings.media}
@@ -380,6 +427,16 @@ export function AdminDashboardClient({
               <ContentManager
                 settings={settings}
                 onUpdate={(next) => updateSettingPart("content", next)}
+                onUpdateFull={async (patch) => {
+                  const res = await fetch("/api/admin/settings", {
+                    method: "PATCH",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify(patch),
+                  });
+                  if (!res.ok) throw new Error("Failed to update settings");
+                  const data = await res.json();
+                  setSettings(data.settings);
+                }}
               />
             )}
 

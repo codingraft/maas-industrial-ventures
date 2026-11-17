@@ -11,6 +11,7 @@ export function LeadsTable() {
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
+  const [projectFilter, setProjectFilter] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(10);
   const [totalPages, setTotalPages] = useState(1);
@@ -63,6 +64,7 @@ export function LeadsTable() {
       const params = new URLSearchParams();
       if (search) params.set("search", search);
       if (statusFilter !== "all") params.set("status", statusFilter);
+      if (projectFilter !== "all") params.set("project", projectFilter);
       params.set("page", String(currentPage));
       params.set("limit", String(pageSize));
 
@@ -88,7 +90,7 @@ export function LeadsTable() {
     } finally {
       setLoading(false);
     }
-  }, [search, statusFilter, currentPage, pageSize]);
+  }, [search, statusFilter, projectFilter, currentPage, pageSize]);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -258,6 +260,20 @@ export function LeadsTable() {
           </select>
           <select
             className="filter-select"
+            value={projectFilter}
+            onChange={(e) => {
+              setProjectFilter(e.target.value);
+              setCurrentPage(1);
+            }}
+          >
+            <option value="all">All Projects</option>
+            <option value="Gayatri Industrial Park (Bhojpur, Modinagar)">Gayatri Industrial Park</option>
+            <option value="Shri Balaji Industrial Park (Hapur-Modinagar Rd)">Shri Balaji Industrial Park</option>
+            <option value="Residential Plotted Developments">Residential Plotted</option>
+            <option value="General Industrial Land Consultation">General Consultation</option>
+          </select>
+          <select
+            className="filter-select"
             value={pageSize}
             onChange={handlePageSizeChange}
             title="Rows per page"
@@ -280,7 +296,7 @@ export function LeadsTable() {
             <tr>
               <th>ID &amp; Date</th>
               <th>Lead Contact</th>
-              <th>Requirement</th>
+              <th>Project &amp; Requirement</th>
               <th>Ad Attribution (UTM)</th>
               <th>Status</th>
               <th>Quick Actions</th>
@@ -328,6 +344,22 @@ export function LeadsTable() {
                     </td>
 
                     <td>
+                      {lead.project && (
+                        <div style={{ marginBottom: "6px" }}>
+                          <span
+                            style={{
+                              background: "#2a2415",
+                              color: "#facc15",
+                              padding: "2px 6px",
+                              borderRadius: "3px",
+                              fontSize: "11px",
+                              fontWeight: 600,
+                            }}
+                          >
+                            {lead.project}
+                          </span>
+                        </div>
+                      )}
                       {lead.industry && (
                         <div style={{ fontSize: "12px", color: "#e2e8f0" }}>
                           <b>Industry:</b> {lead.industry}

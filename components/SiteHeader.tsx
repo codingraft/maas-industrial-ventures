@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { Arrow } from "@/components/ui/Arrow";
 
 interface SiteHeaderProps {
@@ -43,13 +44,11 @@ export function SiteHeader({
   }, [menuOpen]);
 
   const navItems = [
-    { label: "Overview", href: "#overview", key: "overview" },
-    { label: "Infrastructure", href: "#infrastructure", key: "infrastructure" },
-    { label: "Master Plan", href: "#master-plan", key: "masterplan" },
-    { label: "Location", href: "#location", key: "location" },
-    { label: "Gallery", href: "#gallery", key: "gallery" },
-    { label: "Timeline", href: "#timeline", key: "timeline" },
-    { label: "FAQs", href: "#faqs", key: "faq" },
+    { label: "About", href: "/about", key: "overview" },
+    { label: "Projects", href: "/projects", key: "projects" },
+    { label: "Gallery", href: "/gallery", key: "gallery" },
+    { label: "Blog", href: "/blog", key: "blog" },
+    { label: "Contact", href: "/contact", key: "contact" },
   ];
 
   // Filter items based on active sections (if provided, otherwise show)
@@ -59,7 +58,8 @@ export function SiteHeader({
 
   return (
     <header className={`site-header ${scrolled ? "is-scrolled" : ""}`}>
-      <a href="#top" className="brand" aria-label={`${brandName} Home`}>
+      {/* <a href="/" className="brand" aria-label={`${brandName} Home`}> */}
+      <Link href="/">
         <div className="brand-logo-wrap">
           <Image
             src={resolvedLogo}
@@ -71,7 +71,8 @@ export function SiteHeader({
             className="brand-logo-img"
           />
         </div>
-      </a>
+      </Link>
+      {/* </a> */}
 
       <button
         className="menu-toggle"
@@ -85,18 +86,39 @@ export function SiteHeader({
 
       <nav className={menuOpen ? "nav-open" : ""} aria-label="Main navigation">
         {visibleNav.map((item) => (
-          <a key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
+          <Link key={item.href} href={item.href} onClick={() => setMenuOpen(false)}>
             {item.label}
-          </a>
+          </Link>
         ))}
         {phone && (
           <a className="nav-phone" href={`tel:${phone}`} onClick={() => setMenuOpen(false)}>
-            📞 {phone}
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ display: "inline-block", verticalAlign: "middle", marginRight: "6px" }}>
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+            {phone}
           </a>
         )}
-        <a className="nav-cta" href="#enquire" onClick={() => setMenuOpen(false)}>
-          Request Details <Arrow diagonal />
-        </a>
+        <button
+          type="button"
+          className="nav-cta"
+          onClick={() => {
+            setMenuOpen(false);
+            if (typeof window !== "undefined") {
+              window.dispatchEvent(
+                new CustomEvent("open-enquiry-modal", {
+                  detail: {
+                    title: "Schedule Consultation & Site Visit",
+                    requirement: "Industrial Land",
+                  },
+                })
+              );
+            }
+          }}
+          data-enquiry-trigger
+          data-enquiry-title="Schedule Consultation & Site Visit"
+        >
+          Schedule Site Visit <Arrow diagonal />
+        </button>
       </nav>
     </header>
   );

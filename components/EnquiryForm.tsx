@@ -1,13 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Arrow } from "@/components/ui/Arrow";
 import { getCapturedUtm } from "@/lib/utm";
 
-export function EnquiryForm() {
+interface EnquiryFormProps {
+  defaultProject?: string;
+}
+
+export function EnquiryForm({ defaultProject }: EnquiryFormProps = {}) {
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [message, setMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [selectedProject, setSelectedProject] = useState(
+    defaultProject || "Gayatri Industrial Park (Bhojpur, Modinagar)"
+  );
+
+  useEffect(() => {
+    if (defaultProject) {
+      const text = defaultProject.toLowerCase();
+      if (text.includes("balaji")) {
+        setSelectedProject("Shri Balaji Industrial Park (Hapur-Modinagar Rd)");
+      } else if (text.includes("gayatri")) {
+        setSelectedProject("Gayatri Industrial Park (Bhojpur, Modinagar)");
+      } else if (text.includes("residential")) {
+        setSelectedProject("Residential Plotted Developments");
+      } else {
+        setSelectedProject(defaultProject);
+      }
+    }
+  }, [defaultProject]);
+
+  useEffect(() => {
+    function handleSelect(e: Event) {
+      const custom = e as CustomEvent<string>;
+      if (custom.detail) {
+        const text = custom.detail.toLowerCase();
+        if (text.includes("balaji")) {
+          setSelectedProject("Shri Balaji Industrial Park (Hapur-Modinagar Rd)");
+        } else if (text.includes("gayatri")) {
+          setSelectedProject("Gayatri Industrial Park (Bhojpur, Modinagar)");
+        } else if (text.includes("residential")) {
+          setSelectedProject("Residential Plotted Developments");
+        } else {
+          setSelectedProject(custom.detail);
+        }
+      }
+    }
+    window.addEventListener("maas-select-project", handleSelect);
+    return () => window.removeEventListener("maas-select-project", handleSelect);
+  }, []);
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -55,6 +97,7 @@ export function EnquiryForm() {
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
           ...values,
+          project: values.project || selectedProject,
           consent: Boolean(values.consent),
           ...utmData,
         }),
@@ -66,7 +109,9 @@ export function EnquiryForm() {
       }
 
       setStatus("success");
-      setMessage("Thank you. Your enquiry has been received by MAAS Industrial Ventures. Our project director will follow up with you shortly.");
+      setMessage(
+        "Thank you. Your enquiry has been received by MAAS Industrial Ventures. Our project director will follow up with you shortly."
+      );
       form.reset();
 
       // Trigger Ad Conversion Events (Google Ads / GA4 / Meta Pixel)
@@ -84,7 +129,9 @@ export function EnquiryForm() {
     } catch (error) {
       setStatus("error");
       setMessage(
-        error instanceof Error ? error.message : "We could not send your enquiry. Please try calling directly."
+        error instanceof Error
+          ? error.message
+          : "We could not send your enquiry. Please try calling directly."
       );
     }
   }
@@ -92,6 +139,33 @@ export function EnquiryForm() {
   return (
     <form className="enquiry-form" onSubmit={handleSubmit} noValidate>
       <div className="form-grid">
+        {/* Project Selector */}
+        <div className="field field-wide">
+          <label htmlFor="project">
+            Project Interested In <b>*</b>
+          </label>
+          <select
+            id="project"
+            name="project"
+            className="form-select"
+            value={selectedProject}
+            onChange={(e) => setSelectedProject(e.target.value)}
+          >
+            <option value="Gayatri Industrial Park (Bhojpur, Modinagar)">
+              Gayatri Industrial Park (Bhojpur, Modinagar)
+            </option>
+            <option value="Shri Balaji Industrial Park (Hapur-Modinagar Rd)">
+              Shri Balaji Industrial Park (Hapur-Modinagar Rd)
+            </option>
+            <option value="Residential Plotted Developments">
+              Residential Plotted Developments
+            </option>
+            <option value="General Industrial Land Consultation">
+              General Industrial Land Consultation
+            </option>
+          </select>
+        </div>
+
         <div className="field">
           <label htmlFor="name">
             Full name <b>*</b>
@@ -158,16 +232,16 @@ export function EnquiryForm() {
             id="industry"
             name="industry"
             autoComplete="organization"
-            placeholder="e.g. Manufacturing, Logistics, Pharma"
+            placeholder="e.g. Manufacturing, Logistics, Engineering"
           />
         </div>
 
         <div className="field field-wide">
-          <label htmlFor="requirement">Required Land / Built-Up Area</label>
+          <label htmlFor="requirement">Required Plot Size / Dimensions</label>
           <input
             id="requirement"
             name="requirement"
-            placeholder="e.g. 5–10 Acres Plot or 100,000 sq.ft Warehouse"
+            placeholder="e.g. 500 sq. yards, 1,000 sq. yards, 3,000 sq. yards"
           />
         </div>
 
@@ -179,7 +253,7 @@ export function EnquiryForm() {
             id="message"
             name="message"
             rows={3}
-            placeholder="Share details on power requirements, timeline, or intended usage"
+            placeholder="Share details on power requirements, intended manufacturing usage, or site visit request"
             aria-invalid={!!errors.message}
             aria-describedby={errors.message ? "message-error" : undefined}
           />

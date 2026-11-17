@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import { Arrow } from "@/components/ui/Arrow";
 import { HeroSlide } from "@/lib/types";
@@ -9,46 +9,81 @@ interface HeroSliderProps {
   slides: HeroSlide[];
   locationText?: string;
   brandShortName?: string;
+  heroEyebrow?: string;
+  heroHeadline?: string;
+  heroSubheadline?: string;
+  heroDescription?: string;
+  primaryBtnText?: string;
+  secondaryBtnText?: string;
+  bottomHighlights?: string[];
 }
 
 export function HeroSlider({
   slides,
-  locationText = "Project Location",
+  locationText = "Industrial & Residential Land Development | India",
   brandShortName = "MAAS Industrial Ventures",
+  heroEyebrow,
+  heroHeadline,
+  heroSubheadline,
+  heroDescription,
+  primaryBtnText = "Explore Our Projects",
+  secondaryBtnText = "Get in Touch",
+  bottomHighlights = [
+    "Industrial Hub Development",
+    "Industrial Plot Development",
+    "Residential Land Development",
+    "Real Estate Development",
+  ],
 }: HeroSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
-  const [isPaused, setIsPaused] = useState(false);
-
-  const total = slides.length;
+  const total = slides?.length || 0;
 
   const nextSlide = useCallback(() => {
+    if (total <= 1) return;
     setCurrentIndex((prev) => (prev + 1) % total);
   }, [total]);
 
   const prevSlide = useCallback(() => {
+    if (total <= 1) return;
     setCurrentIndex((prev) => (prev - 1 + total) % total);
   }, [total]);
 
-  // Autoplay timer (6 seconds)
+  // Keyboard navigation
   useEffect(() => {
-    if (isPaused || total <= 1) return;
-    const interval = setInterval(nextSlide, 6000);
-    return () => clearInterval(interval);
-  }, [isPaused, total, nextSlide]);
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") nextSlide();
+      if (e.key === "ArrowLeft") prevSlide();
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [nextSlide, prevSlide]);
 
   if (!slides || slides.length === 0) return null;
 
   const activeSlide = slides[currentIndex];
 
+  const displayEyebrow =
+    currentIndex === 0 && heroEyebrow
+      ? heroEyebrow
+      : activeSlide.eyebrow || heroEyebrow || `${brandShortName} · Land & Real Estate Developers`;
+
+  const displayTitle =
+    currentIndex === 0 && heroHeadline
+      ? heroHeadline
+      : activeSlide.title || heroHeadline || "Developing Land. Building Opportunities.";
+
+  const displaySubtitle =
+    currentIndex === 0 && heroSubheadline
+      ? heroSubheadline
+      : activeSlide.subtitle || heroSubheadline || "Creating Industrial Hubs & Residential Developments for a Better Tomorrow.";
+
+  const displayDesc =
+    currentIndex === 0
+      ? heroDescription || "We are land and real estate developers focused on creating thoughtfully planned industrial hubs, industrial plots and residential developments. Transforming land into destinations for enterprise growth."
+      : undefined;
+
   return (
-    <section
-      className="hero hero-slider"
-      aria-label="Hero Carousel"
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
-      onTouchStart={() => setIsPaused(true)}
-      onTouchEnd={() => setIsPaused(false)}
-    >
+    <section className="hero hero-slider" aria-label="MAAS Industrial Ventures Hero Banner">
       {/* Background Slides */}
       {slides.map((slide, idx) => (
         <div
@@ -68,137 +103,137 @@ export function HeroSlider({
         </div>
       ))}
 
+      {/* Cinematic Architectural Scrim */}
       <div className="hero-shade" />
 
-      {/* Side Navigation Arrows (Desktop / Tablet) */}
-      {total > 1 && (
-        <>
-          <button
-            type="button"
-            className="slider-side-arrow slider-side-prev"
-            onClick={prevSlide}
-            aria-label="Previous Slide"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="15 18 9 12 15 6" />
-            </svg>
-          </button>
-          <button
-            type="button"
-            className="slider-side-arrow slider-side-next"
-            onClick={nextSlide}
-            aria-label="Next Slide"
-          >
-            <svg
-              width="20"
-              height="20"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="9 18 15 12 9 6" />
-            </svg>
-          </button>
-        </>
-      )}
+      {/* Hero Content Area */}
+      <div className="hero-main">
+        <div className="page-wrap hero-main-wrap">
+          <div className="hero-copy-column">
+            <div className="hero-eyebrow-badge">
+              <span className="eyebrow-dot" />
+              <span className="eyebrow-text">{displayEyebrow}</span>
+            </div>
 
-      {/* Main Slide Content - Clean, unobstructed flow */}
-      <div className="hero-content page-wrap">
-        <p className="eyebrow eyebrow-light">
-          <span /> {activeSlide.eyebrow || `${brandShortName} / High-Capacity Infrastructure`}
-        </p>
+            <h1 id="hero-title" key={`title-${currentIndex}`} className="hero-slider-heading">
+              {displayTitle.split(".").map((part, i, arr) => {
+                const trimmed = part.trim();
+                if (!trimmed) return null;
+                return (
+                  <span key={i} className="heading-line">
+                    {i === 1 ? <span className="hero-gold-accent">{trimmed}.</span> : `${trimmed}. `}
+                  </span>
+                );
+              })}
+            </h1>
 
-        <h1 id="hero-title" key={`title-${currentIndex}`} className="hero-slider-heading">
-          {activeSlide.title || (
-            <>
-              Built for industry.<br />
-              <em>Designed for what’s next.</em>
-            </>
-          )}
-        </h1>
+            <p key={`subtitle-${currentIndex}`} className="hero-subheadline">
+              {displaySubtitle}
+            </p>
 
-        <p key={`desc-${currentIndex}`} className="hero-copy hero-slider-copy">
-          {activeSlide.subtitle}
-        </p>
+            {displayDesc && (
+              <p key={`desc-${currentIndex}`} className="hero-desc-narrative">
+                {displayDesc}
+              </p>
+            )}
 
-        <div className="hero-actions">
-          <a className="button button-gold" href="#enquire">
-            Register For Priority Allocation <Arrow diagonal />
-          </a>
-          <a className="text-link text-link-light" href="#overview">
-            Explore Infrastructure Scope <Arrow />
-          </a>
+            <div className="hero-actions">
+              <a className="button button-gold hero-cta-primary" href="#projects">
+                {primaryBtnText} <Arrow diagonal />
+              </a>
+              <button
+                type="button"
+                className="button button-outline-light hero-cta-secondary"
+                onClick={() => {
+                  if (typeof window !== "undefined") {
+                    window.dispatchEvent(
+                      new CustomEvent("open-enquiry-modal", {
+                        detail: {
+                          title: "Priority Project Allocation Consultation",
+                          requirement: "Industrial Land",
+                        },
+                      })
+                    );
+                  }
+                }}
+                data-enquiry-trigger
+                data-enquiry-title="Priority Project Allocation Consultation"
+              >
+                {secondaryBtnText} <Arrow />
+              </button>
+            </div>
+
+            {/* 4 Highlights Strip */}
+            {bottomHighlights && bottomHighlights.length > 0 && (
+              <div className="hero-highlights-strip" aria-label="Development Verticals">
+                {bottomHighlights.map((hl, idx) => (
+                  <span key={idx} className="hero-highlight-chip">
+                    <span className="chip-num">0{idx + 1}</span>
+                    <span className="chip-label">{hl}</span>
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Hero Bottom Meta Strip with Integrated Non-Overlapping Slider Dock */}
-      <div className="hero-bottom page-wrap">
-        {/* Left: Location Pin */}
-        <span className="hero-location">
-          <span className="pin">⌖</span>
-          {locationText}
-        </span>
-
-        {/* Center: Integrated Slider Navigation Dock */}
-        {total > 1 && (
-          <div className="slider-dock" role="tablist" aria-label="Slide Selection">
-            <button
-              type="button"
-              className="slider-dock-btn"
-              onClick={prevSlide}
-              aria-label="Previous Slide"
-            >
-              ‹
-            </button>
-
-            <div className="slider-dock-dots">
-              {slides.map((_, idx) => (
-                <button
-                  key={idx}
-                  type="button"
-                  role="tab"
-                  className={`slider-dock-dot ${idx === currentIndex ? "is-active" : ""}`}
-                  onClick={() => setCurrentIndex(idx)}
-                  aria-selected={idx === currentIndex}
-                  aria-label={`Go to slide ${idx + 1}`}
-                >
-                  <span className="dot-progress" />
-                </button>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              className="slider-dock-btn"
-              onClick={nextSlide}
-              aria-label="Next Slide"
-            >
-              ›
-            </button>
-
-            <span className="slider-dock-counter">
-              0{currentIndex + 1} <span style={{ opacity: 0.4 }}>/</span> 0{total}
-            </span>
+      {/* Hero Bottom Architectural Status Bar */}
+      <div className="hero-dock-bar">
+        <div className="hero-dock-inner">
+          <div className="hero-dock-location">
+            <span className="dock-pin-icon" aria-hidden="true">📍</span>
+            <span>{locationText}</span>
           </div>
-        )}
 
-        {/* Right: Scroll to explore with right-padding clearance for floating buttons */}
-        <div className="hero-bottom-right">
-          <a className="scroll-cue" href="#overview">
-            <span /> Scroll to explore
-          </a>
+          {total > 1 && (
+            <div className="hero-dock-controls" role="tablist" aria-label="Slide Selection">
+              <button
+                type="button"
+                className="dock-arrow-btn"
+                onClick={prevSlide}
+                aria-label="Previous Slide"
+              >
+                ‹
+              </button>
+
+              <div className="dock-progress-dots">
+                {slides.map((_, idx) => (
+                  <button
+                    key={idx}
+                    type="button"
+                    role="tab"
+                    className={`dock-dot ${idx === currentIndex ? "is-active" : ""}`}
+                    onClick={() => setCurrentIndex(idx)}
+                    aria-selected={idx === currentIndex}
+                    aria-label={`Slide ${idx + 1}`}
+                  >
+                    <span className="dock-dot-fill" />
+                  </button>
+                ))}
+              </div>
+
+              <button
+                type="button"
+                className="dock-arrow-btn"
+                onClick={nextSlide}
+                aria-label="Next Slide"
+              >
+                ›
+              </button>
+
+              <span className="dock-counter">
+                0{currentIndex + 1} <span style={{ opacity: 0.35 }}>/</span> 0{total}
+              </span>
+            </div>
+          )}
+
+          <div className="hero-dock-scroll">
+            <a href="#overview" className="dock-scroll-link">
+              <span className="dock-scroll-line" />
+              <span>Scroll to explore</span>
+            </a>
+          </div>
         </div>
       </div>
     </section>

@@ -49,7 +49,7 @@ const securityHeaders = [
 const nextConfig: NextConfig = {
   distDir: process.env.NODE_ENV === "development" ? ".next-dev" : ".next",
   images: {
-    qualities: [75, 82, 85],
+    qualities: [25, 50, 75, 80, 82, 85, 90],
     remotePatterns: [
       {
         protocol: "https",

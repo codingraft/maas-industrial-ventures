@@ -8,48 +8,114 @@ import { Pagination } from "@/components/ui/Pagination";
 interface ProjectGalleryProps {
   images?: GalleryItem[];
   categories?: GalleryCategory[];
+  eyebrow?: string;
+  headline?: string;
+  description?: string;
+  pageSize?: number;
 }
 
-export function ProjectGallery({ images = [], categories = [] }: ProjectGalleryProps) {
+export function ProjectGallery({
+  images = [],
+  categories = [],
+  eyebrow = "Project Visuals & Site Progress",
+  headline = "Project Gallery & Site Progress.",
+  description = "Real site photographs and clearly identified illustrative images of Gayatri Industrial Park, Shri Balaji Industrial Park, concrete road networks, and manufacturing operations.",
+  pageSize = 6,
+}: ProjectGalleryProps) {
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
-  const pageSize = 6;
+  const fallbackImage =
+    "https://images.unsplash.com/photo-1567789884554-0b844b597180?auto=format&fit=crop&w=1400&q=82";
 
-  // Filter out any categories that have ZERO images
+  // Lock body scroll when lightbox is open
+  useEffect(() => {
+    if (lightboxIndex !== null) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [lightboxIndex]);
+
+  function handleTouchStart(e: React.TouchEvent) {
+    setTouchStartX(e.changedTouches[0].screenX);
+  }
+
+  function handleTouchEnd(e: React.TouchEvent) {
+    if (touchStartX === null) return;
+    const diff = e.changedTouches[0].screenX - touchStartX;
+    if (diff > 50) {
+      // swipe right -> previous image
+      setLightboxIndex((prev) => (prev! - 1 + filteredImages.length) % filteredImages.length);
+    } else if (diff < -50) {
+      // swipe left -> next image
+      setLightboxIndex((prev) => (prev! + 1) % filteredImages.length);
+    }
+    setTouchStartX(null);
+  }
+
+
+  // Filter out any categories that have ZERO matching images
   const visibleCategories = useMemo(() => {
-    const baseCats = categories && categories.length > 0
-      ? categories
-      : [
-          { id: "manufacturing", label: "Manufacturing" },
-          { id: "warehousing", label: "Warehousing" },
-          { id: "infrastructure", label: "Infrastructure" },
-          { id: "logistics", label: "Logistics" },
-        ];
+    const baseCats =
+      categories && categories.length > 0
+        ? categories.filter((c) => c.id !== "all")
+        : [
+            { id: "gayatri", label: "Gayatri Industrial Park" },
+            { id: "shri-balaji", label: "Shri Balaji Industrial Park" },
+            { id: "infrastructure", label: "Infrastructure & Roads" },
+            { id: "manufacturing", label: "Manufacturing & Logistics" },
+          ];
 
-    // Only render tabs that have at least 1 image
-    return baseCats.filter((cat) =>
-      images.some((img) => (img.category || "").toLowerCase() === cat.id.toLowerCase())
-    );
+    return baseCats.filter((cat) => {
+      const catId = cat.id.toLowerCase();
+      return images.some((img) => {
+        const c = (img.category || "").toLowerCase();
+        const pid = (img.projectId || "").toLowerCase();
+        const cap = (img.caption || "").toLowerCase();
+        return (
+          c === catId ||
+          pid === catId ||
+          (catId === "gayatri" && (pid.includes("gayatri") || cap.includes("gayatri"))) ||
+          (catId === "shri-balaji" && (pid.includes("balaji") || cap.includes("balaji")))
+        );
+      });
+    });
   }, [categories, images]);
 
   // If current activeCategory has no images, reset to 'all'
   useEffect(() => {
     if (activeCategory !== "all") {
-      const exists = visibleCategories.some((c) => c.id.toLowerCase() === activeCategory.toLowerCase());
+      const exists = visibleCategories.some(
+        (c) => c.id.toLowerCase() === activeCategory.toLowerCase()
+      );
       if (!exists) {
         setActiveCategory("all");
       }
     }
   }, [activeCategory, visibleCategories]);
 
-  // Filter items by selected category
+  // Filter items by selected category or project
   const filteredImages = useMemo(() => {
     if (activeCategory === "all") return images;
-    return images.filter(
-      (img) => (img.category || "").toLowerCase() === activeCategory.toLowerCase()
-    );
+    const catId = activeCategory.toLowerCase();
+    return images.filter((img) => {
+      const c = (img.category || "").toLowerCase();
+      const pid = (img.projectId || "").toLowerCase();
+      const cap = (img.caption || "").toLowerCase();
+      return (
+        c === catId ||
+        pid === catId ||
+        (catId === "gayatri" && (pid.includes("gayatri") || cap.includes("gayatri"))) ||
+        (catId === "shri-balaji" && (pid.includes("balaji") || cap.includes("balaji")))
+      );
+    });
   }, [images, activeCategory]);
 
   const totalPages = Math.max(1, Math.ceil(filteredImages.length / pageSize));
@@ -84,21 +150,19 @@ export function ProjectGallery({ images = [], categories = [] }: ProjectGalleryP
   return (
     <>
       <section className="gallery section-pad" id="gallery">
+        <div className="page-wrap section-label" style={{ marginBottom: "20px" }}>
+          <span>04</span> / Project Gallery
+        </div>
         <div className="page-wrap gallery-head">
           <div>
-            <p className="eyebrow">An industrial point of view</p>
-            <h2>
-              Space to see<br />
-              <em>possibility.</em>
-            </h2>
+            <p className="eyebrow">{eyebrow}</p>
+            <h2>{headline}</h2>
           </div>
-          <p>
-            Visual references for high-capacity industrial settings, logistics typologies, and operational infrastructure.
-          </p>
+          <p>{description}</p>
         </div>
 
-        {/* Category Filter Pills (Only categories with images are visible) */}
-        <div className="page-wrap gallery-filter-bar" role="tablist" aria-label="Sector filter tabs">
+        {/* Category Filter Pills */}
+        <div className="page-wrap gallery-filter-bar" role="tablist" aria-label="Sector and Project filter tabs">
           {images.length > 0 && (
             <button
               type="button"
@@ -107,14 +171,24 @@ export function ProjectGallery({ images = [], categories = [] }: ProjectGalleryP
               className={`gallery-filter-pill ${activeCategory === "all" ? "is-active" : ""}`}
               onClick={() => handleCategoryChange("all")}
             >
-              All Sectors ({images.length})
+              All Photos ({images.length})
             </button>
           )}
 
           {visibleCategories.map((cat) => {
-            const count = images.filter(
-              (img) => (img.category || "").toLowerCase() === cat.id.toLowerCase()
-            ).length;
+            const catId = cat.id.toLowerCase();
+            const count = images.filter((img) => {
+              const c = (img.category || "").toLowerCase();
+              const pid = (img.projectId || "").toLowerCase();
+              const cap = (img.caption || "").toLowerCase();
+              return (
+                c === catId ||
+                pid === catId ||
+                (catId === "gayatri" && (pid.includes("gayatri") || cap.includes("gayatri"))) ||
+                (catId === "shri-balaji" && (pid.includes("balaji") || cap.includes("balaji")))
+              );
+            }).length;
+
             return (
               <button
                 key={cat.id}
@@ -130,11 +204,11 @@ export function ProjectGallery({ images = [], categories = [] }: ProjectGalleryP
           })}
         </div>
 
-        {/* Paginated Gallery Grid - Auto-flowing without empty gaps */}
+        {/* Paginated Gallery Grid */}
         <div className="gallery-grid page-wrap">
           {paginatedImages.length === 0 ? (
             <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
-              No visual references found.
+              No visual references found for this filter.
             </div>
           ) : (
             paginatedImages.map((image, index) => {
@@ -143,119 +217,157 @@ export function ProjectGallery({ images = [], categories = [] }: ProjectGalleryP
                 <button
                   key={`${image.src}-${index}`}
                   type="button"
-                  className="gallery-item"
+                  className={`gallery-item ${image.className || ""}`}
                   onClick={() => setLightboxIndex(globalIndex)}
-                  aria-label={`Open image: ${image.caption}`}
+                  aria-label={`Open photo: ${image.caption}`}
                 >
                   <Image
-                    src={image.src}
-                    alt={image.alt || "MAAS Industrial Infrastructure"}
+                    src={failedImages[image.src] ? fallbackImage : image.src}
+                    alt={image.alt || image.caption}
                     fill
-                    sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                    sizes="(max-width: 600px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                    className="gallery-item-image"
+                    quality={85}
+                    onError={() => {
+                      if (!failedImages[image.src]) {
+                        setFailedImages((previous) => ({ ...previous, [image.src]: true }));
+                      }
+                    }}
                   />
-                  <span className="gallery-open" aria-hidden="true">
-                    ↗
-                  </span>
+
+                  {/* Dark scrim gradient behind typography */}
                   <div className="gallery-item-info">
-                    <span className="gallery-tag">{image.category}</span>
-                    <span className="gallery-caption">{image.caption}</span>
+                    <span className="gallery-category-badge">
+                      {image.category.toUpperCase()}
+                    </span>
+                    <strong className="gallery-caption-text">
+                      {image.caption}
+                    </strong>
                   </div>
+
+                  <span className="gallery-item-zoom" aria-hidden="true">
+                    <svg
+                      width="18"
+                      height="18"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2.5"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <line x1="7" y1="17" x2="17" y2="7" />
+                      <polyline points="7 7 17 7 17 17" />
+                    </svg>
+                  </span>
                 </button>
               );
             })
           )}
         </div>
 
-        {/* Pagination Bar */}
+        {/* Pagination Controls */}
         {totalPages > 1 && (
-          <div className="page-wrap" style={{ marginTop: "28px" }}>
+          <div className="gallery-pagination page-wrap">
             <Pagination
               currentPage={currentPage}
               totalPages={totalPages}
-              onPageChange={setCurrentPage}
-              totalItems={filteredImages.length}
-              pageSize={pageSize}
+              onPageChange={(page) => {
+                setCurrentPage(page);
+                const galleryEl = document.getElementById("gallery");
+                if (galleryEl) {
+                  galleryEl.scrollIntoView({ behavior: "smooth" });
+                }
+              }}
             />
           </div>
         )}
-
-        <div className="page-wrap gallery-foot">
-          <span>
-            Showing {filteredImages.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}–
-            {Math.min(currentPage * pageSize, filteredImages.length)} of {filteredImages.length} assets
-          </span>
-          <span style={{ textTransform: "capitalize" }}>
-            Active Filter: {activeCategory === "all" ? "All Sectors" : activeCategory}
-          </span>
-        </div>
       </section>
 
-      {/* Enhanced Lightbox */}
+      {/* Lightbox Modal */}
       {lightboxIndex !== null && filteredImages[lightboxIndex] && (
         <div
-          className="lightbox"
+          className="lightbox-overlay"
+          onClick={() => setLightboxIndex(null)}
           role="dialog"
           aria-modal="true"
-          aria-label="Expanded Gallery View"
-          onClick={() => setLightboxIndex(null)}
+          aria-label="Image viewer"
         >
-          <button
-            type="button"
-            className="lightbox-close"
-            onClick={() => setLightboxIndex(null)}
-            aria-label="Close presentation"
+          <div
+            className="lightbox-content"
+            onClick={(e) => e.stopPropagation()}
+            onTouchStart={handleTouchStart}
+            onTouchEnd={handleTouchEnd}
           >
-            ✕
-          </button>
-
-          {filteredImages.length > 1 && (
-            <>
-              <button
-                type="button"
-                className="lightbox-prev"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex(
-                    (prev) => (prev! - 1 + filteredImages.length) % filteredImages.length
-                  );
+            <div className="lightbox-image-wrap">
+              <Image
+                src={failedImages[filteredImages[lightboxIndex].src]
+                  ? fallbackImage
+                  : filteredImages[lightboxIndex].src}
+                alt={filteredImages[lightboxIndex].alt || filteredImages[lightboxIndex].caption}
+                fill
+                sizes="95vw"
+                style={{ objectFit: "contain" }}
+                priority
+                onError={() => {
+                  const source = filteredImages[lightboxIndex].src;
+                  if (!failedImages[source]) {
+                    setFailedImages((previous) => ({ ...previous, [source]: true }));
+                  }
                 }}
-                aria-label="Previous image"
-              >
-                ‹
-              </button>
-              <button
-                type="button"
-                className="lightbox-next"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setLightboxIndex((prev) => (prev! + 1) % filteredImages.length);
-                }}
-                aria-label="Next image"
-              >
-                ›
-              </button>
-            </>
-          )}
+              />
+            </div>
 
-          <figure onClick={(e) => e.stopPropagation()}>
-            <Image
-              src={filteredImages[lightboxIndex].src}
-              alt={filteredImages[lightboxIndex].alt || "MAAS asset"}
-              fill
-              sizes="90vw"
-              priority
-              style={{ objectFit: "contain" }}
-            />
-            <figcaption>
-              <span className="gallery-tag" style={{ display: "inline-block", marginRight: "10px" }}>
-                {filteredImages[lightboxIndex].category}
+            <div className="lightbox-caption-bar">
+              <div>
+                <span className="lightbox-tag">
+                  {filteredImages[lightboxIndex].category.toUpperCase()}
+                </span>
+                <p className="lightbox-title">
+                  {filteredImages[lightboxIndex].caption}
+                </p>
+              </div>
+              <span className="lightbox-counter">
+                {lightboxIndex + 1} / {filteredImages.length}
               </span>
-              <strong>{filteredImages[lightboxIndex].caption}</strong>
-              <span style={{ opacity: 0.7, marginLeft: "10px" }}>
-                (Image {lightboxIndex + 1} of {filteredImages.length})
-              </span>
-            </figcaption>
-          </figure>
+            </div>
+
+            <button
+              type="button"
+              className="lightbox-close"
+              onClick={() => setLightboxIndex(null)}
+              aria-label="Close image viewer"
+            >
+              ✕
+            </button>
+
+            {filteredImages.length > 1 && (
+              <>
+                <button
+                  type="button"
+                  className="lightbox-arrow lightbox-prev"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIndex((prev) => (prev! - 1 + filteredImages.length) % filteredImages.length);
+                  }}
+                  aria-label="Previous photo"
+                >
+                  ‹
+                </button>
+                <button
+                  type="button"
+                  className="lightbox-arrow lightbox-next"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxIndex((prev) => (prev! + 1) % filteredImages.length);
+                  }}
+                  aria-label="Next photo"
+                >
+                  ›
+                </button>
+              </>
+            )}
+          </div>
         </div>
       )}
     </>

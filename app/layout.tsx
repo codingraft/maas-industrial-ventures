@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Script from "next/script";
 import { getAllSettings } from "@/lib/db";
+import { EnquiryModal } from "@/components/EnquiryModal";
 import "./globals.css";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -185,6 +186,7 @@ export default async function RootLayout({
           </noscript>
         )}
         {children}
+        <EnquiryModal />
       </body>
     </html>
   );

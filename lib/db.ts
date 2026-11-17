@@ -2,13 +2,20 @@ import path from "node:path";
 import fs from "node:fs";
 import { createRequire } from "node:module";
 import { isMongoConfigured, getMongoDb } from "./mongodb";
+import { cacheGet, cacheSet, cacheInvalidate, CACHE_KEYS } from "./cache";
 import {
   defaultMedia,
   defaultContent,
   defaultSeo,
+  defaultVerticals,
+  defaultVisionMission,
+  defaultProjects,
+  defaultBlogs,
   SiteSettings,
   Lead,
   GalleryItem,
+  ProjectItem,
+  BlogPost,
 } from "./types";
 
 export * from "./types";
@@ -70,6 +77,7 @@ export function getDb(): SqliteDatabase {
       name TEXT NOT NULL,
       phone TEXT NOT NULL,
       email TEXT NOT NULL,
+      project TEXT DEFAULT '',
       industry TEXT DEFAULT '',
       requirement TEXT DEFAULT '',
       message TEXT DEFAULT '',
@@ -89,41 +97,125 @@ export function getDb(): SqliteDatabase {
       key TEXT PRIMARY KEY,
       value TEXT NOT NULL
     );
+
+    CREATE TABLE IF NOT EXISTS projects (
+      id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      data TEXT NOT NULL,
+      "order" INTEGER DEFAULT 0,
+      is_active INTEGER DEFAULT 1,
+      updated_at TEXT DEFAULT (datetime('now', 'localtime'))
+    );
+
+    CREATE TABLE IF NOT EXISTS blogs (
+      id TEXT PRIMARY KEY,
+      slug TEXT UNIQUE NOT NULL,
+      title TEXT NOT NULL,
+      data TEXT NOT NULL,
+      is_published INTEGER DEFAULT 1,
+      published_at TEXT DEFAULT (datetime('now', 'localtime')),
+      updated_at TEXT DEFAULT (datetime('now', 'localtime'))
+    );
   `);
 
-  // Initialize default settings if not exists
+  // Migrate leads table if project column is missing
+  try {
+    const tableInfo = db.prepare("PRAGMA table_info(leads)").all() as Array<{ name: string }>;
+    const hasProjectCol = tableInfo.some((col) => col.name === "project");
+    if (!hasProjectCol) {
+      db.exec("ALTER TABLE leads ADD COLUMN project TEXT DEFAULT ''");
+    }
+  } catch {
+    // Ignore migration check error
+  }
+
+  // Initialize default settings, projects and blogs if not exists
   initDefaultSettings(db);
+  initDefaultProjects(db);
+  initDefaultBlogs(db);
 
   return db;
 }
 
 export const defaultSiteSettings: SiteSettings = {
   site_info: {
-    brandName: "MAAS INDUSTRIAL VENTURES PVT LIMITED",
+    brandName: "MAAS INDUSTRIAL VENTURES PVT. LIMITED",
     shortName: "MAAS Industrial Ventures",
-    tagline: "A Better Foundation for Industry.",
-    subheadline: "Built for industry. Designed for what's next.",
+    tagline: "Developing Land. Building Opportunities.",
+    subheadline: "Creating Industrial Hubs & Residential Developments for a Better Tomorrow.",
     introduction:
-      "MAAS Industrial Ventures Pvt Limited delivers high-capacity, infrastructure-ready industrial addresses engineered for modern manufacturing, strategic distribution, and high-value capital investment.",
+      "MAAS Industrial Ventures Pvt. Limited is a land and real estate development company specialising in industrial and residential development. We focus on identifying land opportunities, planning and developing integrated industrial hubs, creating industrial plots and developing residential plotted projects.",
+    heroEyebrow: "MAAS INDUSTRIAL VENTURES PVT. LIMITED",
+    heroHeadline: "Developing Land. Building Opportunities.",
+    heroSubheadline: "Creating Industrial Hubs & Residential Developments for a Better Tomorrow.",
+    heroDescription:
+      "We are land and real estate developers focused on creating thoughtfully planned industrial hubs, industrial plots and residential developments. From empowering businesses to shaping future communities, we transform land into opportunities for growth and investment.",
+    heroPrimaryBtnText: "Explore Our Projects",
+    heroSecondaryBtnText: "Get in Touch",
+    locationHighlight: "Industrial & Residential Land Development | India",
+    bottomHighlights: [
+      "Industrial Hub Development",
+      "Industrial Plot Development",
+      "Residential Land Development",
+      "Real Estate Development",
+    ],
+    overviewHeadline: "We Develop Land. We Build Destinations. We Create Opportunities.",
+    overviewEyebrow: "About MAAS Industrial Ventures Pvt. Limited",
+    overviewCtaText: "Explore Active Projects",
+    verticalsEyebrow: "Our Focus Areas",
+    verticalsHeadline: "Our Development Verticals",
+    verticalsDescription:
+      "From strategic industrial manufacturing estates to planned plotted communities, our developments are engineered for long-term value.",
+    projectsEyebrow: "Our Landmark Developments",
+    projectsHeadline: "Industrial Land Opportunities & Planned Developments.",
+    projectsDescription:
+      "Strategically positioned along prime expressway corridors in Western Uttar Pradesh. Engineered with completed boundary demarcation, heavy concrete roads, continuous power feeds, and government policy benefits.",
+    galleryEyebrow: "Project Visuals & Site Progress",
+    galleryHeadline: "Project Gallery & Site Progress.",
+    galleryDescription:
+      "Real site photographs and clearly identified illustrative images of Gayatri Industrial Park, Shri Balaji Industrial Park, concrete road networks, and manufacturing operations.",
+    blogSectionEyebrow: "Market Intelligence & Property Updates",
+    blogSectionHeadline: "Industrial Land Insights & Real Estate Updates.",
+    blogSectionDescription:
+      "Stay informed with our latest news, Uttar Pradesh MSME policy analysis, and corridor infrastructure updates designed to guide manufacturers and investors.",
+    overviewParagraphs: [
+      "MAAS Industrial Ventures Pvt. Limited is a land and real estate development company specialising in industrial and residential development. We focus on identifying land opportunities, planning and developing integrated industrial hubs, creating industrial plots and developing residential plotted projects.",
+      "We are developers who believe that every piece of land has the potential to become something greater. From developing industrial hubs that provide opportunities for businesses and manufacturers to create residential developments for individuals and families, our aim is to transform land into well-planned destinations.",
+      "Our work goes beyond selling land. We focus on the development process — from land identification and planning to project development and offering developed plots to buyers. Through our projects, we aim to create opportunities for businesses, entrepreneurs, investors and communities.",
+    ],
+    contactEyebrow: "Inbound Project Allocation Desk",
+    contactHeadline: "Get in Touch & Request Details.",
+    contactDescription:
+      "Connect with MAAS Industrial Ventures to explore plot availability, schedule physical site visits at Gayatri or Shri Balaji Industrial Park, or request government policy subsidy documentation.",
+    blogEyebrow: "MAAS INDUSTRIAL VENTURES / INTELLIGENCE",
+    blogHeadline: "Industrial Land Insights & Market Intelligence.",
+    blogDescription:
+      "In-depth analysis on state manufacturing incentives, expressway logistics corridors, and technical site planning for factory owners and institutional investors.",
     phone: "+91 98765 43210",
     whatsapp: "+91 98765 43210",
     email: "enquiry@maasventures.com",
-    address: "MAAS Industrial Hub, Primary Investment Zone, India",
+    address: "Bhojpur & Hapur Investment Corridors, Uttar Pradesh, India",
     brochureUrl: "",
   },
   sections: {
     hero: true,
-    facts: true,
     overview: true,
-    highlights: true,
-    infrastructure: true,
-    masterplan: true,
-    location: true,
+    projects: true,
     gallery: true,
-    timeline: true,
+    blog: true,
+    contact: true,
+    facts: false,
+    highlights: false,
+    infrastructure: false,
+    masterplan: false,
+    location: false,
+    timeline: false,
     faq: true,
     enquire: true,
   },
+  verticals: defaultVerticals,
+  vision_mission: defaultVisionMission,
   social_links: {
     linkedin: "https://linkedin.com",
     instagram: "https://instagram.com",
@@ -153,6 +245,46 @@ function initDefaultSettings(db: SqliteDatabase) {
   }
 }
 
+function initDefaultProjects(db: SqliteDatabase) {
+  const metaStmt = db.prepare("SELECT value FROM settings WHERE key = '_projects_seeded'");
+  if (!metaStmt.get()) {
+    const insertStmt = db.prepare(
+      "INSERT INTO projects (id, slug, title, data, \"order\", is_active) VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    for (const proj of defaultProjects) {
+      insertStmt.run(
+        proj.id,
+        proj.slug,
+        proj.title,
+        JSON.stringify(proj),
+        proj.order,
+        proj.isActive ? 1 : 0
+      );
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('_projects_seeded', '1')").run();
+  }
+}
+
+function initDefaultBlogs(db: SqliteDatabase) {
+  const metaStmt = db.prepare("SELECT value FROM settings WHERE key = '_blogs_seeded'");
+  if (!metaStmt.get()) {
+    const insertStmt = db.prepare(
+      "INSERT INTO blogs (id, slug, title, data, is_published, published_at) VALUES (?, ?, ?, ?, ?, ?)"
+    );
+    for (const blog of defaultBlogs) {
+      insertStmt.run(
+        blog.id,
+        blog.slug,
+        blog.title,
+        JSON.stringify(blog),
+        blog.isPublished ? 1 : 0,
+        blog.publishedAt
+      );
+    }
+    db.prepare("INSERT INTO settings (key, value) VALUES ('_blogs_seeded', '1')").run();
+  }
+}
+
 /**
  * Normalizes settings ensuring complete backward-compatibility and guaranteed default fallbacks
  */
@@ -167,6 +299,19 @@ export function normalizeSettings(raw: Partial<SiteSettings>): SiteSettings {
   result.sections = {
     ...defaultSiteSettings.sections,
     ...(result.sections || {}),
+    projects: result.sections?.projects !== false,
+    blog: result.sections?.blog !== false,
+    faq: result.sections?.faq !== false,
+  };
+
+  result.verticals =
+    result.verticals && result.verticals.length > 0
+      ? result.verticals
+      : defaultSiteSettings.verticals;
+
+  result.vision_mission = {
+    ...defaultSiteSettings.vision_mission,
+    ...(result.vision_mission || {}),
   };
 
   result.social_links = {
@@ -194,22 +339,7 @@ export function normalizeSettings(raw: Partial<SiteSettings>): SiteSettings {
     masterplanPlans:
       mediaRaw.masterplanPlans && mediaRaw.masterplanPlans.length > 0
         ? mediaRaw.masterplanPlans
-        : mediaRaw.masterplanImage?.src
-          ? [
-              {
-                id: "plan-custom",
-                title: "Overall Verified Master Layout",
-                subtitle: "Approved industrial park zoning and plot framework",
-                description:
-                  mediaRaw.masterplanImage.caption ||
-                  "Approved master plan blueprint and zoning framework.",
-                src: mediaRaw.masterplanImage.src,
-                alt: mediaRaw.masterplanImage.alt || "Master Plan Blueprint",
-                tag: "Verified Master Layout",
-              },
-              ...defaultMedia.masterplanPlans.slice(1),
-            ]
-          : defaultMedia.masterplanPlans,
+        : defaultMedia.masterplanPlans,
     locationImage: mediaRaw.locationImage || defaultMedia.locationImage,
     galleryCategories:
       mediaRaw.galleryCategories && mediaRaw.galleryCategories.length > 0
@@ -219,11 +349,12 @@ export function normalizeSettings(raw: Partial<SiteSettings>): SiteSettings {
       ? mediaRaw.gallery
       : defaultMedia.gallery
     ).map((item, idx) => {
-      const defaultCats: GalleryItem["category"][] = [
-        "manufacturing",
-        "warehousing",
+      const defaultCats = [
+        "all",
+        "gayatri",
+        "shri-balaji",
         "infrastructure",
-        "logistics",
+        "manufacturing",
       ];
       return {
         ...item,
@@ -272,16 +403,24 @@ export function getAllSettingsSync(): SiteSettings {
   const rows = stmt.all() as Array<{ key: string; value: string }>;
   const result: Partial<SiteSettings> = {};
   for (const row of rows) {
-    result[row.key as keyof SiteSettings] = JSON.parse(row.value);
+    try {
+      result[row.key as keyof SiteSettings] = JSON.parse(row.value);
+    } catch {
+      // Ignore parse error
+    }
   }
   return normalizeSettings(result);
 }
 
 /**
- * Reads all site settings. Uses MongoDB Atlas when MONGODB_URI is provided;
- * falls back seamlessly to SQLite for local development.
+ * Reads all site settings. Uses an in-memory TTL cache to eliminate redundant
+ * database hits on high-traffic page views, falling back to MongoDB or SQLite.
  */
 export async function getAllSettings(): Promise<SiteSettings> {
+  const cached = cacheGet<SiteSettings>(CACHE_KEYS.SETTINGS);
+  if (cached) return cached;
+
+  let result: SiteSettings;
   if (isMongoConfigured()) {
     try {
       const db = await getMongoDb();
@@ -298,40 +437,52 @@ export async function getAllSettings(): Promise<SiteSettings> {
           },
         }));
         await settingsColl.bulkWrite(ops);
-        return normalizeSettings(defaultSiteSettings);
-      }
-
-      const result: Partial<SiteSettings> = {};
-      for (const doc of docs) {
-        if (doc.key) {
-          result[doc.key as keyof SiteSettings] = doc.value;
+        result = normalizeSettings(defaultSiteSettings);
+      } else {
+        const parsed: Partial<SiteSettings> = {};
+        for (const doc of docs) {
+          if (doc.key) {
+            parsed[doc.key as keyof SiteSettings] = doc.value;
+          }
         }
+        result = normalizeSettings(parsed);
       }
-      return normalizeSettings(result);
     } catch (err) {
       console.error("MongoDB settings read failed, falling back to local SQLite:", err);
-      return getAllSettingsSync();
+      result = getAllSettingsSync();
     }
+  } else {
+    result = getAllSettingsSync();
   }
 
-  return getAllSettingsSync();
+  cacheSet(CACHE_KEYS.SETTINGS, result, 60000); // 60s TTL
+  return result;
 }
 
 /**
- * Persists a setting change to MongoDB (production) or SQLite (local).
+ * Persists multiple setting changes in a single database round-trip (bulkWrite)
+ * and invalidates the in-memory cache immediately.
  */
-export async function updateSetting(key: keyof SiteSettings, value: unknown): Promise<void> {
+export async function updateSettings(updates: Partial<SiteSettings>): Promise<void> {
+  cacheInvalidate(CACHE_KEYS.SETTINGS);
+
+  const entries = Object.entries(updates);
+  if (entries.length === 0) return;
+
   if (isMongoConfigured()) {
     try {
       const db = await getMongoDb();
-      await db.collection("settings").updateOne(
-        { key },
-        { $set: { key, value, updated_at: new Date() } },
-        { upsert: true }
-      );
+      const ops = entries.map(([key, value]) => ({
+        updateOne: {
+          filter: { key },
+          update: { $set: { key, value, updated_at: new Date() } },
+          upsert: true,
+        },
+      }));
+      await db.collection("settings").bulkWrite(ops);
       return;
     } catch (err) {
-      console.error("MongoDB settings update failed, falling back to SQLite:", err);
+      console.error("MongoDB settings bulk update failed, falling back to SQLite:", err);
     }
   }
 
@@ -340,13 +491,468 @@ export async function updateSetting(key: keyof SiteSettings, value: unknown): Pr
     INSERT INTO settings (key, value) VALUES (?, ?)
     ON CONFLICT(key) DO UPDATE SET value = excluded.value
   `);
-  stmt.run(key, JSON.stringify(value));
+  db.exec("BEGIN");
+  try {
+    for (const [key, value] of entries) {
+      stmt.run(key, JSON.stringify(value));
+    }
+    db.exec("COMMIT");
+  } catch (err) {
+    db.exec("ROLLBACK");
+    throw err;
+  }
 }
+
+/**
+ * Persists a single setting change to MongoDB (production) or SQLite (local).
+ */
+export async function updateSetting(key: keyof SiteSettings, value: unknown): Promise<void> {
+  return updateSettings({ [key]: value } as Partial<SiteSettings>);
+}
+
+// ==========================================
+// PROJECTS API (MongoDB & SQLite)
+// ==========================================
+
+function getProjectsFromSqlite(activeOnly: boolean): ProjectItem[] {
+  const db = getDb();
+  const query = activeOnly
+    ? 'SELECT data FROM projects WHERE is_active = 1 ORDER BY "order" ASC'
+    : 'SELECT data FROM projects ORDER BY "order" ASC';
+  const stmt = db.prepare(query);
+  const rows = stmt.all() as Array<{ data: string }>;
+  if (rows.length === 0) {
+    return defaultProjects.filter((p) => !activeOnly || p.isActive);
+  }
+  return rows.map((r) => JSON.parse(r.data) as ProjectItem);
+}
+
+export async function getProjects(activeOnly: boolean = false): Promise<ProjectItem[]> {
+  const cacheKey = activeOnly ? CACHE_KEYS.PROJECTS_ACTIVE : CACHE_KEYS.PROJECTS_ALL;
+  const cached = cacheGet<ProjectItem[]>(cacheKey);
+  if (cached) return cached;
+
+  let projects: ProjectItem[];
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      const coll = db.collection("projects");
+
+      const filter = activeOnly ? { isActive: true } : {};
+      const docs = await coll.find(filter).sort({ order: 1, _id: 1 }).toArray();
+
+      if (docs.length === 0 && !activeOnly) {
+        // Seed default projects to Mongo in 1 bulk write
+        const ops = defaultProjects.map((p) => ({
+          updateOne: {
+            filter: { id: p.id },
+            update: { $set: p },
+            upsert: true,
+          },
+        }));
+        await coll.bulkWrite(ops);
+        projects = defaultProjects;
+      } else if (docs.length === 0) {
+        projects = defaultProjects.filter((p) => p.isActive);
+      } else {
+        projects = docs.map((d: any) => ({
+          id: d.id || d._id.toString(),
+          title: d.title || "",
+          slug: d.slug || "",
+          tagline: d.tagline || "",
+          location: d.location || "",
+          addressShort: d.addressShort || "",
+          shortDescription: d.shortDescription || "",
+          fullDescription: d.fullDescription || "",
+          plotSizes: d.plotSizes || "",
+          roadWidth: d.roadWidth || "",
+          connectivity: Array.isArray(d.connectivity) ? d.connectivity : [],
+          features: Array.isArray(d.features) ? d.features : [],
+          subsidiesInfo: d.subsidiesInfo || "",
+          status: d.status || "Active Plots Available",
+          coverImage: d.coverImage || "",
+          galleryImages: Array.isArray(d.galleryImages) ? d.galleryImages : [],
+          brochureUrl: d.brochureUrl || "",
+          order: Number(d.order) || 0,
+          isActive: d.isActive !== false,
+        }));
+      }
+    } catch (err) {
+      console.error("MongoDB getProjects failed, falling back to SQLite:", err);
+      projects = getProjectsFromSqlite(activeOnly);
+    }
+  } else {
+    projects = getProjectsFromSqlite(activeOnly);
+  }
+
+  cacheSet(cacheKey, projects, 60000);
+  return projects;
+}
+
+/**
+ * Targeted O(1) single project lookup by slug or ID without loading the entire collection.
+ */
+export async function getProjectBySlug(slug: string): Promise<ProjectItem | null> {
+  if (!slug) return null;
+
+  // 1. Try cache if full project list is already memory-resident
+  const cachedList = cacheGet<ProjectItem[]>(CACHE_KEYS.PROJECTS_ALL) || cacheGet<ProjectItem[]>(CACHE_KEYS.PROJECTS_ACTIVE);
+  if (cachedList) {
+    const found = cachedList.find((p) => p.slug === slug || p.id === slug);
+    if (found) return found;
+  }
+
+  // 2. Targeted lookup in MongoDB
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      const d: any = await db.collection("projects").findOne({
+        $or: [{ slug }, { id: slug }],
+      });
+      if (d) {
+        return {
+          id: d.id || d._id.toString(),
+          title: d.title || "",
+          slug: d.slug || "",
+          tagline: d.tagline || "",
+          location: d.location || "",
+          addressShort: d.addressShort || "",
+          shortDescription: d.shortDescription || "",
+          fullDescription: d.fullDescription || "",
+          plotSizes: d.plotSizes || "",
+          roadWidth: d.roadWidth || "",
+          connectivity: Array.isArray(d.connectivity) ? d.connectivity : [],
+          features: Array.isArray(d.features) ? d.features : [],
+          subsidiesInfo: d.subsidiesInfo || "",
+          status: d.status || "Active Plots Available",
+          coverImage: d.coverImage || "",
+          galleryImages: Array.isArray(d.galleryImages) ? d.galleryImages : [],
+          brochureUrl: d.brochureUrl || "",
+          order: Number(d.order) || 0,
+          isActive: d.isActive !== false,
+        };
+      }
+    } catch (err) {
+      console.error("MongoDB getProjectBySlug failed, falling back to SQLite:", err);
+    }
+  }
+
+  // 3. Targeted lookup in SQLite
+  try {
+    const db = getDb();
+    const stmt = db.prepare("SELECT data FROM projects WHERE slug = ? OR id = ? LIMIT 1");
+    const row = stmt.get(slug, slug) as { data: string } | undefined;
+    if (row?.data) {
+      return JSON.parse(row.data) as ProjectItem;
+    }
+  } catch {
+    // Fall back to default projects list
+  }
+
+  return defaultProjects.find((p) => p.slug === slug || p.id === slug) || null;
+}
+
+export async function saveProject(project: ProjectItem): Promise<ProjectItem> {
+  cacheInvalidate("projects:");
+
+  const id = project.id || `proj-${Date.now()}`;
+  const slug =
+    project.slug ||
+    project.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+  const fullProject: ProjectItem = {
+    ...project,
+    id,
+    slug,
+    order: Number(project.order) || 0,
+    isActive: project.isActive !== false,
+  };
+
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      await db
+        .collection("projects")
+        .updateOne({ id }, { $set: { ...fullProject, updated_at: new Date() } }, { upsert: true });
+      return fullProject;
+    } catch (err) {
+      console.error("MongoDB saveProject failed, falling back to SQLite:", err);
+    }
+  }
+
+  const db = getDb();
+  const stmt = db.prepare(`
+    INSERT INTO projects (id, slug, title, data, "order", is_active, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+    ON CONFLICT(id) DO UPDATE SET
+      slug = excluded.slug,
+      title = excluded.title,
+      data = excluded.data,
+      "order" = excluded."order",
+      is_active = excluded.is_active,
+      updated_at = excluded.updated_at
+  `);
+  stmt.run(
+    fullProject.id,
+    fullProject.slug,
+    fullProject.title,
+    JSON.stringify(fullProject),
+    fullProject.order,
+    fullProject.isActive ? 1 : 0
+  );
+  return fullProject;
+}
+
+export async function deleteProject(id: string): Promise<boolean> {
+  cacheInvalidate("projects:");
+
+  let deletedFromMongo = false;
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      await db.collection("projects").deleteOne({ id });
+      deletedFromMongo = true;
+    } catch (err) {
+      console.error("MongoDB deleteProject failed, falling back to SQLite:", err);
+    }
+  }
+
+  try {
+    const db = getDb();
+    const stmt = db.prepare("DELETE FROM projects WHERE id = ?");
+    stmt.run(id);
+  } catch (err) {
+    if (!deletedFromMongo) throw err;
+  }
+  return true;
+}
+
+// ==========================================
+// BLOG API (MongoDB & SQLite)
+// ==========================================
+
+function getBlogPostsFromSqlite(publishedOnly: boolean): BlogPost[] {
+  const db = getDb();
+  const query = publishedOnly
+    ? "SELECT data FROM blogs WHERE is_published = 1 ORDER BY published_at DESC"
+    : "SELECT data FROM blogs ORDER BY published_at DESC";
+  const stmt = db.prepare(query);
+  const rows = stmt.all() as Array<{ data: string }>;
+  if (rows.length === 0) {
+    return defaultBlogs.filter((b) => !publishedOnly || b.isPublished);
+  }
+  return rows.map((r) => JSON.parse(r.data) as BlogPost);
+}
+
+export async function getBlogPosts(publishedOnly: boolean = false): Promise<BlogPost[]> {
+  const cacheKey = publishedOnly ? CACHE_KEYS.BLOGS_PUBLISHED : CACHE_KEYS.BLOGS_ALL;
+  const cached = cacheGet<BlogPost[]>(cacheKey);
+  if (cached) return cached;
+
+  let blogs: BlogPost[];
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      const coll = db.collection("blogs");
+
+      const filter = publishedOnly ? { isPublished: true } : {};
+      const docs = await coll.find(filter).sort({ publishedAt: -1, _id: -1 }).toArray();
+
+      if (docs.length === 0 && !publishedOnly) {
+        // Seed default blogs to Mongo in 1 bulk write
+        const ops = defaultBlogs.map((b) => ({
+          updateOne: {
+            filter: { id: b.id },
+            update: { $set: b },
+            upsert: true,
+          },
+        }));
+        await coll.bulkWrite(ops);
+        blogs = defaultBlogs;
+      } else if (docs.length === 0) {
+        blogs = defaultBlogs.filter((b) => b.isPublished);
+      } else {
+        blogs = docs.map((d: any) => ({
+          id: d.id || d._id.toString(),
+          title: d.title || "",
+          slug: d.slug || "",
+          category: d.category || "General",
+          excerpt: d.excerpt || "",
+          content: d.content || "",
+          coverImage: d.coverImage || "",
+          author: d.author || "MAAS Research Desk",
+          authorBio: d.authorBio || "",
+          readTime: d.readTime || "4 min read",
+          publishedAt: d.publishedAt || new Date().toISOString().slice(0, 10),
+          isFeatured: Boolean(d.isFeatured),
+          isPublished: d.isPublished !== false,
+          metaTitle: d.metaTitle || d.title,
+          metaDescription: d.metaDescription || d.excerpt,
+          keywords: Array.isArray(d.keywords) ? d.keywords : [],
+        }));
+      }
+    } catch (err) {
+      console.error("MongoDB getBlogPosts failed, falling back to SQLite:", err);
+      blogs = getBlogPostsFromSqlite(publishedOnly);
+    }
+  } else {
+    blogs = getBlogPostsFromSqlite(publishedOnly);
+  }
+
+  cacheSet(cacheKey, blogs, 60000);
+  return blogs;
+}
+
+/**
+ * Targeted O(1) single blog post lookup by slug or ID without loading the entire collection.
+ */
+export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+  if (!slug) return null;
+
+  // 1. Try cache if full blog list is already memory-resident
+  const cachedList = cacheGet<BlogPost[]>(CACHE_KEYS.BLOGS_ALL) || cacheGet<BlogPost[]>(CACHE_KEYS.BLOGS_PUBLISHED);
+  if (cachedList) {
+    const found = cachedList.find((b) => b.slug === slug || b.id === slug);
+    if (found) return found;
+  }
+
+  // 2. Targeted lookup in MongoDB
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      const d: any = await db.collection("blogs").findOne({
+        $or: [{ slug }, { id: slug }],
+      });
+      if (d) {
+        return {
+          id: d.id || d._id.toString(),
+          title: d.title || "",
+          slug: d.slug || "",
+          category: d.category || "General",
+          excerpt: d.excerpt || "",
+          content: d.content || "",
+          coverImage: d.coverImage || "",
+          author: d.author || "MAAS Research Desk",
+          authorBio: d.authorBio || "",
+          readTime: d.readTime || "4 min read",
+          publishedAt: d.publishedAt || new Date().toISOString().slice(0, 10),
+          isFeatured: Boolean(d.isFeatured),
+          isPublished: d.isPublished !== false,
+          metaTitle: d.metaTitle || d.title,
+          metaDescription: d.metaDescription || d.excerpt,
+          keywords: Array.isArray(d.keywords) ? d.keywords : [],
+        };
+      }
+    } catch (err) {
+      console.error("MongoDB getBlogPostBySlug failed, falling back to SQLite:", err);
+    }
+  }
+
+  // 3. Targeted lookup in SQLite
+  try {
+    const db = getDb();
+    const stmt = db.prepare("SELECT data FROM blogs WHERE slug = ? OR id = ? LIMIT 1");
+    const row = stmt.get(slug, slug) as { data: string } | undefined;
+    if (row?.data) {
+      return JSON.parse(row.data) as BlogPost;
+    }
+  } catch {
+    // Fall back to default blogs list
+  }
+
+  return defaultBlogs.find((b) => b.slug === slug || b.id === slug) || null;
+}
+
+export async function saveBlogPost(post: BlogPost): Promise<BlogPost> {
+  cacheInvalidate("blogs:");
+
+  const id = post.id || `blog-${Date.now()}`;
+  const slug =
+    post.slug ||
+    post.title
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)/g, "");
+
+  const fullPost: BlogPost = {
+    ...post,
+    id,
+    slug,
+    publishedAt: post.publishedAt || new Date().toISOString().slice(0, 10),
+    isPublished: post.isPublished !== false,
+  };
+
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      await db
+        .collection("blogs")
+        .updateOne({ id }, { $set: { ...fullPost, updated_at: new Date() } }, { upsert: true });
+      return fullPost;
+    } catch (err) {
+      console.error("MongoDB saveBlogPost failed, falling back to SQLite:", err);
+    }
+  }
+
+  const db = getDb();
+  const stmt = db.prepare(`
+    INSERT INTO blogs (id, slug, title, data, is_published, published_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, datetime('now', 'localtime'))
+    ON CONFLICT(id) DO UPDATE SET
+      slug = excluded.slug,
+      title = excluded.title,
+      data = excluded.data,
+      is_published = excluded.is_published,
+      published_at = excluded.published_at,
+      updated_at = excluded.updated_at
+  `);
+  stmt.run(
+    fullPost.id,
+    fullPost.slug,
+    fullPost.title,
+    JSON.stringify(fullPost),
+    fullPost.isPublished ? 1 : 0,
+    fullPost.publishedAt
+  );
+  return fullPost;
+}
+
+export async function deleteBlogPost(id: string): Promise<boolean> {
+  cacheInvalidate("blogs:");
+
+  let deletedFromMongo = false;
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      await db.collection("blogs").deleteOne({ id });
+      deletedFromMongo = true;
+    } catch (err) {
+      console.error("MongoDB deleteBlogPost failed, falling back to SQLite:", err);
+    }
+  }
+
+  try {
+    const db = getDb();
+    const stmt = db.prepare("DELETE FROM blogs WHERE id = ?");
+    stmt.run(id);
+  } catch (err) {
+    if (!deletedFromMongo) throw err;
+  }
+  return true;
+}
+
+// ==========================================
+// LEADS CRM API (MongoDB & SQLite)
+// ==========================================
 
 export type LeadInsertData = {
   name: string;
   phone: string;
   email: string;
+  project?: string;
   industry?: string;
   requirement?: string;
   message?: string;
@@ -362,33 +968,35 @@ export type LeadInsertData = {
 };
 
 /**
- * Inserts a new lead into MongoDB or SQLite.
+ * Inserts an inbound enquiry lead into MongoDB (if configured) or SQLite.
+ * Uses an index-backed monotonic ID generator to prevent race conditions and full collection scans.
  */
 export async function insertLead(data: LeadInsertData): Promise<{ id: number | string }> {
-  const now = new Date();
-  const createdAt = now.toISOString().replace("T", " ").slice(0, 19);
-
   if (isMongoConfigured()) {
     try {
       const db = await getMongoDb();
-      // Sequential human-readable ID via atomic counter
-      const counter = await db.collection("counters").findOneAndUpdate(
-        { _id: "lead_seq" as any },
-        { $inc: { seq: 1 } },
-        { upsert: true, returnDocument: "after" }
-      );
-      const leadId = (counter && "seq" in counter) ? (counter as any).seq : Date.now();
+      // Fast index-backed lookup for highest existing lead_id
+      const highest = await db
+        .collection("leads")
+        .find({}, { projection: { lead_id: 1 } })
+        .sort({ lead_id: -1 })
+        .limit(1)
+        .toArray();
+
+      const leadId =
+        highest.length > 0 && typeof highest[0].lead_id === "number"
+          ? highest[0].lead_id + 1
+          : 1;
 
       await db.collection("leads").insertOne({
         lead_id: leadId,
         name: data.name,
         phone: data.phone,
         email: data.email,
+        project: data.project || "",
         industry: data.industry || "",
         requirement: data.requirement || "",
         message: data.message || "",
-        status: data.status || "new",
-        notes: data.notes || "",
         utm_source: data.utm_source || "",
         utm_medium: data.utm_medium || "",
         utm_campaign: data.utm_campaign || "",
@@ -396,7 +1004,9 @@ export async function insertLead(data: LeadInsertData): Promise<{ id: number | s
         utm_content: data.utm_content || "",
         gclid: data.gclid || "",
         fbclid: data.fbclid || "",
-        created_at: createdAt,
+        status: data.status || "new",
+        notes: data.notes || "",
+        created_at: new Date().toISOString(),
       });
 
       return { id: leadId };
@@ -408,15 +1018,16 @@ export async function insertLead(data: LeadInsertData): Promise<{ id: number | s
   const db = getDb();
   const insertStmt = db.prepare(`
     INSERT INTO leads (
-      name, phone, email, industry, requirement, message,
+      name, phone, email, project, industry, requirement, message,
       utm_source, utm_medium, utm_campaign, utm_term, utm_content, gclid, fbclid, status, notes
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
 
   const result = insertStmt.run(
     data.name,
     data.phone,
     data.email,
+    data.project || "",
     data.industry || "",
     data.requirement || "",
     data.message || "",
@@ -437,13 +1048,14 @@ export async function insertLead(data: LeadInsertData): Promise<{ id: number | s
 export type GetLeadsOptions = {
   search?: string;
   status?: string;
+  project?: string;
   page?: number;
   limit?: number;
   exportCsv?: boolean;
 };
 
 /**
- * Retrieves leads with search, filtering, and pagination for MongoDB or SQLite.
+ * Retrieves leads with search, project filtering, status filtering, and pagination for MongoDB or SQLite.
  */
 export async function getLeads(options: GetLeadsOptions): Promise<{
   leads: Lead[];
@@ -454,6 +1066,7 @@ export async function getLeads(options: GetLeadsOptions): Promise<{
 }> {
   const search = options.search?.trim().toLowerCase() || "";
   const status = options.status?.trim().toLowerCase() || "";
+  const project = options.project?.trim() || "";
   const page = Math.max(1, options.page || 1);
   const limit = Math.max(1, Math.min(100, options.limit || 10));
 
@@ -466,6 +1079,10 @@ export async function getLeads(options: GetLeadsOptions): Promise<{
         filter.status = status;
       }
 
+      if (project && project !== "all") {
+        filter.project = project;
+      }
+
       if (search) {
         const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         const regex = { $regex: escaped, $options: "i" };
@@ -473,6 +1090,7 @@ export async function getLeads(options: GetLeadsOptions): Promise<{
           { name: regex },
           { phone: regex },
           { email: regex },
+          { project: regex },
           { industry: regex },
           { requirement: regex },
         ];
@@ -493,6 +1111,7 @@ export async function getLeads(options: GetLeadsOptions): Promise<{
         name: d.name || "",
         phone: d.phone || "",
         email: d.email || "",
+        project: d.project || "",
         industry: d.industry || "",
         requirement: d.requirement || "",
         message: d.message || "",
@@ -524,12 +1143,17 @@ export async function getLeads(options: GetLeadsOptions): Promise<{
     params.push(status);
   }
 
+  if (project && project !== "all") {
+    conditions.push("project = ?");
+    params.push(project);
+  }
+
   if (search) {
     conditions.push(
-      "(LOWER(name) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(email) LIKE ? OR LOWER(industry) LIKE ? OR LOWER(requirement) LIKE ?)"
+      "(LOWER(name) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(email) LIKE ? OR LOWER(project) LIKE ? OR LOWER(industry) LIKE ? OR LOWER(requirement) LIKE ?)"
     );
     const wild = `%${search}%`;
-    params.push(wild, wild, wild, wild, wild);
+    params.push(wild, wild, wild, wild, wild, wild);
   }
 
   const whereClause = conditions.length > 0 ? " WHERE " + conditions.join(" AND ") : "";
@@ -555,7 +1179,7 @@ export async function getLeads(options: GetLeadsOptions): Promise<{
 }
 
 /**
- * Retrieves aggregate summary metrics for dashboard cards.
+ * Retrieves aggregate summary metrics for dashboard cards in a single network round-trip.
  */
 export async function getLeadMetrics(): Promise<{
   totalLeads: number;
@@ -565,13 +1189,28 @@ export async function getLeadMetrics(): Promise<{
   if (isMongoConfigured()) {
     try {
       const db = await getMongoDb();
-      const totalLeads = await db.collection("leads").countDocuments({});
-      const newLeads = await db.collection("leads").countDocuments({ status: "new" });
-
       const todayPrefix = new Date().toISOString().slice(0, 10);
-      const todayLeads = await db.collection("leads").countDocuments({
-        created_at: { $regex: `^${todayPrefix}` },
-      });
+
+      // Single round-trip $facet aggregation pipeline in MongoDB
+      const [metrics]: any = await db
+        .collection("leads")
+        .aggregate([
+          {
+            $facet: {
+              total: [{ $count: "count" }],
+              newCount: [{ $match: { status: "new" } }, { $count: "count" }],
+              todayCount: [
+                { $match: { created_at: { $regex: `^${todayPrefix}` } } },
+                { $count: "count" },
+              ],
+            },
+          },
+        ])
+        .toArray();
+
+      const totalLeads = metrics?.total?.[0]?.count || 0;
+      const newLeads = metrics?.newCount?.[0]?.count || 0;
+      const todayLeads = metrics?.todayCount?.[0]?.count || 0;
 
       return { totalLeads, newLeads, todayLeads };
     } catch (err) {
@@ -580,18 +1219,20 @@ export async function getLeadMetrics(): Promise<{
   }
 
   const db = getDb();
-  const totalStmt = db.prepare("SELECT COUNT(*) as count FROM leads");
-  const totalLeads = (totalStmt.get() as { count: number }).count;
+  // Single round-trip query in SQLite using subselects
+  const stmt = db.prepare(`
+    SELECT
+      (SELECT COUNT(*) FROM leads) as totalLeads,
+      (SELECT COUNT(*) FROM leads WHERE status = 'new') as newLeads,
+      (SELECT COUNT(*) FROM leads WHERE date(created_at) = date('now', 'localtime')) as todayLeads
+  `);
+  const row = stmt.get() as { totalLeads: number; newLeads: number; todayLeads: number } | undefined;
 
-  const newStmt = db.prepare("SELECT COUNT(*) as count FROM leads WHERE status = 'new'");
-  const newLeads = (newStmt.get() as { count: number }).count;
-
-  const todayStmt = db.prepare(
-    "SELECT COUNT(*) as count FROM leads WHERE date(created_at) = date('now', 'localtime')"
-  );
-  const todayLeads = (todayStmt.get() as { count: number }).count;
-
-  return { totalLeads, newLeads, todayLeads };
+  return {
+    totalLeads: row?.totalLeads || 0,
+    newLeads: row?.newLeads || 0,
+    todayLeads: row?.todayLeads || 0,
+  };
 }
 
 /**

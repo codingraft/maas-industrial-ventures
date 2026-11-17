@@ -9,6 +9,7 @@ interface EnquiryModalData {
   title: string;
   subtitle?: string;
   requirement?: string;
+  project?: string;
 }
 
 export function EnquiryModal() {
@@ -17,17 +18,52 @@ export function EnquiryModal() {
     title: "Register Your Requirement",
     subtitle: "Direct priority allocation and technical master documentation for enterprise investors.",
     requirement: "Industrial Land",
+    project: "Gayatri Industrial Park (Bhojpur, Modinagar)",
   });
+
+  const [selectedProject, setSelectedProject] = useState("Gayatri Industrial Park (Bhojpur, Modinagar)");
+  const [selectedRequirement, setSelectedRequirement] = useState("500 to 1,000 Sq. Yards");
 
   const [status, setStatus] = useState<"idle" | "sending" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
   const [errors, setErrors] = useState<Record<string, string>>({});
 
+  // Sync selected project and requirement when modalData updates
+  useEffect(() => {
+    if (modalData.project) {
+      const p = modalData.project.toLowerCase();
+      if (p.includes("balaji")) {
+        setSelectedProject("Shri Balaji Industrial Park (Hapur-Modinagar Rd)");
+      } else if (p.includes("gayatri")) {
+        setSelectedProject("Gayatri Industrial Park (Bhojpur, Modinagar)");
+      } else if (p.includes("residential")) {
+        setSelectedProject("Residential Plotted Developments");
+      } else {
+        setSelectedProject(modalData.project);
+      }
+    }
+    if (modalData.requirement) {
+      setSelectedRequirement(modalData.requirement);
+    }
+  }, [modalData]);
+
+  // Lock body scroll when modal is open
+  useEffect(() => {
+    if (modalData.isOpen) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [modalData.isOpen]);
+
   // Global click interception for all enquiry CTAs
   useEffect(() => {
     function handleGlobalClick(e: MouseEvent) {
       const target = (e.target as HTMLElement).closest<HTMLElement>(
-        'a[href="#enquire"], button[data-enquiry-trigger], a[data-enquiry-trigger]'
+        'a[href="#enquire"], button[data-enquiry-trigger], a[data-enquiry-trigger], button[data-enquiry-project], a[data-enquiry-project]'
       );
       if (!target) return;
 
@@ -39,17 +75,20 @@ export function EnquiryModal() {
       e.preventDefault();
       const rawText = target.innerText?.replace(/[↗→]/g, "").trim() || "Register Your Requirement";
       const customTitle = target.getAttribute("data-enquiry-title") || rawText;
-      const customReq = target.getAttribute("data-enquiry-req") || "Industrial Land";
+      const customReq = target.getAttribute("data-enquiry-req") || "500 to 1,000 Sq. Yards";
+      const customProject = target.getAttribute("data-enquiry-project") || "";
 
       let cleanTitle = customTitle;
-      if (cleanTitle.toLowerCase().includes("master plan")) {
-        cleanTitle = "Request Master Plan Dossier";
+      if (cleanTitle.toLowerCase().includes("master plan") || cleanTitle.toLowerCase().includes("brochure")) {
+        cleanTitle = "Request Master Plan & Brochure Dossier";
       } else if (cleanTitle.toLowerCase().includes("priority")) {
         cleanTitle = "Priority Allocation Enquiry";
-      } else if (cleanTitle.toLowerCase().includes("briefing")) {
-        cleanTitle = "Schedule Technical Briefing";
-      } else if (!cleanTitle.startsWith("Request") && !cleanTitle.startsWith("Register")) {
-        cleanTitle = `Request: ${cleanTitle}`;
+      } else if (cleanTitle.toLowerCase().includes("visit")) {
+        cleanTitle = "Schedule Physical Site Visit";
+      } else if (cleanTitle.toLowerCase().includes("touch")) {
+        cleanTitle = "Direct Enterprise Consultation";
+      } else if (!cleanTitle.startsWith("Request") && !cleanTitle.startsWith("Register") && !cleanTitle.startsWith("Enquiry")) {
+        cleanTitle = `Enquiry: ${cleanTitle}`;
       }
 
       setModalData({
@@ -57,6 +96,7 @@ export function EnquiryModal() {
         title: cleanTitle,
         subtitle: "Direct priority allocation and technical master documentation for enterprise investors.",
         requirement: customReq,
+        project: customProject,
       });
       setStatus("idle");
       setErrorMessage("");
@@ -64,12 +104,18 @@ export function EnquiryModal() {
     }
 
     function handleCustomEvent(e: Event) {
-      const customEvent = e as CustomEvent<{ title?: string; subtitle?: string; requirement?: string }>;
+      const customEvent = e as CustomEvent<{
+        title?: string;
+        subtitle?: string;
+        requirement?: string;
+        project?: string;
+      }>;
       setModalData({
         isOpen: true,
         title: customEvent.detail?.title || "Register Your Requirement",
         subtitle: customEvent.detail?.subtitle || "Direct priority allocation and technical master documentation.",
-        requirement: customEvent.detail?.requirement || "Industrial Land",
+        requirement: customEvent.detail?.requirement || "500 to 1,000 Sq. Yards",
+        project: customEvent.detail?.project || "",
       });
       setStatus("idle");
       setErrorMessage("");
@@ -292,13 +338,40 @@ export function EnquiryModal() {
                 </div>
 
                 <div className="modal-field modal-field-full">
-                  <label htmlFor="modal-req">Space / Plot Requirement</label>
-                  <select id="modal-req" name="requirement" defaultValue={modalData.requirement || "2 to 5 Acres (Industrial)"}>
-                    <option value="1 to 2 Acres">1 to 2 Acres (Light Assembly)</option>
-                    <option value="2 to 5 Acres (Industrial)">2 to 5 Acres (Industrial Facility)</option>
-                    <option value="5 to 10 Acres (Heavy Industry)">5 to 10 Acres (Heavy Industry)</option>
-                    <option value="10 to 25+ Acres (Mega Campus)">10 to 25+ Acres (Mega Campus / Logistics)</option>
-                    <option value="50,000+ sq.ft Built-to-Suit">50,000+ sq.ft Built-to-Suit Warehouse</option>
+                  <label htmlFor="modal-project">Project Interested In</label>
+                  <select
+                    id="modal-project"
+                    name="project"
+                    value={selectedProject}
+                    onChange={(e) => setSelectedProject(e.target.value)}
+                  >
+                    <option value="Gayatri Industrial Park (Bhojpur, Modinagar)">
+                      Gayatri Industrial Park (Bhojpur, Modinagar)
+                    </option>
+                    <option value="Shri Balaji Industrial Park (Hapur-Modinagar Rd)">
+                      Shri Balaji Industrial Park (Hapur-Modinagar Rd)
+                    </option>
+                    <option value="Residential Plotted Developments">
+                      Residential Plotted Developments
+                    </option>
+                    <option value="General Industrial Land Consultation">
+                      General Industrial Land Consultation
+                    </option>
+                  </select>
+                </div>
+
+                <div className="modal-field modal-field-full">
+                  <label htmlFor="modal-req">Plot Size / Space Requirement</label>
+                  <select
+                    id="modal-req"
+                    name="requirement"
+                    value={selectedRequirement}
+                    onChange={(e) => setSelectedRequirement(e.target.value)}
+                  >
+                    <option value="500 to 1,000 Sq. Yards">500 to 1,000 Sq. Yards</option>
+                    <option value="1,000 to 2,000 Sq. Yards">1,000 to 2,000 Sq. Yards</option>
+                    <option value="2,000 to 3,000+ Sq. Yards">2,000 to 3,000+ Sq. Yards</option>
+                    <option value="1 to 5 Acres (Industrial Hub)">1 to 5 Acres (Industrial Hub)</option>
                     <option value="Master Plan Blueprint Only">Master Plan Blueprint &amp; Zoning Only</option>
                   </select>
                 </div>

@@ -1,18 +1,93 @@
 "use client";
 
 import { useState } from "react";
-import { SiteSettings, FactItem, HighlightItem, TimelineMilestone, FaqItem, defaultContent } from "@/lib/types";
+import {
+  SiteSettings,
+  FactItem,
+  HighlightItem,
+  TimelineMilestone,
+  FaqItem,
+  DevelopmentVertical,
+  VisionMissionPhilosophy,
+  defaultContent,
+  defaultVerticals,
+  defaultVisionMission,
+} from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
+
+const publicCopyFields = [
+  ["overviewEyebrow", "Overview Eyebrow"],
+  ["overviewCtaText", "Overview Project Link"],
+  ["verticalsEyebrow", "Development Verticals Eyebrow"],
+  ["verticalsHeadline", "Development Verticals Headline"],
+  ["verticalsDescription", "Development Verticals Description"],
+  ["projectsEyebrow", "Projects Eyebrow"],
+  ["projectsHeadline", "Projects Headline"],
+  ["projectsDescription", "Projects Description"],
+  ["galleryEyebrow", "Gallery Eyebrow"],
+  ["galleryHeadline", "Gallery Headline"],
+  ["galleryDescription", "Gallery Description"],
+  ["blogSectionEyebrow", "Homepage Blog Eyebrow"],
+  ["blogSectionHeadline", "Homepage Blog Headline"],
+  ["blogSectionDescription", "Homepage Blog Description"],
+  ["contactEyebrow", "Contact Eyebrow"],
+  ["contactHeadline", "Contact Headline"],
+  ["contactDescription", "Contact Description"],
+  ["blogEyebrow", "Blog Index Eyebrow"],
+  ["blogHeadline", "Blog Index Headline"],
+  ["blogDescription", "Blog Index Description"],
+] as const;
 
 interface ContentManagerProps {
   settings: SiteSettings;
   onUpdate: (updatedContent: SiteSettings["content"]) => Promise<void>;
+  onUpdateFull?: (patch: Partial<SiteSettings>) => Promise<void>;
 }
 
-export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
-  const [activeSubTab, setActiveSubTab] = useState<"facts" | "highlights" | "timeline" | "faqs">("facts");
-  
-  // Local state initialized with fallback to defaultContent
+export function ContentManager({ settings, onUpdate, onUpdateFull }: ContentManagerProps) {
+  const [activeSubTab, setActiveSubTab] = useState<
+    "hero" | "overview" | "verticals" | "vision" | "facts" | "highlights" | "faqs" | "public-copy"
+  >("hero");
+
+  // Hero & Overview local state
+  const [siteInfo, setSiteInfo] = useState({ ...settings.site_info });
+
+  // 4 Bottom highlights
+  const [bottomHighlights, setBottomHighlights] = useState<string[]>(
+    settings.site_info.bottomHighlights && settings.site_info.bottomHighlights.length > 0
+      ? settings.site_info.bottomHighlights
+      : [
+          "Industrial Hub Development",
+          "Industrial Plot Development",
+          "Residential Land Development",
+          "Real Estate Development",
+        ]
+  );
+
+  // 3 Overview paragraphs
+  const [overviewParagraphs, setOverviewParagraphs] = useState<string[]>(
+    settings.site_info.overviewParagraphs && settings.site_info.overviewParagraphs.length > 0
+      ? settings.site_info.overviewParagraphs
+      : [
+          "MAAS Industrial Ventures Pvt. Limited is a land and real estate development company specialising in industrial and residential development. We focus on identifying land opportunities, planning and developing integrated industrial hubs, creating industrial plots and developing residential plotted projects.",
+          "We are developers who believe that every piece of land has the potential to become something greater. From developing industrial hubs that provide opportunities for businesses and manufacturers to create residential developments for individuals and families, our aim is to transform land into well-planned destinations.",
+          "Our work goes beyond selling land. We focus on the development process — from land identification and planning to project development and offering developed plots to buyers. Through our projects, we aim to create opportunities for businesses, entrepreneurs, investors and communities.",
+        ]
+  );
+
+  // 4 Verticals local state
+  const [verticals, setVerticals] = useState<DevelopmentVertical[]>(
+    settings.verticals && settings.verticals.length > 0
+      ? settings.verticals
+      : defaultVerticals
+  );
+
+  // Vision, Mission & Philosophy local state
+  const [visionMission, setVisionMission] = useState<VisionMissionPhilosophy>(
+    settings.vision_mission || defaultVisionMission
+  );
+
+  // Content strip local state
   const [facts, setFacts] = useState<FactItem[]>(
     settings.content?.facts && settings.content.facts.length > 0
       ? settings.content.facts
@@ -63,495 +138,367 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }
 
-  // --- SAVE HANDLER ---
   async function handleSaveAll() {
     setSaving(true);
     try {
+      // 1. Update Content
       await onUpdate({
         facts,
         highlights,
         timeline,
         faqs,
       });
-      addToast("success", "Content saved successfully", "Homepage facts, highlights, timeline, and FAQs have been updated.");
+
+      // 2. Update site_info, verticals, vision_mission if callback provided
+      if (onUpdateFull) {
+        await onUpdateFull({
+          site_info: {
+            ...siteInfo,
+            bottomHighlights,
+            overviewParagraphs,
+          },
+          verticals,
+          vision_mission: visionMission,
+        });
+      } else {
+        // Fallback: direct PATCH to /api/admin/settings
+        await fetch("/api/admin/settings", {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            site_info: {
+              ...siteInfo,
+              bottomHighlights,
+              overviewParagraphs,
+            },
+            verticals,
+            vision_mission: visionMission,
+          }),
+        });
+      }
+
+      addToast("success", "Changes Saved Successfully", "All text, verticals, vision, and FAQs are updated live.");
     } catch (err) {
-      addToast("error", "Failed to save content", err instanceof Error ? err.message : "Network error");
+      addToast("error", "Failed to save", err instanceof Error ? err.message : "Error saving");
     } finally {
       setSaving(false);
     }
   }
 
-  // --- FACTS HANDLERS ---
-  function handleAddFact() {
-    const newFact: FactItem = {
-      id: "fact-" + Date.now(),
-      label: "New Parameter",
-      value: "Specification Value",
-    };
-    setFacts([...facts, newFact]);
-  }
-
-  function handleUpdateFact(id: string, field: "label" | "value", val: string) {
-    setFacts(facts.map((f) => (f.id === id ? { ...f, [field]: val } : f)));
-  }
-
-  function handleDeleteFact(id: string) {
-    if (facts.length <= 1) {
-      addToast("error", "Cannot remove fact", "You must keep at least one key fact in the strip.");
-      return;
-    }
-    setFacts(facts.filter((f) => f.id !== id));
-  }
-
-  // --- HIGHLIGHTS HANDLERS ---
-  function handleAddHighlight() {
-    const nextIdx = (highlights.length + 1).toString().padStart(2, "0");
-    const newHl: HighlightItem = {
-      id: "hl-" + Date.now(),
-      index: nextIdx,
-      title: "New Technical Specification",
-      value: "Standard Dimension / Capacity",
-      note: "Engineering verification details",
-    };
-    setHighlights([...highlights, newHl]);
-  }
-
-  function handleUpdateHighlight(id: string, field: keyof HighlightItem, val: string) {
-    setHighlights(highlights.map((h) => (h.id === id ? { ...h, [field]: val } : h)));
-  }
-
-  function handleDeleteHighlight(id: string) {
-    if (highlights.length <= 1) {
-      addToast("error", "Cannot remove highlight", "You must keep at least one technical highlight.");
-      return;
-    }
-    setHighlights(highlights.filter((h) => h.id !== id));
-  }
-
-  // --- TIMELINE HANDLERS ---
-  function handleAddTimeline() {
-    const nextNum = (timeline.length + 1).toString().padStart(2, "0");
-    const newTm: TimelineMilestone = {
-      id: "tm-" + Date.now(),
-      phase: `PHASE ${nextNum} / MILESTONE`,
-      title: "New Development Milestone",
-      description: "Milestone completion scope, approvals, and physical site handover.",
-    };
-    setTimeline([...timeline, newTm]);
-  }
-
-  function handleUpdateTimeline(id: string, field: keyof TimelineMilestone, val: string) {
-    setTimeline(timeline.map((t) => (t.id === id ? { ...t, [field]: val } : t)));
-  }
-
-  function handleDeleteTimeline(id: string) {
-    if (timeline.length <= 1) {
-      addToast("error", "Cannot remove phase", "You must keep at least one development milestone.");
-      return;
-    }
-    setTimeline(timeline.filter((t) => t.id !== id));
-  }
-
-  // --- FAQS HANDLERS ---
-  function handleAddFaq() {
-    const newFaq: FaqItem = {
-      id: "faq-" + Date.now(),
-      question: "What are the infrastructure specifications?",
-      answer: "Dedicated HT dual power lines, high-cube structural clear heights, heavy freight arterial roads, and clear statutory titles.",
-    };
-    setFaqs([...faqs, newFaq]);
-  }
-
-  function handleUpdateFaq(id: string, field: "question" | "answer", val: string) {
-    setFaqs(faqs.map((f) => (f.id === id ? { ...f, [field]: val } : f)));
-  }
-
-  function handleMoveFaq(index: number, direction: "up" | "down") {
-    const targetIndex = direction === "up" ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= faqs.length) return;
-    const nextFaqs = [...faqs];
-    const [moved] = nextFaqs.splice(index, 1);
-    nextFaqs.splice(targetIndex, 0, moved);
-    setFaqs(nextFaqs);
-  }
-
-  function handleDeleteFaq(id: string) {
-    setConfirmDialog({
-      isOpen: true,
-      title: "Delete FAQ Item",
-      message: "Are you sure you want to delete this FAQ question and answer?",
-      action: () => {
-        setFaqs(faqs.filter((f) => f.id !== id));
-        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
-        addToast("info", "FAQ removed", "Click Save Changes to commit this change.");
-      },
-    });
-  }
-
   return (
-    <div className="admin-content-studio">
+    <div className="admin-card">
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
       <ConfirmModal
         isOpen={confirmDialog.isOpen}
         title={confirmDialog.title}
         message={confirmDialog.message}
-        confirmLabel="Delete"
-        isDanger={true}
-        onConfirm={confirmDialog.action}
+        onConfirm={() => {
+          confirmDialog.action();
+          setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
+        }}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
       />
 
-      <div className="admin-card">
-        <div className="admin-card-head" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-          <div>
-            <h3 className="admin-card-title">Township Content &amp; FAQs Studio</h3>
-            <p className="admin-card-desc">
-              Manage key project facts, substance data highlights, phased development timeline, and customer FAQs displayed on the homepage.
-            </p>
-          </div>
-          <button
-            type="button"
-            className="admin-btn admin-btn-primary"
-            onClick={handleSaveAll}
-            disabled={saving}
-            style={{ minWidth: "150px" }}
-          >
-            {saving ? "Saving..." : "Save All Changes"}
-          </button>
+      <div className="admin-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div>
+          <h2 className="admin-card-title">MAAS Content, Verticals &amp; Strategic Vision Studio</h2>
+          <p className="admin-card-desc">
+            Edit hero copywriting, company overview, 4 development verticals, vision/mission, facts strip, and customer FAQs.
+          </p>
         </div>
+        <button
+          type="button"
+          className="admin-btn admin-btn-primary"
+          onClick={handleSaveAll}
+          disabled={saving}
+        >
+          {saving ? "Saving Changes…" : "Save All Changes"}
+        </button>
+      </div>
 
-        {/* Sub-Navigation Tabs */}
-        <div className="content-studio-tabs">
-          <button
-            type="button"
-            className={`content-subtab-btn ${activeSubTab === "facts" ? "is-active" : ""}`}
-            onClick={() => setActiveSubTab("facts")}
-          >
-            Project Facts Strip ({facts.length})
-          </button>
-          <button
-            type="button"
-            className={`content-subtab-btn ${activeSubTab === "highlights" ? "is-active" : ""}`}
-            onClick={() => setActiveSubTab("highlights")}
-          >
-            Data &amp; Highlights ({highlights.length})
-          </button>
-          <button
-            type="button"
-            className={`content-subtab-btn ${activeSubTab === "timeline" ? "is-active" : ""}`}
-            onClick={() => setActiveSubTab("timeline")}
-          >
-            Phased Milestones ({timeline.length})
-          </button>
-          <button
-            type="button"
-            className={`content-subtab-btn ${activeSubTab === "faqs" ? "is-active" : ""}`}
-            onClick={() => setActiveSubTab("faqs")}
-          >
-            Customer FAQs ({faqs.length})
-          </button>
-        </div>
+      {/* Sub-tab Navigation */}
+      <div className="content-tabs-nav" style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
+        <button
+          type="button"
+          className={`admin-subtab-btn ${activeSubTab === "hero" ? "is-active" : ""}`}
+          onClick={() => setActiveSubTab("hero")}
+        >
+          Hero Section ({bottomHighlights.length} Highlights)
+        </button>
+        <button
+          type="button"
+          className={`admin-subtab-btn ${activeSubTab === "overview" ? "is-active" : ""}`}
+          onClick={() => setActiveSubTab("overview")}
+        >
+          Company Overview &amp; Story
+        </button>
+        <button
+          type="button"
+          className={`admin-subtab-btn ${activeSubTab === "verticals" ? "is-active" : ""}`}
+          onClick={() => setActiveSubTab("verticals")}
+        >
+          4 Development Verticals ({verticals.length})
+        </button>
+        <button
+          type="button"
+          className={`admin-subtab-btn ${activeSubTab === "vision" ? "is-active" : ""}`}
+          onClick={() => setActiveSubTab("vision")}
+        >
+          Vision, Mission &amp; Philosophy
+        </button>
+        <button
+          type="button"
+          className={`admin-subtab-btn ${activeSubTab === "public-copy" ? "is-active" : ""}`}
+          onClick={() => setActiveSubTab("public-copy")}
+        >
+          Contact &amp; Blog Copy
+        </button>
+        <button
+          type="button"
+          className={`admin-subtab-btn ${activeSubTab === "facts" ? "is-active" : ""}`}
+          onClick={() => setActiveSubTab("facts")}
+        >
+          Project Facts Strip ({facts.length})
+        </button>
+        <button
+          type="button"
+          className={`admin-subtab-btn ${activeSubTab === "faqs" ? "is-active" : ""}`}
+          onClick={() => setActiveSubTab("faqs")}
+        >
+          Customer FAQs ({faqs.length})
+        </button>
+      </div>
 
-        {/* 1. FACTS STRIP */}
-        {activeSubTab === "facts" && (
-          <div className="content-subtab-pane">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <p style={{ margin: 0, fontSize: "13px", color: "var(--admin-text-muted)" }}>
-                These 4 glance metrics appear directly beneath the hero slider to build instant credibility with visitors.
-              </p>
-              <button
-                type="button"
-                className="admin-btn admin-btn-secondary"
-                onClick={handleAddFact}
-                style={{ padding: "6px 12px", fontSize: "12px" }}
-              >
-                + Add Fact
-              </button>
+      <div style={{ marginTop: "24px" }}>
+        {/* 1. HERO TAB */}
+        {activeSubTab === "hero" && (
+          <div className="admin-form-grid">
+            <div className="admin-field admin-field-full">
+              <label>Hero Eyebrow Text</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={siteInfo.heroEyebrow || ""}
+                onChange={(e) => setSiteInfo({ ...siteInfo, heroEyebrow: e.target.value })}
+                placeholder="MAAS INDUSTRIAL VENTURES PVT. LIMITED"
+              />
             </div>
 
-            {facts.map((fact, idx) => (
-              <div key={fact.id} className="content-item-card">
-                <div className="content-item-header">
-                  <span className="content-item-badge">Fact #{idx + 1}</span>
-                  <div className="content-item-actions">
-                    <button
-                      type="button"
-                      className="content-icon-btn is-danger"
-                      onClick={() => handleDeleteFact(fact.id)}
-                      title="Remove fact"
-                      aria-label="Remove fact"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="content-grid-2col">
-                  <div className="admin-input-group">
-                    <label className="admin-input-label">Label (Category)</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={fact.label}
-                      onChange={(e) => handleUpdateFact(fact.id, "label", e.target.value)}
-                      placeholder="e.g. Development Zone"
-                    />
-                  </div>
-                  <div className="admin-input-group">
-                    <label className="admin-input-label">Value (Bold Highlight)</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={fact.value}
-                      onChange={(e) => handleUpdateFact(fact.id, "value", e.target.value)}
-                      placeholder="e.g. Master Industrial Park"
-                    />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* 2. HIGHLIGHTS & SUBSTANCE */}
-        {activeSubTab === "highlights" && (
-          <div className="content-subtab-pane">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <p style={{ margin: 0, fontSize: "13px", color: "var(--admin-text-muted)" }}>
-                Technical data points showcased in &quot;Substance before superlatives&quot; section for institutional investors.
-              </p>
-              <button
-                type="button"
-                className="admin-btn admin-btn-secondary"
-                onClick={handleAddHighlight}
-                style={{ padding: "6px 12px", fontSize: "12px" }}
-              >
-                + Add Highlight
-              </button>
+            <div className="admin-field admin-field-full">
+              <label>Hero Headline (H1)</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={siteInfo.heroHeadline || ""}
+                onChange={(e) => setSiteInfo({ ...siteInfo, heroHeadline: e.target.value })}
+                placeholder="Developing Land. Building Opportunities."
+              />
             </div>
 
-            {highlights.map((hl) => (
-              <div key={hl.id} className="content-item-card">
-                <div className="content-item-header">
-                  <span className="content-item-badge">Index {hl.index} · {hl.title}</span>
-                  <div className="content-item-actions">
-                    <button
-                      type="button"
-                      className="content-icon-btn is-danger"
-                      onClick={() => handleDeleteHighlight(hl.id)}
-                      title="Remove highlight"
-                      aria-label="Remove highlight"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
+            <div className="admin-field admin-field-full">
+              <label>Hero Subheadline</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={siteInfo.heroSubheadline || ""}
+                onChange={(e) => setSiteInfo({ ...siteInfo, heroSubheadline: e.target.value })}
+                placeholder="Creating Industrial Hubs &amp; Residential Developments for a Better Tomorrow."
+              />
+            </div>
 
-                <div className="content-grid-3col">
-                  <div className="admin-input-group">
-                    <label className="admin-input-label">Index Code</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={hl.index}
-                      onChange={(e) => handleUpdateHighlight(hl.id, "index", e.target.value)}
-                      placeholder="01"
-                    />
-                  </div>
-                  <div className="admin-input-group">
-                    <label className="admin-input-label">Title / Category</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={hl.title}
-                      onChange={(e) => handleUpdateHighlight(hl.id, "title", e.target.value)}
-                      placeholder="e.g. Zoning & Land Tenure"
-                    />
-                  </div>
-                  <div className="admin-input-group">
-                    <label className="admin-input-label">Primary Metric (Bold)</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={hl.value}
-                      onChange={(e) => handleUpdateHighlight(hl.id, "value", e.target.value)}
-                      placeholder="e.g. Freehold Industrial Title"
-                    />
-                  </div>
-                </div>
+            <div className="admin-field admin-field-full">
+              <label>Hero Body Paragraph</label>
+              <textarea
+                rows={3}
+                className="admin-textarea"
+                value={siteInfo.heroDescription || ""}
+                onChange={(e) => setSiteInfo({ ...siteInfo, heroDescription: e.target.value })}
+                placeholder="We are land and real estate developers focused on creating thoughtfully planned industrial hubs..."
+              />
+            </div>
 
-                <div className="admin-input-group" style={{ marginTop: "12px" }}>
-                  <label className="admin-input-label">Subnote / Engineering Verification</label>
+            <div className="admin-field">
+              <label>Primary Button Text</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={siteInfo.heroPrimaryBtnText || "Explore Our Projects"}
+                onChange={(e) => setSiteInfo({ ...siteInfo, heroPrimaryBtnText: e.target.value })}
+              />
+            </div>
+
+            <div className="admin-field">
+              <label>Secondary Button Text</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={siteInfo.heroSecondaryBtnText || "Get in Touch"}
+                onChange={(e) => setSiteInfo({ ...siteInfo, heroSecondaryBtnText: e.target.value })}
+              />
+            </div>
+
+            <div className="admin-field admin-field-full">
+              <label>Location Highlight Tag</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={siteInfo.locationHighlight || "Industrial & Residential Land Development | India"}
+                onChange={(e) => setSiteInfo({ ...siteInfo, locationHighlight: e.target.value })}
+              />
+            </div>
+
+            {/* Bottom 4 Glance Highlights */}
+            <div className="admin-field admin-field-full">
+              <label>Bottom 4 Highlights (Glance pills beneath hero)</label>
+              {bottomHighlights.map((hl, idx) => (
+                <div key={idx} style={{ display: "flex", gap: "10px", marginBottom: "8px" }}>
                   <input
                     type="text"
                     className="admin-input"
-                    value={hl.note}
-                    onChange={(e) => handleUpdateHighlight(hl.id, "note", e.target.value)}
-                    placeholder="e.g. Verified clear commercial documentation and single-window sanction dossiers"
+                    value={hl}
+                    onChange={(e) => {
+                      const next = [...bottomHighlights];
+                      next[idx] = e.target.value;
+                      setBottomHighlights(next);
+                    }}
                   />
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-danger"
+                    onClick={() => setBottomHighlights(bottomHighlights.filter((_, i) => i !== idx))}
+                  >
+                    ✕
+                  </button>
                 </div>
-              </div>
-            ))}
+              ))}
+              <button
+                type="button"
+                className="admin-btn admin-btn-outline"
+                style={{ marginTop: "6px" }}
+                onClick={() => setBottomHighlights([...bottomHighlights, "New Development Highlight"])}
+              >
+                + Add Highlight Pill
+              </button>
+            </div>
           </div>
         )}
 
-        {/* 3. TIMELINE MILESTONES */}
-        {activeSubTab === "timeline" && (
-          <div className="content-subtab-pane">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <p style={{ margin: 0, fontSize: "13px", color: "var(--admin-text-muted)" }}>
-                Phased execution milestones displayed in the &quot;Every phase with purpose&quot; section.
-              </p>
-              <button
-                type="button"
-                className="admin-btn admin-btn-secondary"
-                onClick={handleAddTimeline}
-                style={{ padding: "6px 12px", fontSize: "12px" }}
-              >
-                + Add Phase Milestone
-              </button>
+        {/* 2. OVERVIEW TAB */}
+        {activeSubTab === "overview" && (
+          <div className="admin-form-grid">
+            <div className="admin-field admin-field-full">
+              <label>Overview Section Headline</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={siteInfo.overviewHeadline || "We Develop Land. We Build Destinations. We Create Opportunities."}
+                onChange={(e) => setSiteInfo({ ...siteInfo, overviewHeadline: e.target.value })}
+              />
             </div>
 
-            {timeline.map((item) => (
-              <div key={item.id} className="content-item-card">
-                <div className="content-item-header">
-                  <span className="content-item-badge">{item.phase}</span>
-                  <div className="content-item-actions">
-                    <button
-                      type="button"
-                      className="content-icon-btn is-danger"
-                      onClick={() => handleDeleteTimeline(item.id)}
-                      title="Remove milestone"
-                      aria-label="Remove milestone"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
+            <div className="admin-field admin-field-full">
+              <label>Overview Narrative (Paragraphs from Official PDF)</label>
+              {overviewParagraphs.map((para, idx) => (
+                <div key={idx} style={{ marginBottom: "14px" }}>
+                  <div style={{ fontSize: "12px", color: "#94a3b8", marginBottom: "4px" }}>
+                    Paragraph #{idx + 1}
                   </div>
-                </div>
-
-                <div className="content-grid-2col">
-                  <div className="admin-input-group">
-                    <label className="admin-input-label">Phase Eyebrow Tag</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={item.phase}
-                      onChange={(e) => handleUpdateTimeline(item.id, "phase", e.target.value)}
-                      placeholder="e.g. PHASE 01 / ALLOCATION"
-                    />
-                  </div>
-                  <div className="admin-input-group">
-                    <label className="admin-input-label">Milestone Title</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={item.title}
-                      onChange={(e) => handleUpdateTimeline(item.id, "title", e.target.value)}
-                      placeholder="e.g. Land Allotment & Civil Infrastructure"
-                    />
-                  </div>
-                </div>
-
-                <div className="admin-input-group" style={{ marginTop: "12px" }}>
-                  <label className="admin-input-label">Scope Description</label>
-                  <textarea
-                    rows={2}
-                    className="admin-input"
-                    value={item.description}
-                    onChange={(e) => handleUpdateTimeline(item.id, "description", e.target.value)}
-                    placeholder="e.g. Plot boundaries demarcation, concrete road network completion, and boundary security deployment."
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* 4. CUSTOMER FAQS */}
-        {activeSubTab === "faqs" && (
-          <div className="content-subtab-pane">
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px" }}>
-              <p style={{ margin: 0, fontSize: "13px", color: "var(--admin-text-muted)" }}>
-                Accordion questions and detailed corporate answers displayed in the &quot;Good questions come first&quot; section.
-              </p>
-              <button
-                type="button"
-                className="admin-btn admin-btn-secondary"
-                onClick={handleAddFaq}
-                style={{ padding: "6px 12px", fontSize: "12px" }}
-              >
-                + Add FAQ Question
-              </button>
-            </div>
-
-            {faqs.map((faq, idx) => (
-              <div key={faq.id} className="content-item-card">
-                <div className="content-item-header">
-                  <span className="content-item-badge">Question 0{idx + 1}</span>
-                  <div className="content-item-actions">
-                    <button
-                      type="button"
-                      className="content-icon-btn"
-                      onClick={() => handleMoveFaq(idx, "up")}
-                      disabled={idx === 0}
-                      title="Move Up"
-                      aria-label="Move Up"
-                    >
-                      ▲
-                    </button>
-                    <button
-                      type="button"
-                      className="content-icon-btn"
-                      onClick={() => handleMoveFaq(idx, "down")}
-                      disabled={idx === faqs.length - 1}
-                      title="Move Down"
-                      aria-label="Move Down"
-                    >
-                      ▼
-                    </button>
-                    <button
-                      type="button"
-                      className="content-icon-btn is-danger"
-                      onClick={() => handleDeleteFaq(faq.id)}
-                      title="Delete question"
-                      aria-label="Delete question"
-                    >
-                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
-                        <line x1="18" y1="6" x2="6" y2="18"/>
-                        <line x1="6" y1="6" x2="18" y2="18"/>
-                      </svg>
-                    </button>
-                  </div>
-                </div>
-
-                <div className="admin-input-group">
-                  <label className="admin-input-label">Question</label>
-                  <input
-                    type="text"
-                    className="admin-input"
-                    value={faq.question}
-                    onChange={(e) => handleUpdateFaq(faq.id, "question", e.target.value)}
-                    placeholder="e.g. What plot sizes and warehouse configurations are available?"
-                  />
-                </div>
-
-                <div className="admin-input-group" style={{ marginTop: "12px" }}>
-                  <label className="admin-input-label">Detailed Answer</label>
                   <textarea
                     rows={3}
+                    className="admin-textarea"
+                    value={para}
+                    onChange={(e) => {
+                      const next = [...overviewParagraphs];
+                      next[idx] = e.target.value;
+                      setOverviewParagraphs(next);
+                    }}
+                  />
+                </div>
+              ))}
+              <button
+                type="button"
+                className="admin-btn admin-btn-outline"
+                onClick={() => setOverviewParagraphs([...overviewParagraphs, "New company overview paragraph."])}
+              >
+                + Add Overview Paragraph
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeSubTab === "public-copy" && (
+          <div className="admin-form-grid">
+            {publicCopyFields.map(([key, label]) => (
+              <div className="admin-field admin-field-full" key={key}>
+                <label>{label}</label>
+                {key.toLowerCase().includes("description") ? (
+                  <textarea
+                    rows={3}
+                    className="admin-textarea"
+                    value={siteInfo[key] || ""}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, [key]: e.target.value })}
+                  />
+                ) : (
+                  <input
                     className="admin-input"
-                    value={faq.answer}
-                    onChange={(e) => handleUpdateFaq(faq.id, "answer", e.target.value)}
-                    placeholder="Detailed corporate answer explaining zoning, utilities, or procedure..."
+                    value={siteInfo[key] || ""}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, [key]: e.target.value })}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* 3. VERTICALS TAB */}
+        {activeSubTab === "verticals" && (
+          <div>
+            <p className="admin-field-desc" style={{ marginBottom: "16px", color: "#94a3b8" }}>
+              The 4 Core Development Verticals displayed in the interactive grid on the homepage.
+            </p>
+            {verticals.map((vert, idx) => (
+              <div key={vert.id || idx} className="admin-card-inner" style={{ marginBottom: "16px", padding: "16px", background: "#171c26", borderRadius: "8px", border: "1px solid #2d3748" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                  <span style={{ fontWeight: 600, color: "var(--admin-gold)" }}>VERTICAL 0{idx + 1}</span>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={vert.tag || "Vertical"}
+                    style={{ width: "160px", padding: "4px 8px", fontSize: "12px" }}
+                    placeholder="Tag e.g. Parks & Estates"
+                    onChange={(e) => {
+                      const next = [...verticals];
+                      next[idx] = { ...vert, tag: e.target.value };
+                      setVerticals(next);
+                    }}
+                  />
+                </div>
+
+                <div className="admin-field admin-field-full" style={{ marginBottom: "10px" }}>
+                  <label>Vertical Title</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={vert.title}
+                    onChange={(e) => {
+                      const next = [...verticals];
+                      next[idx] = { ...vert, title: e.target.value };
+                      setVerticals(next);
+                    }}
+                  />
+                </div>
+
+                <div className="admin-field admin-field-full">
+                  <label>Vertical Description</label>
+                  <textarea
+                    rows={2}
+                    className="admin-textarea"
+                    value={vert.description}
+                    onChange={(e) => {
+                      const next = [...verticals];
+                      next[idx] = { ...vert, description: e.target.value };
+                      setVerticals(next);
+                    }}
                   />
                 </div>
               </div>
@@ -559,17 +506,153 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
           </div>
         )}
 
-        <div style={{ marginTop: "24px", paddingTop: "18px", borderTop: "1px solid var(--admin-border)", display: "flex", justifyContent: "flex-end" }}>
-          <button
-            type="button"
-            className="admin-btn admin-btn-primary"
-            onClick={handleSaveAll}
-            disabled={saving}
-            style={{ minWidth: "160px" }}
-          >
-            {saving ? "Saving Changes..." : "Save All Changes"}
-          </button>
-        </div>
+        {/* 4. VISION & MISSION TAB */}
+        {activeSubTab === "vision" && (
+          <div className="admin-form-grid">
+            <div className="admin-field admin-field-full">
+              <label>Our Vision</label>
+              <textarea
+                rows={3}
+                className="admin-textarea"
+                value={visionMission.vision}
+                onChange={(e) => setVisionMission({ ...visionMission, vision: e.target.value })}
+              />
+            </div>
+
+            <div className="admin-field admin-field-full">
+              <label>Our Mission</label>
+              <textarea
+                rows={3}
+                className="admin-textarea"
+                value={visionMission.mission}
+                onChange={(e) => setVisionMission({ ...visionMission, mission: e.target.value })}
+              />
+            </div>
+
+            <div className="admin-field admin-field-full">
+              <label>Our Philosophy Headline</label>
+              <input
+                type="text"
+                className="admin-input"
+                value={visionMission.philosophyTitle}
+                onChange={(e) => setVisionMission({ ...visionMission, philosophyTitle: e.target.value })}
+              />
+            </div>
+
+            <div className="admin-field admin-field-full">
+              <label>Our Philosophy Narrative</label>
+              <textarea
+                rows={3}
+                className="admin-textarea"
+                value={visionMission.philosophyText}
+                onChange={(e) => setVisionMission({ ...visionMission, philosophyText: e.target.value })}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* 5. FACTS STRIP TAB */}
+        {activeSubTab === "facts" && (
+          <div>
+            {facts.map((fact, idx) => (
+              <div key={fact.id || idx} style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: "12px", marginBottom: "12px" }}>
+                <div>
+                  <label style={{ fontSize: "12px", color: "#94a3b8" }}>Label</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={fact.label}
+                    onChange={(e) => {
+                      const next = [...facts];
+                      next[idx] = { ...fact, label: e.target.value };
+                      setFacts(next);
+                    }}
+                  />
+                </div>
+                <div>
+                  <label style={{ fontSize: "12px", color: "#94a3b8" }}>Value</label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={fact.value}
+                    onChange={(e) => {
+                      const next = [...facts];
+                      next[idx] = { ...fact, value: e.target.value };
+                      setFacts(next);
+                    }}
+                  />
+                </div>
+                <div style={{ alignSelf: "end" }}>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-danger"
+                    onClick={() => setFacts(facts.filter((_, i) => i !== idx))}
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+            ))}
+            <button
+              type="button"
+              className="admin-btn admin-btn-outline"
+              onClick={() => setFacts([...facts, { id: `fact-${Date.now()}`, label: "Parameter", value: "Value" }])}
+            >
+              + Add Fact
+            </button>
+          </div>
+        )}
+
+        {/* 6. FAQS TAB */}
+        {activeSubTab === "faqs" && (
+          <div>
+            {faqs.map((faq, idx) => (
+              <div key={faq.id || idx} style={{ marginBottom: "16px", padding: "14px", background: "#171c26", borderRadius: "8px", border: "1px solid #2d3748" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "8px" }}>
+                  <strong style={{ color: "#d4af37", fontSize: "13px" }}>Question #{idx + 1}</strong>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-danger"
+                    style={{ padding: "2px 8px", fontSize: "11px" }}
+                    onClick={() => setFaqs(faqs.filter((_, i) => i !== idx))}
+                  >
+                    Remove
+                  </button>
+                </div>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={faq.question}
+                  style={{ marginBottom: "8px" }}
+                  onChange={(e) => {
+                    const next = [...faqs];
+                    next[idx] = { ...faq, question: e.target.value };
+                    setFaqs(next);
+                  }}
+                  placeholder="e.g. What plot sizes are available?"
+                />
+                <textarea
+                  rows={2}
+                  className="admin-textarea"
+                  value={faq.answer}
+                  onChange={(e) => {
+                    const next = [...faqs];
+                    next[idx] = { ...faq, answer: e.target.value };
+                    setFaqs(next);
+                  }}
+                  placeholder="Answer text here..."
+                />
+              </div>
+            ))}
+            <button
+              type="button"
+              className="admin-btn admin-btn-outline"
+              onClick={() => setFaqs([...faqs, { id: `faq-${Date.now()}`, question: "New Question?", answer: "Answer description." }])}
+            >
+              + Add FAQ Item
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

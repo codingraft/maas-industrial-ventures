@@ -8,6 +8,7 @@ interface EnquiryPayload {
   name?: string;
   phone?: string;
   email?: string;
+  project?: string;
   industry?: string;
   requirement?: string;
   message?: string;
@@ -55,12 +56,13 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true });
   }
 
-  const name = typeof body.name === "string" ? body.name.trim() : "";
-  const phone = typeof body.phone === "string" ? body.phone.trim() : "";
-  const email = typeof body.email === "string" ? body.email.trim() : "";
-  const industry = typeof body.industry === "string" ? body.industry.trim() : "";
-  const requirement = typeof body.requirement === "string" ? body.requirement.trim() : "";
-  const message = typeof body.message === "string" ? body.message.trim() : "";
+  const name = typeof body.name === "string" ? body.name.trim().slice(0, 120) : "";
+  const phone = typeof body.phone === "string" ? body.phone.trim().slice(0, 30) : "";
+  const email = typeof body.email === "string" ? body.email.trim().slice(0, 254) : "";
+  const project = typeof body.project === "string" ? body.project.trim().slice(0, 150) : "";
+  const industry = typeof body.industry === "string" ? body.industry.trim().slice(0, 120) : "";
+  const requirement = typeof body.requirement === "string" ? body.requirement.trim().slice(0, 200) : "";
+  const message = typeof body.message === "string" ? body.message.trim().slice(0, 3000) : "";
 
   const utm_source = typeof body.utm_source === "string" ? body.utm_source.slice(0, 100) : "";
   const utm_medium = typeof body.utm_medium === "string" ? body.utm_medium.slice(0, 100) : "";
@@ -88,6 +90,7 @@ export async function POST(request: Request) {
       name,
       phone,
       email,
+      project,
       industry,
       requirement,
       message,

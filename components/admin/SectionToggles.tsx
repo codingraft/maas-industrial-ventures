@@ -34,6 +34,16 @@ export function SectionToggles({ initialSections, onUpdate }: SectionTogglesProp
       description: "Core industrial vision statement, value proposition, and feature visual.",
     },
     {
+      key: "projects",
+      title: "Projects & Landmark Developments",
+      description: "Multi-project portfolio cards for Gayatri Industrial Park and Shri Balaji Industrial Park.",
+    },
+    {
+      key: "blog",
+      title: "Insights, News & Blog Preview Strip",
+      description: "Homepage preview strip showcasing latest market reports and link to /blog.",
+    },
+    {
       key: "highlights",
       title: "Substance Data & Highlights",
       description: "Phasing, zoning approvals, development area data rows.",

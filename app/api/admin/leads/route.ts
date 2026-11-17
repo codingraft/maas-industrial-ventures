@@ -12,6 +12,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const search = searchParams.get("search")?.trim().toLowerCase() || "";
   const status = searchParams.get("status")?.trim().toLowerCase() || "";
+  const project = searchParams.get("project")?.trim() || "";
   const isExport = searchParams.get("export") === "csv";
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.max(1, Math.min(100, parseInt(searchParams.get("limit") || "10", 10)));
@@ -19,6 +20,7 @@ export async function GET(request: Request) {
   const result = await getLeads({
     search,
     status,
+    project,
     page,
     limit,
     exportCsv: isExport,
@@ -33,6 +35,7 @@ export async function GET(request: Request) {
         "Name",
         "Phone",
         "Email",
+        "Project",
         "Industry",
         "Requirement",
         "Message",
@@ -58,6 +61,7 @@ export async function GET(request: Request) {
           lead.name,
           lead.phone,
           lead.email,
+          lead.project || "",
           lead.industry,
           lead.requirement,
           lead.message ? lead.message.replace(/"/g, '""') : "",
