@@ -931,9 +931,6 @@
 :where(body:not(.admin-body) h1, body:not(.admin-body) h2, body:not(.admin-body) h3, .blog-catalog-title, .blog-article-headline) { color: var(--ink); font-family: var(--serif); font-weight: 500; letter-spacing: -.035em; }
 :where(.button-gold, .btn-gold) { background: var(--ink); color: var(--white); border-color: var(--ink); }
 :where(.button-gold:hover, .btn-gold:hover) { background: var(--gold-dark); border-color: var(--gold-dark); }
-.site-header { background: color-mix(in srgb, var(--paper) 94%, transparent); border-bottom-color: var(--line); color: var(--ink); backdrop-filter: blur(14px); }
-.site-header .brand, .site-header nav a, .site-header .header-phone { color: var(--white); }
-.site-header nav a:hover, .site-header .header-phone:hover { color: var(--gold-dark); }
 .hero-slider-heading { max-width: 1160px; font-family: var(--serif); font-size: clamp(3.5rem, 5.7vw, 5.4rem); font-weight: 500; letter-spacing: -.045em; }
 .hero .hero-slider-heading, .hero .hero-subheadline { color: var(--white); }
 .facts-strip { background: var(--ink); color: var(--white); }
@@ -972,11 +969,6 @@
 }
 
 /* Shared semantic palette and readable mobile navigation */
-.site-header { background: color-mix(in srgb, var(--ink) 94%, transparent); border-bottom: 1px solid rgba(255,255,255,.14); color: var(--white); backdrop-filter: blur(14px); }
-.site-header.is-scrolled { background: color-mix(in srgb, var(--ink) 97%, transparent); color: var(--white); }
-.site-header nav .nav-cta { background: var(--gold-light); color: var(--ink); }
-.site-header nav > a:hover, .site-header nav .nav-phone { color: var(--gold-light); }
-.site-header nav > a { color: var(--white); }
 .overview { background: var(--paper); }
 .gallery { background: var(--surface); }
 .blog-section { background: var(--paper-deep); }
