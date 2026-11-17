@@ -3322,6 +3322,7 @@ input:checked+.slider:before {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -3619,6 +3620,355 @@ input:checked+.slider:before {
   border-color: var(--admin-gold);
   box-shadow: 0 0 0 2px var(--admin-gold-soft);
 }
+
+/* ==========================================================================
+   FULL-PAGE STUDIO ARCHITECTURE (Projects & Blog Studios)
+   ========================================================================== */
+.admin-full-studio {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+  width: 100%;
+  position: relative;
+  animation: studioFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: 80px;
+}
+
+@keyframes studioFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sticky Executive Top Action Bar */
+.studio-sticky-header {
+  position: sticky;
+  top: 60px;
+  z-index: 25;
+  background: rgba(12, 16, 28, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--admin-border);
+  padding: 12px 0;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.studio-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.studio-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text-main);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.studio-back-btn:hover {
+  background: var(--admin-bg-hover);
+  border-color: var(--admin-gold);
+  color: var(--admin-gold);
+}
+
+.studio-header-titles {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.studio-breadcrumb {
+  font-size: 11px;
+  color: var(--admin-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.studio-main-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* 2-Column Responsive Studio Grid (Desktop) */
+.studio-layout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
+  gap: 28px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.studio-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.studio-sidebar-col {
+  position: sticky;
+  top: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Card Container inside Studio */
+.studio-card {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.studio-card-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--admin-border-subtle);
+}
+
+.studio-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px;
+}
+
+.studio-card-desc {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  margin: 0;
+}
+
+/* Live Project Card Preview Panel */
+.studio-preview-box {
+  background: var(--admin-bg-card-subtle);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.studio-preview-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.studio-preview-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-gold);
+  background: var(--admin-gold-soft);
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.live-card-preview-shell {
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.live-card-preview-media {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background: #0f172a;
+}
+
+.live-card-preview-body {
+  padding: 18px 20px;
+}
+
+.live-card-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #b45309;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.live-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+.live-card-tagline {
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.live-card-specs-strip {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.live-card-spec-item small {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.live-card-spec-item strong {
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.live-card-subsidies-pill {
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  color: #854d0e;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 6px;
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+/* Editorial Blog Studio Typography */
+.editorial-title-input {
+  width: 100%;
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid var(--admin-border) !important;
+  border-radius: 0 !important;
+  padding: 10px 0 !important;
+  outline: none !important;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+  letter-spacing: -0.02em;
+}
+
+.editorial-title-input:focus {
+  border-bottom-color: var(--admin-gold) !important;
+  box-shadow: none !important;
+}
+
+.editorial-title-input::placeholder {
+  color: var(--admin-text-dim) !important;
+}
+
+/* Mobile Sticky Bottom Floating Action Dock */
+.mobile-studio-actions {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .studio-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .studio-sidebar-col {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .studio-sticky-header {
+    top: 50px;
+    padding: 10px 0;
+  }
+
+  .studio-header-actions.desktop-only {
+    display: none;
+  }
+
+  .mobile-studio-actions {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(12, 16, 28, 0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--admin-border);
+    padding: 10px 16px;
+    gap: 12px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .mobile-studio-actions button {
+    flex: 1;
+    height: 44px;
+    font-size: 13.5px;
+    font-weight: 600;
+    justify-content: center;
+  }
+
+  .admin-full-studio {
+    padding-bottom: 110px;
+  }
+}
+
 
 
 /* ==========================================================================
@@ -3732,6 +4082,7 @@ input:checked+.slider:before {
   0% {
     background-position: 200% 0;
   }
+
   100% {
     background-position: -200% 0;
   }
@@ -4028,4 +4379,352 @@ input:checked+.slider:before {
 .admin-select:focus {
   border-color: var(--admin-gold);
   box-shadow: 0 0 0 2px var(--admin-gold-soft);
+}
+
+/* ==========================================================================
+   FULL-PAGE STUDIO ARCHITECTURE (Projects & Blog Studios)
+   ========================================================================== */
+.admin-full-studio {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 80px);
+  width: 100%;
+  position: relative;
+  animation: studioFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  padding-bottom: 80px;
+}
+
+@keyframes studioFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Sticky Executive Top Action Bar */
+.studio-sticky-header {
+  position: sticky;
+  top: 60px;
+  z-index: 25;
+  background: rgba(12, 16, 28, 0.92);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--admin-border);
+  padding: 12px 0;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.studio-header-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+  flex: 1;
+}
+
+.studio-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text-main);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.16s ease;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.studio-back-btn:hover {
+  background: var(--admin-bg-hover);
+  border-color: var(--admin-gold);
+  color: var(--admin-gold);
+}
+
+.studio-header-titles {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.studio-breadcrumb {
+  font-size: 11px;
+  color: var(--admin-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 2px;
+}
+
+.studio-main-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.studio-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+/* 2-Column Responsive Studio Grid (Desktop) */
+.studio-layout-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.8fr) minmax(320px, 1fr);
+  gap: 28px;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.studio-main-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+.studio-sidebar-col {
+  position: sticky;
+  top: 140px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  min-width: 0;
+}
+
+/* Card Container inside Studio */
+.studio-card {
+  background: var(--admin-bg-card);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 24px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+}
+
+.studio-card-header {
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--admin-border-subtle);
+}
+
+.studio-card-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0 0 4px;
+}
+
+.studio-card-desc {
+  font-size: 12px;
+  color: var(--admin-text-muted);
+  margin: 0;
+}
+
+/* Live Project Card Preview Panel */
+.studio-preview-box {
+  background: var(--admin-bg-card-subtle);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.studio-preview-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.studio-preview-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--admin-gold);
+  background: var(--admin-gold-soft);
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.live-card-preview-shell {
+  background: #ffffff;
+  color: #1e293b;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.live-card-preview-media {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background: #0f172a;
+}
+
+.live-card-preview-body {
+  padding: 18px 20px;
+}
+
+.live-card-eyebrow {
+  font-size: 10.5px;
+  font-weight: 700;
+  color: #b45309;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.live-card-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0 0 6px;
+  line-height: 1.25;
+}
+
+.live-card-tagline {
+  font-size: 12.5px;
+  color: #475569;
+  margin: 0 0 14px;
+  line-height: 1.45;
+}
+
+.live-card-specs-strip {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  padding: 10px 12px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  margin-bottom: 14px;
+}
+
+.live-card-spec-item small {
+  display: block;
+  font-size: 10px;
+  text-transform: uppercase;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.live-card-spec-item strong {
+  font-size: 12px;
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.live-card-subsidies-pill {
+  background: #fefce8;
+  border: 1px solid #fef08a;
+  color: #854d0e;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border-radius: 6px;
+  line-height: 1.4;
+  margin-bottom: 14px;
+}
+
+/* Editorial Blog Studio Typography */
+.editorial-title-input {
+  width: 100%;
+  font-size: 26px;
+  font-weight: 800;
+  color: #ffffff !important;
+  background: transparent !important;
+  border: none !important;
+  border-bottom: 2px solid var(--admin-border) !important;
+  border-radius: 0 !important;
+  padding: 10px 0 !important;
+  outline: none !important;
+  margin-bottom: 16px;
+  transition: border-color 0.2s;
+  letter-spacing: -0.02em;
+}
+
+.editorial-title-input:focus {
+  border-bottom-color: var(--admin-gold) !important;
+  box-shadow: none !important;
+}
+
+.editorial-title-input::placeholder {
+  color: var(--admin-text-dim) !important;
+}
+
+/* Mobile Sticky Bottom Floating Action Dock */
+.mobile-studio-actions {
+  display: none;
+}
+
+@media (max-width: 1024px) {
+  .studio-layout-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .studio-sidebar-col {
+    position: static;
+  }
+}
+
+@media (max-width: 768px) {
+  .studio-sticky-header {
+    top: 50px;
+    padding: 10px 0;
+  }
+
+  .studio-header-actions.desktop-only {
+    display: none;
+  }
+
+  .mobile-studio-actions {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+    background: rgba(12, 16, 28, 0.95);
+    backdrop-filter: blur(12px);
+    border-top: 1px solid var(--admin-border);
+    padding: 10px 16px;
+    gap: 12px;
+    box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .mobile-studio-actions button {
+    flex: 1;
+    height: 44px;
+    font-size: 13.5px;
+    font-weight: 600;
+    justify-content: center;
+  }
+
+  .admin-full-studio {
+    padding-bottom: 110px;
+  }
 }

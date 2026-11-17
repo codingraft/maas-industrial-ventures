@@ -6,7 +6,7 @@ import dynamic from "next/dynamic";
 import { BlogPost } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
 import { Pagination } from "@/components/ui/Pagination";
-import { TableSkeleton, CardSkeleton } from "@/components/admin/ui/AdminSkeleton";
+import { TableSkeleton } from "@/components/admin/ui/AdminSkeleton";
 import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminToolbar, AdminSearchInput } from "@/components/admin/ui/AdminToolbar";
 import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
@@ -16,26 +16,25 @@ const RichMarkdownEditor = dynamic(
   {
     ssr: false,
     loading: () => (
-      <div style={{ padding: "40px", textAlign: "center", color: "var(--admin-text-muted)", background: "var(--admin-bg-card-subtle)", borderRadius: "8px" }}>
+      <div style={{ padding: "60px 20px", textAlign: "center", color: "var(--admin-text-muted)", background: "var(--admin-bg-card-subtle)", borderRadius: "8px" }}>
         Loading Content Studio Editor...
       </div>
     ),
   }
 );
 
-type BlogModalTab = "metadata" | "content";
+type BlogStudioTab = "writing" | "publishing";
 
-const BLOG_MODAL_TABS: TabOption<BlogModalTab>[] = [
-  { id: "metadata", label: "Metadata & Cover" },
-  { id: "content", label: "Article Content (Markdown)" },
+const BLOG_STUDIO_TABS: TabOption<BlogStudioTab>[] = [
+  { id: "writing", label: "1. Article Writing Canvas" },
+  { id: "publishing", label: "2. Publishing, Cover & SEO" },
 ];
 
 export function BlogManager() {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingBlog, setEditingBlog] = useState<BlogPost | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [modalTab, setModalTab] = useState<BlogModalTab>("metadata");
+  const [studioTab, setStudioTab] = useState<BlogStudioTab>("writing");
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
 
@@ -127,14 +126,53 @@ export function BlogManager() {
     return () => controller.abort();
   }, [fetchBlogs]);
 
-  function handleCreateNew() {
+  // Deep link check on mount
+  useEffect(() => {
+    if (typeof window === "undefined" || blogs.length === 0) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const editSlug = urlParams.get("edit");
+    const actionParam = urlParams.get("action");
+    if (actionParam === "create") {
+      setEditingBlog((prev) => {
+        if (prev) return prev;
+        return {
+          id: `blog-${Date.now()}`,
+          title: "",
+          slug: "",
+          category: "Policy & Subsidies",
+          excerpt: "",
+          content: "## Article Headline\n\nWrite your insights here. You can format with **bold**, *italics*, bullet points, and tables.",
+          coverImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80",
+          author: "MAAS Research Desk",
+          readTime: "4 min read",
+          publishedAt: new Date().toISOString().slice(0, 10),
+          isFeatured: false,
+          isPublished: true,
+          metaTitle: "",
+          metaDescription: "",
+          keywords: [],
+        };
+      });
+      setStudioTab("writing");
+    } else if (editSlug) {
+      const match = blogs.find(
+        (b: BlogPost) => b.slug === editSlug || b.id === editSlug
+      );
+      if (match) {
+        setEditingBlog((prev) => prev || { ...match });
+        setStudioTab("writing");
+      }
+    }
+  }, [blogs]);
+
+  function handleCreateNew(updateUrl = true) {
     const newPost: BlogPost = {
       id: `blog-${Date.now()}`,
       title: "",
       slug: "",
-      category: "Industrial Insights",
+      category: "Policy & Subsidies",
       excerpt: "",
-      content: "## Article Headline\n\nWrite your insights here. You can use markdown like **bold**, *italics*, and lists.",
+      content: "## Article Headline\n\nWrite your insights here. You can format with **bold**, *italics*, bullet points, and tables.",
       coverImage: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1200&q=80",
       author: "MAAS Research Desk",
       readTime: "4 min read",
@@ -146,30 +184,51 @@ export function BlogManager() {
       keywords: [],
     };
     setEditingBlog(newPost);
-    setModalTab("metadata");
-    setIsModalOpen(true);
+    setStudioTab("writing");
+
+    if (updateUrl && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("action", "create");
+      url.searchParams.delete("edit");
+      window.history.pushState({}, "", url.toString());
+    }
   }
 
-  async function handleEdit(post: BlogPost) {
+  async function handleEdit(post: BlogPost, updateUrl = true) {
+    let target = post;
     if (!post.content) {
       try {
         const res = await fetch(`/api/admin/blogs/${post.slug || post.id}`);
         if (res.ok) {
           const data = await res.json();
           if (data.blog) {
-            setEditingBlog(data.blog);
-            setModalTab("metadata");
-            setIsModalOpen(true);
-            return;
+            target = data.blog;
           }
         }
       } catch (err) {
         console.error("Failed to fetch full blog post content:", err);
       }
     }
-    setEditingBlog({ ...post });
-    setModalTab("metadata");
-    setIsModalOpen(true);
+
+    setEditingBlog({ ...target });
+    setStudioTab("writing");
+
+    if (updateUrl && typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("edit", target.slug || target.id);
+      url.searchParams.delete("action");
+      window.history.pushState({}, "", url.toString());
+    }
+  }
+
+  function handleCloseStudio() {
+    setEditingBlog(null);
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.delete("edit");
+      url.searchParams.delete("action");
+      window.history.pushState({}, "", url.toString());
+    }
   }
 
   async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -200,12 +259,12 @@ export function BlogManager() {
     if (!editingBlog) return;
     if (!editingBlog.title.trim()) {
       addToast("error", "Validation error", "Article title is required.");
-      setModalTab("metadata");
+      setStudioTab("writing");
       return;
     }
     if (!editingBlog.excerpt.trim()) {
       addToast("error", "Validation error", "Article excerpt is required.");
-      setModalTab("metadata");
+      setStudioTab("publishing");
       return;
     }
 
@@ -221,8 +280,7 @@ export function BlogManager() {
         throw new Error(data.error || "Failed to save article");
       }
       addToast("success", "Article published / saved successfully!");
-      setIsModalOpen(false);
-      setEditingBlog(null);
+      handleCloseStudio();
       fetchBlogs();
     } catch (err: unknown) {
       addToast("error", "Save failed", err instanceof Error ? err.message : "Save failed");
@@ -249,6 +307,421 @@ export function BlogManager() {
     });
   }
 
+  // =========================================================================
+  // VIEW MODE 1: FULL-PAGE BLOG EDITORIAL STUDIO
+  // =========================================================================
+  if (editingBlog) {
+    const wordCount = (editingBlog.content?.match(/\b\S+\b/g) || []).length;
+    const excerptLen = editingBlog.excerpt?.length || 0;
+    const isExcerptOptimal = excerptLen >= 120 && excerptLen <= 165;
+
+    return (
+      <div className="admin-full-studio">
+        {/* Sticky Executive Action Topbar */}
+        <div className="studio-sticky-header">
+          <div className="studio-header-left">
+            <button
+              type="button"
+              className="studio-back-btn"
+              onClick={handleCloseStudio}
+              title="Return to Articles Hub"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="15 18 9 12 15 6" />
+              </svg>
+              <span>Back to Articles</span>
+            </button>
+
+            <div className="studio-header-titles">
+              <div className="studio-breadcrumb">
+                Insights Studio / {editingBlog.title ? "Edit Article" : "New Article"}
+              </div>
+              <h2 className="studio-main-title">
+                {editingBlog.title || "Untitled Article"}
+              </h2>
+            </div>
+          </div>
+
+          <div className="studio-header-actions desktop-only">
+            <span style={{ fontSize: "12px", color: "var(--admin-text-muted)", marginRight: "4px" }}>
+              {wordCount} words • {editingBlog.readTime}
+            </span>
+
+            <AdminBadge variant={editingBlog.isPublished ? "success" : "neutral"} dot>
+              {editingBlog.isPublished ? "Published Live" : "Draft"}
+            </AdminBadge>
+
+            <button
+              type="button"
+              className="admin-btn admin-btn-outline"
+              onClick={handleCloseStudio}
+            >
+              Discard Changes
+            </button>
+
+            <button
+              type="button"
+              className="admin-btn admin-btn-primary"
+              onClick={handleSave}
+              disabled={saving}
+              style={{ minWidth: "160px" }}
+            >
+              {saving ? "Saving Changes…" : "✓ Save & Publish"}
+            </button>
+          </div>
+        </div>
+
+        {/* Studio Segmented Step Tabs */}
+        <div style={{ marginBottom: "20px" }}>
+          <AdminTabs
+            tabs={BLOG_STUDIO_TABS}
+            activeTab={studioTab}
+            onChange={(tabId) => setStudioTab(tabId)}
+          />
+        </div>
+
+        {/* STUDIO PANE 1: EDITORIAL WRITING CANVAS */}
+        {studioTab === "writing" && (
+          <div className="studio-card" style={{ padding: "28px" }}>
+            <div style={{ marginBottom: "16px" }}>
+              <input
+                type="text"
+                className="editorial-title-input"
+                value={editingBlog.title}
+                onChange={(e) =>
+                  setEditingBlog({
+                    ...editingBlog,
+                    title: e.target.value,
+                    slug:
+                      editingBlog.slug ||
+                      e.target.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, "-")
+                        .replace(/(^-|-$)/g, ""),
+                  })
+                }
+                placeholder="Enter Article Headline..."
+              />
+              <div style={{ display: "flex", gap: "10px", alignItems: "center", flexWrap: "wrap", fontSize: "12px", color: "var(--admin-text-dim)" }}>
+                <span>Category: <strong style={{ color: "var(--admin-gold)" }}>{editingBlog.category}</strong></span>
+                <span>•</span>
+                <span>Author: <strong style={{ color: "var(--admin-text-main)" }}>{editingBlog.author}</strong></span>
+                <span>•</span>
+                <span>Slug: <code>/blog/{editingBlog.slug || "slug"}</code></span>
+              </div>
+            </div>
+
+            {/* Full-width Responsive Markdown Editor */}
+            <RichMarkdownEditor
+              value={editingBlog.content}
+              height={580}
+              onChange={(val) => setEditingBlog({ ...editingBlog, content: val })}
+              onReadTimeCalculated={(time) => setEditingBlog({ ...editingBlog, readTime: time })}
+              placeholder="Write your comprehensive insights here..."
+            />
+
+            <div style={{ display: "flex", justifyContent: "flex-end", marginTop: "24px" }}>
+              <button
+                type="button"
+                className="admin-btn admin-btn-secondary"
+                onClick={() => setStudioTab("publishing")}
+              >
+                Proceed to Publishing &amp; SEO →
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* STUDIO PANE 2: PUBLISHING, COVER & SEO */}
+        {studioTab === "publishing" && (
+          <div className="studio-layout-grid">
+            {/* Left: Metadata and Publishing Form */}
+            <div className="studio-main-col">
+              <div className="studio-card">
+                <div className="studio-card-header">
+                  <h3 className="studio-card-title">Article Metadata &amp; Cover Imagery</h3>
+                  <p className="studio-card-desc">Configure publishing categories, custom slugs, cover banner images, and author profiles.</p>
+                </div>
+
+                <div className="admin-form-grid">
+                  <div className="admin-field">
+                    <label>
+                      <span>URL Slug Identifier <span className="required-star">*</span></span>
+                      <span className="label-hint">/blog/{editingBlog.slug || "your-slug"}</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={editingBlog.slug}
+                      onChange={(e) =>
+                        setEditingBlog({ ...editingBlog, slug: e.target.value })
+                      }
+                      placeholder="e.g. up-msme-promotion-policy-2022"
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>
+                      <span>Editorial Category</span>
+                      <span className="label-hint">Group topic filter</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={editingBlog.category}
+                      onChange={(e) =>
+                        setEditingBlog({ ...editingBlog, category: e.target.value })
+                      }
+                      placeholder="e.g. Policy & Subsidies, Market Insights"
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>
+                      <span>Author Name</span>
+                      <span className="label-hint">Byline display</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={editingBlog.author}
+                      onChange={(e) =>
+                        setEditingBlog({ ...editingBlog, author: e.target.value })
+                      }
+                      placeholder="e.g. MAAS Research Desk"
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>
+                      <span>Estimated Reading Time</span>
+                      <span className="label-hint">e.g. 4 min read</span>
+                    </label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={editingBlog.readTime}
+                      onChange={(e) =>
+                        setEditingBlog({ ...editingBlog, readTime: e.target.value })
+                      }
+                      placeholder="e.g. 4 min read"
+                    />
+                  </div>
+
+                  <div className="admin-field admin-field-full">
+                    <label>
+                      <span>Author Bio / Advisory Role (Optional)</span>
+                      <span className="label-hint">Appears in author profile card at bottom of article</span>
+                    </label>
+                    <textarea
+                      className="admin-textarea"
+                      rows={2}
+                      value={editingBlog.authorBio || ""}
+                      onChange={(e) =>
+                        setEditingBlog({ ...editingBlog, authorBio: e.target.value })
+                      }
+                      placeholder="e.g. Lead Land Acquisition & Infrastructure Advisory Specialist at MAAS Industrial Ventures."
+                    />
+                  </div>
+
+                  <div className="admin-field admin-field-full">
+                    <label style={{ display: "flex", justifyContent: "space-between" }}>
+                      <span>Short Excerpt / Meta Snippet <span className="required-star">*</span></span>
+                      <span style={{ fontSize: "11px", color: isExcerptOptimal ? "var(--admin-success)" : "var(--admin-text-muted)" }}>
+                        {excerptLen}/160 chars {isExcerptOptimal ? "✓ Optimal SEO" : ""}
+                      </span>
+                    </label>
+                    <textarea
+                      className="admin-textarea"
+                      rows={3}
+                      value={editingBlog.excerpt}
+                      onChange={(e) =>
+                        setEditingBlog({ ...editingBlog, excerpt: e.target.value })
+                      }
+                      placeholder="Concise summary shown on blog cards and in Google search previews"
+                    />
+                  </div>
+
+                  {/* Cover Image Upload */}
+                  <div className="admin-field admin-field-full">
+                    <label>
+                      <span>Cover Image (CDN / Cloudinary URL)</span>
+                      <span className="label-hint">High-resolution banner photo</span>
+                    </label>
+                    <div className="admin-image-upload-row">
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={editingBlog.coverImage}
+                        onChange={(e) =>
+                          setEditingBlog({ ...editingBlog, coverImage: e.target.value })
+                        }
+                        placeholder="https://images.unsplash.com/..."
+                      />
+                      <label className="admin-btn admin-btn-outline admin-upload-btn">
+                        {uploadingImage ? "Uploading..." : "Upload File"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileUpload}
+                          disabled={uploadingImage}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                    </div>
+
+                    {editingBlog.coverImage && (
+                      <div style={{ marginTop: "12px", display: "flex", alignItems: "center", gap: "12px" }}>
+                        <Image
+                          src={editingBlog.coverImage}
+                          alt="Cover Preview"
+                          width={160}
+                          height={90}
+                          style={{ objectFit: "cover", borderRadius: "6px", border: "1px solid var(--admin-border)" }}
+                        />
+                        <div style={{ fontSize: "12px", color: "var(--admin-text-muted)" }}>
+                          <span style={{ color: "var(--admin-success)", fontWeight: 600 }}>✓ Cover Connected</span>
+                          <div style={{ fontSize: "11px", marginTop: "4px" }}>Displays at top of article and in shared social previews</div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "24px", paddingTop: "16px", borderTop: "1px solid var(--admin-border-subtle)" }}>
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-outline"
+                    onClick={() => setStudioTab("writing")}
+                  >
+                    ← Back to Writing Canvas
+                  </button>
+
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-primary"
+                    onClick={handleSave}
+                    disabled={saving}
+                  >
+                    {saving ? "Saving Changes…" : "✓ Save & Publish Article"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: Live SERP Snippet & Visibility Controls */}
+            <div className="studio-sidebar-col">
+              {/* Google SERP Snippet Preview */}
+              <div className="studio-card">
+                <h4 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "6px" }}>
+                  <span>🔍 Google Search Preview</span>
+                </h4>
+
+                <div className="serp-card" style={{ background: "#0b0f1a", padding: "14px", borderRadius: "8px", border: "1px solid var(--admin-border)" }}>
+                  <div className="serp-url-row" style={{ display: "flex", alignItems: "center", gap: "6px", marginBottom: "4px" }}>
+                    <span style={{ fontSize: "12px" }}>🌐</span>
+                    <span style={{ fontSize: "11.5px", color: "var(--admin-text-dim)" }}>
+                      maasventures.com &rsaquo; blog &rsaquo; {editingBlog.slug || "your-slug"}
+                    </span>
+                  </div>
+                  <div style={{ fontSize: "15px", fontWeight: 600, color: "#60a5fa", lineHeight: 1.3, marginBottom: "4px" }}>
+                    {editingBlog.metaTitle || editingBlog.title || "Article Headline"}
+                  </div>
+                  <div style={{ fontSize: "12px", color: "#94a3b8", lineHeight: 1.45 }}>
+                    {editingBlog.excerpt || "Article snippet will be extracted here for search result descriptions..."}
+                  </div>
+                </div>
+
+                <div style={{ marginTop: "16px" }}>
+                  <label className="label-hint" style={{ display: "block", marginBottom: "4px" }}>
+                    Custom SEO Meta Title (Optional)
+                  </label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={editingBlog.metaTitle || ""}
+                    onChange={(e) =>
+                      setEditingBlog({ ...editingBlog, metaTitle: e.target.value })
+                    }
+                    placeholder="Custom Title for Google SERP"
+                  />
+                </div>
+              </div>
+
+              {/* Publishing Controls Card */}
+              <div className="studio-card">
+                <h4 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700, color: "#fff" }}>
+                  Visibility &amp; Promotion
+                </h4>
+
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px" }}>
+                    <input
+                      type="checkbox"
+                      checked={editingBlog.isPublished}
+                      onChange={(e) =>
+                        setEditingBlog({ ...editingBlog, isPublished: e.target.checked })
+                      }
+                    />
+                    <span>Published Live on Website</span>
+                  </label>
+
+                  <label style={{ display: "flex", alignItems: "center", gap: "10px", cursor: "pointer", fontSize: "13px" }}>
+                    <input
+                      type="checkbox"
+                      checked={editingBlog.isFeatured}
+                      onChange={(e) =>
+                        setEditingBlog({ ...editingBlog, isFeatured: e.target.checked })
+                      }
+                    />
+                    <span>Featured on Homepage Strip</span>
+                  </label>
+
+                  {editingBlog.slug && (
+                    <a
+                      href={`/blog/${editingBlog.slug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="admin-btn admin-btn-outline"
+                      style={{ textAlign: "center", textDecoration: "none", marginTop: "6px" }}
+                    >
+                      View Live Article ↗
+                    </a>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Mobile Sticky Bottom Floating Action Dock */}
+        <div className="mobile-studio-actions">
+          <button
+            type="button"
+            className="admin-btn admin-btn-outline"
+            onClick={handleCloseStudio}
+          >
+            Discard
+          </button>
+          <button
+            type="button"
+            className="admin-btn admin-btn-primary"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            {saving ? "Saving…" : "Save Article"}
+          </button>
+        </div>
+
+        {/* In-app toasts */}
+        <ToastContainer toasts={toasts} onDismiss={dismissToast} />
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // VIEW MODE 2: BLOG CATALOG & LISTING
+  // =========================================================================
   return (
     <div className="admin-blog-studio">
       <div className="admin-studio-header">
@@ -261,7 +734,7 @@ export function BlogManager() {
         <button
           type="button"
           className="admin-btn admin-btn-primary"
-          onClick={handleCreateNew}
+          onClick={() => handleCreateNew(true)}
           style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -369,7 +842,7 @@ export function BlogManager() {
                 <button
                   type="button"
                   className="admin-btn admin-btn-outline"
-                  onClick={() => handleEdit(b)}
+                  onClick={() => handleEdit(b, true)}
                 >
                   Edit
                 </button>
@@ -396,301 +869,6 @@ export function BlogManager() {
             totalItems={pagination.total}
             pageSize={pagination.limit}
           />
-        </div>
-      )}
-
-      {/* Edit / Create Modal */}
-      {isModalOpen && editingBlog && (
-        <div className="admin-modal-backdrop" onClick={() => setIsModalOpen(false)}>
-          <div className="admin-modal-card admin-modal-large" onClick={(e) => e.stopPropagation()}>
-            <div className="admin-modal-header">
-              <div>
-                <h3>{editingBlog.title ? `Edit Article: ${editingBlog.title}` : "Write New Article"}</h3>
-                <p className="admin-modal-subtitle">Craft executive real estate insights, policy reviews, and market trends.</p>
-              </div>
-              <button
-                type="button"
-                className="admin-modal-close"
-                onClick={() => setIsModalOpen(false)}
-                aria-label="Close modal"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Segmented Modal Tabs */}
-            <div style={{ padding: "0 24px", marginTop: "12px" }}>
-              <AdminTabs
-                tabs={BLOG_MODAL_TABS}
-                activeTab={modalTab}
-                onChange={(tabId) => setModalTab(tabId)}
-              />
-            </div>
-
-            <div className="admin-modal-body admin-form-grid" style={{ maxHeight: "64vh", overflowY: "auto" }}>
-              {/* TAB 1: METADATA & COVER */}
-              {modalTab === "metadata" && (
-                <>
-                  <div className="admin-field admin-field-full">
-                    <label>
-                      <span>Article Title <span className="required-star">*</span></span>
-                      <span className="label-hint">Shown in search engines and cards</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={editingBlog.title}
-                      onChange={(e) =>
-                        setEditingBlog({
-                          ...editingBlog,
-                          title: e.target.value,
-                          slug:
-                            editingBlog.slug ||
-                            e.target.value
-                              .toLowerCase()
-                              .replace(/[^a-z0-9]+/g, "-")
-                              .replace(/(^-|-$)/g, ""),
-                        })
-                      }
-                      placeholder="e.g. Uttar Pradesh MSME Promotion Policy 2022: Key Incentives"
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <label>
-                      <span>URL Slug <span className="required-star">*</span></span>
-                      <span className="label-hint">/blog/{editingBlog.slug || "your-slug"}</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={editingBlog.slug}
-                      onChange={(e) =>
-                        setEditingBlog({ ...editingBlog, slug: e.target.value })
-                      }
-                      placeholder="e.g. up-msme-promotion-policy-2022"
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <label>Category</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={editingBlog.category}
-                      onChange={(e) =>
-                        setEditingBlog({ ...editingBlog, category: e.target.value })
-                      }
-                      placeholder="e.g. Policy & Subsidies, Connectivity, Market Insights"
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <label>Author</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={editingBlog.author}
-                      onChange={(e) =>
-                        setEditingBlog({ ...editingBlog, author: e.target.value })
-                      }
-                      placeholder="e.g. MAAS Research Desk"
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <label>
-                      <span>Reading Time</span>
-                      <span className="label-hint">Auto or custom</span>
-                    </label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={editingBlog.readTime}
-                      onChange={(e) =>
-                        setEditingBlog({ ...editingBlog, readTime: e.target.value })
-                      }
-                      placeholder="e.g. 4 min read"
-                    />
-                  </div>
-
-                  <div className="admin-field admin-field-full">
-                    <label>
-                      <span>Author Bio / Advisory Role (Optional)</span>
-                      <span className="label-hint">Shown in author profile card at bottom of article</span>
-                    </label>
-                    <textarea
-                      className="admin-textarea"
-                      rows={2}
-                      value={editingBlog.authorBio || ""}
-                      onChange={(e) =>
-                        setEditingBlog({ ...editingBlog, authorBio: e.target.value })
-                      }
-                      placeholder="e.g. Lead Land Acquisition & Infrastructure Advisory Specialist at MAAS Industrial Ventures."
-                    />
-                  </div>
-
-                  <div className="admin-field admin-field-full">
-                    <label>
-                      <span>Short Excerpt / Meta Snippet <span className="required-star">*</span></span>
-                      <span className="label-hint">Summary shown on cards and Google search previews</span>
-                    </label>
-                    <textarea
-                      className="admin-textarea"
-                      rows={2}
-                      value={editingBlog.excerpt}
-                      onChange={(e) =>
-                        setEditingBlog({ ...editingBlog, excerpt: e.target.value })
-                      }
-                      placeholder="Concise summary shown on cards and Google search previews"
-                    />
-                  </div>
-
-                  {/* Cover Image Upload */}
-                  <div className="admin-field admin-field-full">
-                    <label>Cover Image (CDN / Cloudinary)</label>
-                    <div className="admin-image-upload-row">
-                      <input
-                        type="text"
-                        className="admin-input"
-                        value={editingBlog.coverImage}
-                        onChange={(e) =>
-                          setEditingBlog({ ...editingBlog, coverImage: e.target.value })
-                        }
-                        placeholder="https://..."
-                      />
-                      <label className="admin-btn admin-btn-outline admin-upload-btn">
-                        {uploadingImage ? "Uploading..." : "Upload New File"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleFileUpload}
-                          disabled={uploadingImage}
-                          style={{ display: "none" }}
-                        />
-                      </label>
-                    </div>
-                    {editingBlog.coverImage && (
-                      <div className="admin-preview-thumbnail" style={{ marginTop: "10px", display: "flex", alignItems: "center", gap: "12px" }}>
-                        <Image
-                          src={editingBlog.coverImage}
-                          alt="Cover Preview"
-                          width={160}
-                          height={90}
-                          style={{ objectFit: "cover", borderRadius: "6px", border: "1px solid var(--admin-border)" }}
-                        />
-                        <div style={{ fontSize: "12px", color: "var(--admin-text-muted)" }}>
-                          <p style={{ margin: "0 0 4px", color: "var(--admin-success)", fontWeight: 600 }}>✓ Image Connected</p>
-                          <button
-                            type="button"
-                            onClick={() => setEditingBlog({ ...editingBlog, coverImage: "" })}
-                            style={{ background: "transparent", border: "none", color: "var(--admin-danger)", cursor: "pointer", padding: 0, fontSize: "11px", textDecoration: "underline" }}
-                          >
-                            Remove image
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="admin-field">
-                    <label>SEO Meta Title (Optional)</label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={editingBlog.metaTitle || ""}
-                      onChange={(e) =>
-                        setEditingBlog({ ...editingBlog, metaTitle: e.target.value })
-                      }
-                      placeholder="Custom title tag for Google"
-                    />
-                  </div>
-
-                  <div className="admin-field">
-                    <label>Publish Status</label>
-                    <div style={{ marginTop: "10px", display: "flex", gap: "18px" }}>
-                      <label style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "var(--admin-text-main)" }}>
-                        <input
-                          type="checkbox"
-                          checked={editingBlog.isPublished}
-                          onChange={(e) =>
-                            setEditingBlog({ ...editingBlog, isPublished: e.target.checked })
-                          }
-                        />
-                        Published Live
-                      </label>
-                      <label style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer", color: "var(--admin-text-main)" }}>
-                        <input
-                          type="checkbox"
-                          checked={editingBlog.isFeatured}
-                          onChange={(e) =>
-                            setEditingBlog({ ...editingBlog, isFeatured: e.target.checked })
-                          }
-                        />
-                        Featured on Home
-                      </label>
-                    </div>
-                  </div>
-                </>
-              )}
-
-              {/* TAB 2: ARTICLE CONTENT (MARKDOWN) */}
-              {modalTab === "content" && (
-                <div className="admin-field admin-field-full" style={{ minHeight: "420px" }}>
-                  <label>
-                    <span>Full Article Content (Rich Markdown)</span>
-                    <span className="label-hint">Formatting toolbar • Live preview • Word counter</span>
-                  </label>
-                  <RichMarkdownEditor
-                    value={editingBlog.content}
-                    onChange={(val) => setEditingBlog({ ...editingBlog, content: val })}
-                    onReadTimeCalculated={(time) => setEditingBlog({ ...editingBlog, readTime: time })}
-                    placeholder="Write your comprehensive insights here..."
-                  />
-                </div>
-              )}
-            </div>
-
-            <div className="admin-modal-footer">
-              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                {modalTab === "content" ? (
-                  <button
-                    type="button"
-                    className="admin-btn admin-btn-outline"
-                    onClick={() => setModalTab("metadata")}
-                  >
-                    ← Edit Metadata &amp; Cover
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    className="admin-btn admin-btn-secondary"
-                    onClick={() => setModalTab("content")}
-                  >
-                    Next: Write Markdown Content →
-                  </button>
-                )}
-              </div>
-
-              <div style={{ display: "flex", gap: "10px" }}>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-outline"
-                  onClick={() => setIsModalOpen(false)}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  className="admin-btn admin-btn-primary"
-                  onClick={handleSave}
-                  disabled={saving}
-                >
-                  {saving ? "Saving..." : "Save & Publish Article"}
-                </button>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
