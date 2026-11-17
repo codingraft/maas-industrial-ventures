@@ -525,13 +525,13 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </p>
           </div>
 
-          <div className="image-preview-box" style={{ alignItems: "flex-start" }}>
-            <div style={{ position: "relative", width: "320px", height: "200px", flexShrink: 0 }}>
+          <div className="image-preview-box">
+            <div className="image-preview-thumb">
               <Image
                 src={media.overviewImage.src}
                 alt="Overview"
                 fill
-                style={{ objectFit: "cover", borderRadius: "8px" }}
+                style={{ objectFit: "cover" }}
               />
             </div>
 
@@ -562,13 +562,13 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </p>
           </div>
 
-          <div className="image-preview-box" style={{ alignItems: "flex-start" }}>
-            <div style={{ position: "relative", width: "320px", height: "200px", flexShrink: 0 }}>
+          <div className="image-preview-box">
+            <div className="image-preview-thumb">
               <Image
                 src={media.infraImage.src}
                 alt="Infrastructure"
                 fill
-                style={{ objectFit: "cover", borderRadius: "8px" }}
+                style={{ objectFit: "cover" }}
               />
             </div>
 
@@ -768,13 +768,13 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </p>
           </div>
 
-          <div className="image-preview-box" style={{ alignItems: "flex-start" }}>
-            <div style={{ position: "relative", width: "320px", height: "200px", flexShrink: 0 }}>
+          <div className="image-preview-box">
+            <div className="image-preview-thumb">
               <Image
                 src={media.locationImage.src || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1200&q=82"}
                 alt="Location Map"
                 fill
-                style={{ objectFit: "cover", borderRadius: "8px" }}
+                style={{ objectFit: "cover" }}
               />
             </div>
 
@@ -851,7 +851,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </div>
 
             {/* Add New Category Input */}
-            <div style={{ display: "flex", gap: "10px", alignItems: "center", maxWidth: "420px" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", maxWidth: "420px", flexWrap: "wrap" }}>
               <input
                 type="text"
                 className="form-control"

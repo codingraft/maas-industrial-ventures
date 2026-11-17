@@ -1030,7 +1030,7 @@ export function ProjectsManager() {
                   src={proj.coverImage || "https://images.unsplash.com/photo-1758304481470-e575d1d44efa?auto=format&fit=crop&w=600&q=80"}
                   alt={proj.title}
                   fill
-                  sizes="300px"
+                  sizes="(max-width: 640px) 100vw, 360px"
                   className="apc-img"
                 />
                 <span className={`apc-status-pill ${proj.isActive ? "is-active" : "is-inactive"}`}>

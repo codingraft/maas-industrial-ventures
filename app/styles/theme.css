@@ -172,6 +172,12 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   }
 }
 
+@media (max-width: 375px) {
+  :root {
+    --gutter: 12px;
+  }
+}
+
 .page-wrap {
   width: min(calc(100% - (var(--gutter, 48px) * 2)), var(--content, 1280px));
   margin-inline: auto;

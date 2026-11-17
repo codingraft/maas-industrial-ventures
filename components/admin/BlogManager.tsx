@@ -799,12 +799,12 @@ export function BlogManager() {
             <div key={b.id} className="admin-blog-row">
               <div className="abr-media">
                 <Image
-                  src={b.coverImage || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=400&q=80"}
+                  src={b.coverImage || "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=600&q=80"}
                   alt={b.title}
-                  width={140}
-                  height={85}
+                  width={320}
+                  height={180}
                   className="abr-img"
-                  style={{ objectFit: "cover", borderRadius: "6px" }}
+                  style={{ objectFit: "cover" }}
                 />
               </div>
 

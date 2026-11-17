@@ -184,7 +184,7 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
 
             {/* Meta Title Field */}
             <div className="form-row" style={{ marginTop: "24px" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
                 <label className="form-label" style={{ margin: 0 }}>
                   Page Title (Meta Title &lt;title&gt;)
                 </label>
@@ -206,7 +206,7 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
 
             {/* Meta Description Field */}
             <div className="form-row">
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "6px", flexWrap: "wrap", gap: "6px" }}>
                 <label className="form-label" style={{ margin: 0 }}>
                   Page Meta Description (&lt;meta name=&quot;description&quot;&gt;)
                 </label>
