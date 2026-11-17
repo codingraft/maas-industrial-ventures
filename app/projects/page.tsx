@@ -79,94 +79,132 @@ export default async function ProjectsIndexPage() {
             </div>
           ) : (
             <div className="projects-catalog-grid">
-              {projects.map((project, idx) => (
-                <article key={project.id || idx} className="project-catalog-card">
-                  <div className="project-catalog-media">
-                    <Image
-                      src={
-                        project.coverImage ||
-                        "https://images.unsplash.com/photo-1567789884554-0b844b597180?auto=format&fit=crop&w=1400&q=82"
-                      }
-                      alt={project.title}
-                      fill
-                      sizes="(max-width: 900px) 100vw, 50vw"
-                      className="project-catalog-img"
-                    />
-                    <div className="project-catalog-badges">
-                      <span className="proj-status-badge">
-                        <span className="status-live-dot" /> {project.status || "Active Plots Available"}
-                      </span>
-                      <span className="proj-location-badge">
-                        {project.addressShort || project.location.split(",")[0]}
-                      </span>
-                    </div>
-                  </div>
+              {projects.map((project, idx) => {
+                const rawDesc = project.shortDescription || project.fullDescription || "";
+                const cleanLead = rawDesc.includes(".")
+                  ? rawDesc.split(". ")[0].trim() + "."
+                  : rawDesc.slice(0, 140) + "...";
 
-                  <div className="project-catalog-body">
-                    <div className="project-catalog-header">
-                      <span className="project-index">0{idx + 1}</span>
-                      <div>
+                const roadDisplay = /rcc|concrete/i.test(project.roadWidth)
+                  ? "Heavy-Duty RCC"
+                  : project.roadWidth.split(".")[0] || "45–52 Ft. Wide";
+
+                const corridorDisplay = project.addressShort || project.location.split(",")[0] || "Western UP Corridor";
+
+                return (
+                  <article key={project.id || idx} className="project-catalog-card">
+                    <div className="project-catalog-media">
+                      <Image
+                        src={
+                          project.coverImage ||
+                          "https://images.unsplash.com/photo-1567789884554-0b844b597180?auto=format&fit=crop&w=1400&q=82"
+                        }
+                        alt={project.title}
+                        fill
+                        sizes="(max-width: 900px) 100vw, 50vw"
+                        className="project-catalog-img"
+                      />
+                      <div className="project-catalog-badges">
+                        <span className="proj-status-badge">
+                          <span className="status-live-dot" /> {project.status || "Active Plots Available"}
+                        </span>
+                        <span className="proj-location-badge">
+                          {corridorDisplay}
+                        </span>
+                      </div>
+                      <span className="project-catalog-index-stamp">0{idx + 1}</span>
+                    </div>
+
+                    <div className="project-catalog-body">
+                      <div className="project-catalog-header">
+                        <div className="project-catalog-kicker-row">
+                          <span className="project-kicker">
+                            <span className="kicker-index">0{idx + 1}</span>
+                            <span className="kicker-divider">/</span>
+                            {project.tagline || "Planned Industrial Park"}
+                          </span>
+                          <span className="project-location-tag">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                              <circle cx="12" cy="10" r="3" />
+                            </svg>
+                            {corridorDisplay}
+                          </span>
+                        </div>
                         <h2 className="project-card-title">
                           <Link href={`/projects/${project.slug}`}>{project.title}</Link>
                         </h2>
-                        <p className="project-card-tagline">{project.tagline}</p>
+                      </div>
+
+                      <p className="project-card-desc">
+                        {cleanLead}
+                      </p>
+
+                      {/* Specifications Quick Strip (3 Tiles) */}
+                      <div className="project-specs-row">
+                        <div className="spec-item">
+                          <span className="spec-label">Plot Sizing</span>
+                          <strong className="spec-val">{project.plotSizes}</strong>
+                        </div>
+                        <div className="spec-item">
+                          <span className="spec-label">Road Network</span>
+                          <strong className="spec-val">{roadDisplay}</strong>
+                        </div>
+                        <div className="spec-item">
+                          <span className="spec-label">Corridor Access</span>
+                          <strong className="spec-val">{corridorDisplay}</strong>
+                        </div>
+                      </div>
+
+                      {/* Key Features Bullets */}
+                      {project.features && project.features.length > 0 && (
+                        <ul className="project-features-list">
+                          {project.features.slice(0, 3).map((feat, fIdx) => (
+                            <li key={fIdx}>
+                              <span className="feat-check" aria-hidden="true">
+                                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              </span>
+                              <span>{feat}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+
+                      {/* MSME Subsidies Highlight */}
+                      {project.subsidiesInfo && (
+                        <div className="project-subsidy-alert">
+                          <span className="subsidy-badge">
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" style={{ verticalAlign: "-1px", marginRight: "4px" }}>
+                              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
+                              <path d="m9 12 2 2 4-4" />
+                            </svg>
+                            UP MSME 2022
+                          </span>
+                          <span>Eligible for capital investment subsidies &amp; stamp duty exemptions</span>
+                        </div>
+                      )}
+
+                      {/* Actions */}
+                      <div className="project-card-actions">
+                        <Link href={`/projects/${project.slug}`} className="button button-gold">
+                          Explore Project Details <Arrow diagonal />
+                        </Link>
+                        <button
+                          type="button"
+                          className="button button-outline-dark"
+                          data-enquiry-trigger
+                          data-enquiry-project={project.title}
+                          data-enquiry-title={`Enquiry for ${project.title}`}
+                        >
+                          Schedule Site Visit <Arrow />
+                        </button>
                       </div>
                     </div>
-
-                    <p className="project-card-desc">
-                      {project.shortDescription || project.fullDescription.slice(0, 180) + "..."}
-                    </p>
-
-                    {/* Specifications Quick Strip */}
-                    <div className="project-specs-row">
-                      <div className="spec-item">
-                        <span className="spec-label">Plot Sizes</span>
-                        <strong className="spec-val">{project.plotSizes}</strong>
-                      </div>
-                      <div className="spec-item">
-                        <span className="spec-label">Internal Roads</span>
-                        <strong className="spec-val">{project.roadWidth}</strong>
-                      </div>
-                    </div>
-
-                    {/* Key Features Bullets */}
-                    {project.features && project.features.length > 0 && (
-                      <ul className="project-features-list">
-                        {project.features.slice(0, 3).map((feat, fIdx) => (
-                          <li key={fIdx}>
-                            <span className="feat-check" aria-hidden="true">✓</span>
-                            <span>{feat}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    )}
-
-                    {/* MSME Subsidies Highlight */}
-                    {project.subsidiesInfo && (
-                      <div className="project-subsidy-alert">
-                        <span className="subsidy-icon" aria-hidden="true">🏛️</span>
-                        <span>{project.subsidiesInfo}</span>
-                      </div>
-                    )}
-
-                    {/* Actions */}
-                    <div className="project-card-actions">
-                      <Link href={`/projects/${project.slug}`} className="button button-gold">
-                        View Project Details <Arrow diagonal />
-                      </Link>
-                      <button
-                        type="button"
-                        className="button button-outline-dark"
-                        data-enquiry-trigger
-                        data-enquiry-project={project.title}
-                        data-enquiry-title={`Enquiry for ${project.title}`}
-                      >
-                        Enquire / Site Visit <Arrow />
-                      </button>
-                    </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
           )}
         </section>

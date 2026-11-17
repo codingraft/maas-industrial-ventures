@@ -535,13 +535,63 @@ export function ProjectsManager() {
                       </label>
                       <textarea
                         className="admin-textarea"
-                        rows={6}
+                        rows={5}
                         value={editingProject.fullDescription}
                         onChange={(e) =>
                           setEditingProject({ ...editingProject, fullDescription: e.target.value })
                         }
                         placeholder="Provide detailed information regarding site topography, boundary demarcation, power substation access, and industrial utility planning..."
                       />
+                    </div>
+
+                    <div className="admin-field admin-field-full">
+                      <label>
+                        <span>Delivered Infrastructure Features</span>
+                        <span className="label-hint">One feature per line · Rendered as verified checklist on project page</span>
+                      </label>
+                      <textarea
+                        className="admin-textarea"
+                        rows={4}
+                        value={(editingProject.features || []).join("\n")}
+                        onChange={(e) =>
+                          setEditingProject({
+                            ...editingProject,
+                            features: e.target.value
+                              .split("\n")
+                              .map((line) => line.trim())
+                              .filter(Boolean),
+                          })
+                        }
+                        placeholder={`Completed clear plot demarcation for rapid site handover\nEngineered RCC internal road infrastructure\nPlanned amenities for industrial workforce & operations\nHigh-uptime electrical lines & utility drainage network`}
+                      />
+                      <small style={{ fontSize: "11px", color: "var(--admin-text-muted)", marginTop: "4px", display: "block" }}>
+                        {(editingProject.features || []).length} active feature items configured
+                      </small>
+                    </div>
+
+                    <div className="admin-field admin-field-full">
+                      <label>
+                        <span>Strategic Freight &amp; Transit Connectivity</span>
+                        <span className="label-hint">One route / corridor per line · Rendered in connectivity milestone cards</span>
+                      </label>
+                      <textarea
+                        className="admin-textarea"
+                        rows={4}
+                        value={(editingProject.connectivity || []).join("\n")}
+                        onChange={(e) =>
+                          setEditingProject({
+                            ...editingProject,
+                            connectivity: e.target.value
+                              .split("\n")
+                              .map((line) => line.trim())
+                              .filter(Boolean),
+                          })
+                        }
+                        placeholder={`Direct access on Hapur–Modinagar Road corridor\n12 km from Delhi–Meerut Expressway (DME) Interchange\n18 km from Ghaziabad Railway Freight & Inland Container Terminal\nSeamless multi-axle heavy freight carrier navigation`}
+                      />
+                      <small style={{ fontSize: "11px", color: "var(--admin-text-muted)", marginTop: "4px", display: "block" }}>
+                        {(editingProject.connectivity || []).length} connectivity routes configured
+                      </small>
                     </div>
                   </div>
                 </div>
@@ -630,6 +680,46 @@ export function ProjectsManager() {
                         }
                         placeholder="https://... (PDF download link)"
                       />
+                    </div>
+
+                    <div className="admin-field admin-field-full">
+                      <label>
+                        <span>Site Progress Gallery Images</span>
+                        <span className="label-hint">One image URL per line · Rendered in public site photo records</span>
+                      </label>
+                      <textarea
+                        className="admin-textarea"
+                        rows={3}
+                        value={(editingProject.galleryImages || []).join("\n")}
+                        onChange={(e) =>
+                          setEditingProject({
+                            ...editingProject,
+                            galleryImages: e.target.value
+                              .split("\n")
+                              .map((line) => line.trim())
+                              .filter(Boolean),
+                          })
+                        }
+                        placeholder={`https://images.unsplash.com/photo-1567789884554-0b844b597180\nhttps://images.unsplash.com/photo-1504307651254-35680f356dfd`}
+                      />
+                      <small style={{ fontSize: "11px", color: "var(--admin-text-muted)", marginTop: "4px", display: "block" }}>
+                        {(editingProject.galleryImages || []).length} gallery images configured
+                      </small>
+
+                      {editingProject.galleryImages && editingProject.galleryImages.length > 0 && (
+                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "10px" }}>
+                          {editingProject.galleryImages.slice(0, 6).map((img, iIdx) => (
+                            <Image
+                              key={iIdx}
+                              src={img}
+                              alt={`Gallery ${iIdx + 1}`}
+                              width={80}
+                              height={55}
+                              style={{ objectFit: "cover", borderRadius: "4px", border: "1px solid var(--admin-border)" }}
+                            />
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>

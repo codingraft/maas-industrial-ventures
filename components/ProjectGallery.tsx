@@ -227,7 +227,6 @@ export function ProjectGallery({
                     fill
                     sizes="(max-width: 600px) 100vw, (max-width: 1024px) 50vw, 33vw"
                     className="gallery-item-image"
-                    quality={85}
                     onError={() => {
                       if (!failedImages[image.src]) {
                         setFailedImages((previous) => ({ ...previous, [image.src]: true }));

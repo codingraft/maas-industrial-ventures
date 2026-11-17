@@ -98,7 +98,6 @@ export function HeroSlider({
             fill
             priority={idx === 0}
             sizes="100vw"
-            quality={85}
           />
         </div>
       ))}

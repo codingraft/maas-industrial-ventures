@@ -144,7 +144,11 @@ body {
   width: 100%;
   position: relative;
 }
-body.menu-open { overflow: hidden; }
+body.menu-open,
+html:has(body.menu-open) {
+  overflow: hidden !important;
+  touch-action: none;
+}
 a { color: inherit; text-decoration: none; }
 button, input, textarea, select { font: inherit; }
 button {

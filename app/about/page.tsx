@@ -124,7 +124,6 @@ export default async function AboutPage() {
                 fill
                 priority
                 sizes="(max-width: 900px) 100vw, 92vw"
-                quality={85}
               />
               <span className="image-caption">
                 {media.overviewImage.caption || "MAAS Industrial Ventures · Developing Land. Building Opportunities."}

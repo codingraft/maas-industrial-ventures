@@ -197,7 +197,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                 sizes="(max-width: 900px) 100vw, 85vw"
                 priority
                 className="blog-cover-img"
-                quality={85}
               />
             </div>
             <div className="blog-cover-caption">

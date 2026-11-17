@@ -109,7 +109,6 @@ export function AboutOverview({
               alt={overviewImage.alt || "MAAS Industrial Land Development"}
               fill
               sizes="(max-width: 900px) 100vw, 90vw"
-              quality={85}
             />
             <span className="image-caption">
               {overviewImage.caption || "MAAS Industrial Ventures · Developing Land. Building Opportunities."}
