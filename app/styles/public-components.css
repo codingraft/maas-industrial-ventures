@@ -3324,27 +3324,34 @@
 }
 
 .project-card-info {
-  padding: 36px 32px;
+  padding: 40px 36px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: var(--surface);
+}
+
+@media (max-width: 640px) {
+  .project-card-info {
+    padding: 24px 20px;
+  }
+}
+
+.project-card-body-content {
   display: flex;
   flex-direction: column;
 }
 
-@media (max-width: 600px) {
-  .project-card-info {
-    padding: 24px 18px;
-  }
-}
-
-.project-meta-top {
+.project-kicker-row {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
+  justify-content: space-between;
+  gap: 12px;
   margin-bottom: 12px;
+  flex-wrap: wrap;
 }
 
-.project-tagline {
+.project-kicker {
   font-size: 11px;
   text-transform: uppercase;
   letter-spacing: 0.1em;
@@ -3355,35 +3362,35 @@
   gap: 6px;
 }
 
-.project-index-num {
+.kicker-index {
   font-weight: 800;
-  color: var(--gold-dark);
 }
 
-.meta-sep {
+.kicker-divider {
   opacity: 0.35;
 }
 
-.project-loc {
-  font-size: 11.5px;
+.project-location-tag {
+  font-size: 12px;
   color: var(--muted);
   font-weight: 500;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 5px;
 }
 
-.loc-pin {
-  font-size: 12px;
+.project-location-tag svg {
+  color: var(--gold-dark);
+  flex-shrink: 0;
 }
 
 .project-title {
   font-family: var(--serif);
-  font-size: clamp(24px, 2.6vw, 34px);
+  font-size: clamp(24px, 2.5vw, 34px);
   font-weight: 500;
   color: var(--ink);
-  margin: 0 0 12px;
-  line-height: 1.22;
+  margin: 0 0 10px;
+  line-height: 1.2;
   letter-spacing: -0.02em;
 }
 
@@ -3400,86 +3407,98 @@
 .project-description {
   font-size: 14.5px;
   color: var(--muted);
-  line-height: 1.65;
-  margin: 0 0 22px;
+  line-height: 1.6;
+  margin: 0 0 20px;
 }
 
-/* Minimalist Hairline Metrics Strip */
-.project-metrics-strip {
+/* Refined Specifications Grid (Un-cramped with clean alignment) */
+.project-specs-strip {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 16px;
-  padding-block: 14px;
-  border-block: 1px solid var(--line);
+  padding: 14px 0;
+  border-top: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
   margin-bottom: 20px;
 }
 
-.metric-cell {
+@media (max-width: 640px) {
+  .project-specs-strip {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
+.spec-cell {
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.metric-val {
-  font-size: 13.5px;
-  font-weight: 600;
-  color: var(--ink);
-  line-height: 1.25;
-}
-
-.metric-lbl {
-  font-size: 10px;
+.spec-lbl {
+  font-size: 9.5px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
 }
 
-/* Minimalist Key Highlight Tags */
-.project-tags-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 20px;
-}
-
-.project-micro-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
+.spec-val {
+  font-size: 13.5px;
+  font-weight: 600;
   color: var(--ink);
-  background: var(--paper);
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 4px 10px;
   line-height: 1.3;
 }
 
-.tag-dot {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--gold);
+/* Clean Architectural Feature Checklist (Replacing cluttered rounded pills) */
+.project-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 18px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
-/* Minimal Policy Callout (Clean gold hairline accent, zero yellow box) */
-.project-policy-callout {
+.project-checklist-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--ink);
+}
+
+.check-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(212, 175, 55, 0.14);
+  color: var(--gold-dark);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.check-text {
+  color: var(--ink);
+}
+
+/* Sleek Policy Incentives Bar (Clean gold accent line) */
+.project-incentives-bar {
   display: flex;
   align-items: baseline;
   gap: 10px;
-  padding: 8px 12px;
+  padding: 10px 14px;
   background: rgba(212, 175, 55, 0.06);
-  border-left: 2px solid var(--gold);
+  border-left: 3px solid var(--gold);
   border-radius: 0 6px 6px 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--ink);
   margin-bottom: 24px;
 }
 
-.policy-pill {
+.incentive-badge {
   font-size: 10px;
   font-weight: 800;
   text-transform: uppercase;
@@ -3488,17 +3507,19 @@
   flex-shrink: 0;
 }
 
-.policy-text {
+.incentive-text {
   color: var(--muted);
   font-size: 12px;
+  line-height: 1.5;
 }
 
 .project-card-actions {
   display: flex;
-  gap: 12px;
+  gap: 14px;
   align-items: center;
   flex-wrap: wrap;
   margin-top: auto;
+  padding-top: 8px;
 }
 
 @media (max-width: 640px) {
