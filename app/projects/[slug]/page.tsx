@@ -123,7 +123,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               fill
               priority
               sizes="100vw"
-              quality={88}
+              quality={85}
               className="project-cover-img"
             />
             <span className="image-caption">{project.title} · {project.location}</span>

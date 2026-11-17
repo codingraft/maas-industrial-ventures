@@ -16,6 +16,7 @@ import {
   GalleryItem,
   ProjectItem,
   BlogPost,
+  PaginatedResult,
 } from "./types";
 
 export * from "./types";
@@ -589,6 +590,123 @@ export async function getProjects(activeOnly: boolean = false): Promise<ProjectI
   return projects;
 }
 
+export interface GetPaginatedProjectsOptions {
+  activeOnly?: boolean;
+  page?: number;
+  limit?: number;
+  search?: string;
+  status?: string;
+}
+
+export async function getPaginatedProjects(
+  options: GetPaginatedProjectsOptions = {}
+): Promise<PaginatedResult<ProjectItem>> {
+  const page = Math.max(1, options.page || 1);
+  const limit = Math.max(1, Math.min(50, options.limit || 10));
+  const skip = (page - 1) * limit;
+  const search = options.search?.trim() || "";
+  const status = options.status?.trim() || "";
+
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      const coll = db.collection("projects");
+      const filter: Record<string, unknown> = {};
+
+      if (options.activeOnly) {
+        filter.isActive = true;
+      }
+      if (status && status !== "all") {
+        filter.status = status;
+      }
+      if (search) {
+        const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = { $regex: escaped, $options: "i" };
+        filter.$or = [
+          { title: regex },
+          { location: regex },
+          { tagline: regex },
+          { shortDescription: regex },
+          { addressShort: regex },
+        ];
+      }
+
+      const [total, docs] = await Promise.all([
+        coll.countDocuments(filter),
+        coll
+          .find(filter)
+          .sort({ order: 1, _id: 1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray(),
+      ]);
+
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const items: ProjectItem[] = docs.map((d: any) => ({
+        id: d.id || d._id.toString(),
+        title: d.title || "",
+        slug: d.slug || "",
+        tagline: d.tagline || "",
+        location: d.location || "",
+        addressShort: d.addressShort || "",
+        shortDescription: d.shortDescription || "",
+        fullDescription: d.fullDescription || "",
+        plotSizes: d.plotSizes || "",
+        roadWidth: d.roadWidth || "",
+        connectivity: Array.isArray(d.connectivity) ? d.connectivity : [],
+        features: Array.isArray(d.features) ? d.features : [],
+        subsidiesInfo: d.subsidiesInfo || "",
+        status: d.status || "Active Plots Available",
+        coverImage: d.coverImage || "",
+        galleryImages: Array.isArray(d.galleryImages) ? d.galleryImages : [],
+        brochureUrl: d.brochureUrl || "",
+        order: Number(d.order) || 0,
+        isActive: d.isActive !== false,
+      }));
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      };
+    } catch (err) {
+      console.error("MongoDB getPaginatedProjects failed, falling back to SQLite:", err);
+    }
+  }
+
+  // Fallback: fetch all from SQLite and slice
+  let all = getProjectsFromSqlite(Boolean(options.activeOnly));
+  if (status && status !== "all") {
+    all = all.filter((p) => p.status === status);
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    all = all.filter(
+      (p) =>
+        p.title.toLowerCase().includes(q) ||
+        p.location.toLowerCase().includes(q) ||
+        p.shortDescription.toLowerCase().includes(q)
+    );
+  }
+  const total = all.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const items = all.slice(skip, skip + limit);
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
+  };
+}
+
 /**
  * Targeted O(1) single project lookup by slug or ID without loading the entire collection.
  */
@@ -804,6 +922,126 @@ export async function getBlogPosts(publishedOnly: boolean = false): Promise<Blog
 
   cacheSet(cacheKey, blogs, 60000);
   return blogs;
+}
+
+export interface GetPaginatedBlogPostsOptions {
+  publishedOnly?: boolean;
+  page?: number;
+  limit?: number;
+  search?: string;
+  category?: string;
+  includeContent?: boolean;
+}
+
+export async function getPaginatedBlogPosts(
+  options: GetPaginatedBlogPostsOptions = {}
+): Promise<PaginatedResult<BlogPost>> {
+  const page = Math.max(1, options.page || 1);
+  const limit = Math.max(1, Math.min(50, options.limit || 10));
+  const skip = (page - 1) * limit;
+  const search = options.search?.trim() || "";
+  const category = options.category?.trim() || "";
+
+  if (isMongoConfigured()) {
+    try {
+      const db = await getMongoDb();
+      const coll = db.collection("blogs");
+      const filter: Record<string, unknown> = {};
+
+      if (options.publishedOnly) {
+        filter.isPublished = true;
+      }
+      if (category && category !== "all") {
+        filter.category = category;
+      }
+      if (search) {
+        const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        const regex = { $regex: escaped, $options: "i" };
+        filter.$or = [
+          { title: regex },
+          { excerpt: regex },
+          { category: regex },
+          { author: regex },
+        ];
+      }
+
+      // Projections: omit heavy markdown content unless explicitly requested
+      const projection = options.includeContent ? {} : { content: 0 };
+
+      const [total, docs] = await Promise.all([
+        coll.countDocuments(filter),
+        coll
+          .find(filter, { projection })
+          .sort({ publishedAt: -1, _id: -1 })
+          .skip(skip)
+          .limit(limit)
+          .toArray(),
+      ]);
+
+      const totalPages = Math.max(1, Math.ceil(total / limit));
+      const items: BlogPost[] = docs.map((d: any) => ({
+        id: d.id || d._id.toString(),
+        title: d.title || "",
+        slug: d.slug || "",
+        category: d.category || "General",
+        excerpt: d.excerpt || "",
+        content: d.content || "",
+        coverImage: d.coverImage || "",
+        author: d.author || "MAAS Research Desk",
+        authorBio: d.authorBio || "",
+        readTime: d.readTime || "4 min read",
+        publishedAt: d.publishedAt || new Date().toISOString().slice(0, 10),
+        isFeatured: Boolean(d.isFeatured),
+        isPublished: d.isPublished !== false,
+        metaTitle: d.metaTitle || d.title,
+        metaDescription: d.metaDescription || d.excerpt,
+        keywords: Array.isArray(d.keywords) ? d.keywords : [],
+      }));
+
+      return {
+        items,
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      };
+    } catch (err) {
+      console.error("MongoDB getPaginatedBlogPosts failed, falling back to SQLite:", err);
+    }
+  }
+
+  // Fallback: fetch all from SQLite and slice
+  let all = getBlogPostsFromSqlite(Boolean(options.publishedOnly));
+  if (category && category !== "all") {
+    all = all.filter((b) => b.category.toLowerCase() === category.toLowerCase());
+  }
+  if (search) {
+    const q = search.toLowerCase();
+    all = all.filter(
+      (b) =>
+        b.title.toLowerCase().includes(q) ||
+        b.excerpt.toLowerCase().includes(q) ||
+        b.category.toLowerCase().includes(q)
+    );
+  }
+  const total = all.length;
+  const totalPages = Math.max(1, Math.ceil(total / limit));
+  const rawItems = all.slice(skip, skip + limit);
+  const items = options.includeContent
+    ? rawItems
+    : rawItems.map((b) => ({ ...b, content: "" }));
+
+  return {
+    items,
+    total,
+    page,
+    limit,
+    totalPages,
+    hasNextPage: page < totalPages,
+    hasPrevPage: page > 1,
+  };
 }
 
 /**

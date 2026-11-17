@@ -99,6 +99,7 @@ body,
   justify-content: space-between;
   z-index: 50;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 /* Sidebar Brand Header */
@@ -149,11 +150,12 @@ body,
   padding: 12px 10px;
   overflow-y: auto;
   overflow-x: hidden;
+  scrollbar-gutter: stable;
   display: flex;
   flex-direction: column;
   gap: 3px;
   scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.08) transparent;
+  scrollbar-color: rgba(255, 255, 255, 0.14) transparent;
 }
 
 .admin-sidebar-nav::-webkit-scrollbar {
@@ -2734,7 +2736,8 @@ input:checked+.slider:before {
 }
 
 .abr-actions,
-.apr-actions {
+.apr-actions,
+.apc-actions {
   display: flex;
   align-items: center;
   gap: 10px;
@@ -2742,7 +2745,8 @@ input:checked+.slider:before {
 }
 
 .abr-actions .admin-btn,
-.apr-actions .admin-btn {
+.apr-actions .admin-btn,
+.apc-actions .admin-btn {
   padding: 6px 14px !important;
   font-size: 12.5px !important;
   border-radius: 6px !important;
@@ -2750,28 +2754,32 @@ input:checked+.slider:before {
 }
 
 .abr-actions .admin-btn-outline,
-.apr-actions .admin-btn-outline {
+.apr-actions .admin-btn-outline,
+.apc-actions .admin-btn-outline {
   background: #111726 !important;
   color: #f1f5f9 !important;
   border: 1px solid #24324a !important;
 }
 
 .abr-actions .admin-btn-outline:hover,
-.apr-actions .admin-btn-outline:hover {
+.apr-actions .admin-btn-outline:hover,
+.apc-actions .admin-btn-outline:hover {
   background: #1a253b !important;
   border-color: var(--admin-gold) !important;
   color: #ffffff !important;
 }
 
 .abr-actions .admin-btn-danger,
-.apr-actions .admin-btn-danger {
+.apr-actions .admin-btn-danger,
+.apc-actions .admin-btn-danger {
   background: rgba(239, 68, 68, 0.12) !important;
   color: #fca5a5 !important;
   border: 1px solid rgba(239, 68, 68, 0.3) !important;
 }
 
 .abr-actions .admin-btn-danger:hover,
-.apr-actions .admin-btn-danger:hover {
+.apr-actions .admin-btn-danger:hover,
+.apc-actions .admin-btn-danger:hover {
   background: #dc2626 !important;
   border-color: #dc2626 !important;
   color: #ffffff !important;

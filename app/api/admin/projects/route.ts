@@ -1,18 +1,41 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { getProjects, saveProject } from "@/lib/db";
+import { getPaginatedProjects, saveProject } from "@/lib/db";
 import { ProjectItem } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const projects = await getProjects(false);
-    return NextResponse.json({ projects });
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "10", 10)));
+    const search = searchParams.get("search")?.trim() || "";
+    const status = searchParams.get("status")?.trim() || "";
+
+    const result = await getPaginatedProjects({
+      activeOnly: false,
+      page,
+      limit,
+      search,
+      status,
+    });
+
+    return NextResponse.json({
+      projects: result.items,
+      pagination: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPrevPage: result.hasPrevPage,
+      },
+    });
   } catch (error) {
     console.error("Failed to load projects:", error);
     return NextResponse.json({ error: "Failed to load projects" }, { status: 500 });

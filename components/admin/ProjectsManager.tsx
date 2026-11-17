@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
 import { ProjectItem } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
+import { Pagination } from "@/components/ui/Pagination";
 
 export function ProjectsManager() {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
@@ -11,6 +12,19 @@ export function ProjectsManager() {
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
+
+  // Pagination & Filtering state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [status, setStatus] = useState("all");
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  });
 
   // In-app dialogs
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -38,22 +52,43 @@ export function ProjectsManager() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }
 
-  const fetchProjects = useCallback(async () => {
+  // 300ms Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  const fetchProjects = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/projects");
+      const params = new URLSearchParams();
+      params.set("page", page.toString());
+      params.set("limit", pageSize.toString());
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (status && status !== "all") params.set("status", status);
+
+      const res = await fetch(`/api/admin/projects?${params.toString()}`, { signal });
       if (!res.ok) throw new Error("Failed to fetch projects");
       const data = await res.json();
       setProjects(data.projects || []);
+      if (data.pagination) {
+        setPagination(data.pagination);
+      }
     } catch (err: unknown) {
+      if ((err as Error)?.name === "AbortError") return;
       addToast("error", "Error loading projects", err instanceof Error ? err.message : "Error");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, debouncedSearch, status]);
 
   useEffect(() => {
-    fetchProjects();
+    const controller = new AbortController();
+    fetchProjects(controller.signal);
+    return () => controller.abort();
   }, [fetchProjects]);
 
   function handleCreateNew() {
@@ -173,6 +208,63 @@ export function ProjectsManager() {
         </button>
       </div>
 
+      {/* Search and Filters Bar */}
+      <div className="admin-filters-bar" style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "18px", flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 240px", position: "relative" }}>
+          <input
+            type="text"
+            className="admin-input"
+            placeholder="Search projects by title, location, or specs..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: "100%", paddingLeft: "36px" }}
+          />
+          <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#64748b", pointerEvents: "none" }}>
+            🔍
+          </span>
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        <div style={{ minWidth: "180px" }}>
+          <select
+            className="admin-input"
+            value={status}
+            onChange={(e) => {
+              setStatus(e.target.value);
+              setPage(1);
+            }}
+          >
+            <option value="all">All Development Statuses</option>
+            <option value="Active Plots Available">Active Plots Available</option>
+            <option value="Under Development">Under Development</option>
+            <option value="Ready for Possession">Ready for Possession</option>
+          </select>
+        </div>
+
+        <div style={{ minWidth: "120px" }}>
+          <select
+            className="admin-input"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(1);
+            }}
+          >
+            <option value={10}>10 per page</option>
+            <option value={20}>20 per page</option>
+            <option value={50}>50 per page</option>
+          </select>
+        </div>
+      </div>
+
       {loading ? (
         <div className="admin-loading-state">Loading projects...</div>
       ) : projects.length === 0 ? (
@@ -242,6 +334,19 @@ export function ProjectsManager() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Backend Pagination */}
+      {!loading && projects.length > 0 && pagination.totalPages > 1 && (
+        <div style={{ marginTop: "24px" }}>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={(p) => setPage(p)}
+            totalItems={pagination.total}
+            pageSize={pagination.limit}
+          />
         </div>
       )}
 

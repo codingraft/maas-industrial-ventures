@@ -1,18 +1,42 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { getBlogPosts, saveBlogPost } from "@/lib/db";
+import { getPaginatedBlogPosts, saveBlogPost } from "@/lib/db";
 import { BlogPost } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-export async function GET() {
+export async function GET(request: Request) {
   if (!(await isAuthenticated())) {
     return NextResponse.json({ message: "Unauthorized" }, { status: 401 });
   }
 
   try {
-    const blogs = await getBlogPosts(false);
-    return NextResponse.json({ blogs });
+    const { searchParams } = new URL(request.url);
+    const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
+    const limit = Math.max(1, Math.min(50, parseInt(searchParams.get("limit") || "10", 10)));
+    const search = searchParams.get("search")?.trim() || "";
+    const category = searchParams.get("category")?.trim() || "";
+
+    const result = await getPaginatedBlogPosts({
+      publishedOnly: false,
+      page,
+      limit,
+      search,
+      category,
+      includeContent: false,
+    });
+
+    return NextResponse.json({
+      blogs: result.items,
+      pagination: {
+        total: result.total,
+        page: result.page,
+        limit: result.limit,
+        totalPages: result.totalPages,
+        hasNextPage: result.hasNextPage,
+        hasPrevPage: result.hasPrevPage,
+      },
+    });
   } catch (error) {
     console.error("Failed to load blogs:", error);
     return NextResponse.json({ error: "Failed to load blogs" }, { status: 500 });

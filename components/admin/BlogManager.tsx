@@ -2,9 +2,22 @@
 
 import { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
+import dynamic from "next/dynamic";
 import { BlogPost } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
-import RichMarkdownEditor from "@/components/admin/RichMarkdownEditor";
+import { Pagination } from "@/components/ui/Pagination";
+
+const RichMarkdownEditor = dynamic(
+  () => import("@/components/admin/RichMarkdownEditor"),
+  {
+    ssr: false,
+    loading: () => (
+      <div style={{ padding: "40px", textAlign: "center", color: "#94a3b8", background: "#0b0f1a", borderRadius: "8px" }}>
+        Loading Content Studio Editor...
+      </div>
+    ),
+  }
+);
 
 export function BlogManager() {
   const [blogs, setBlogs] = useState<BlogPost[]>([]);
@@ -13,6 +26,20 @@ export function BlogManager() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // Pagination & Filtering state
+  const [page, setPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
+  const [search, setSearch] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  const [category, setCategory] = useState("all");
+  const [categories, setCategories] = useState<string[]>([]);
+  const [pagination, setPagination] = useState({
+    total: 0,
+    page: 1,
+    limit: 10,
+    totalPages: 1,
+  });
 
   // In-app dialogs
   const [toasts, setToasts] = useState<ToastMessage[]>([]);
@@ -40,22 +67,53 @@ export function BlogManager() {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }
 
-  const fetchBlogs = useCallback(async () => {
+  // 300ms Debounce search input
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearch(search);
+      setPage(1);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [search]);
+
+  const fetchBlogs = useCallback(async (signal?: AbortSignal) => {
     setLoading(true);
     try {
-      const res = await fetch("/api/admin/blogs");
+      const params = new URLSearchParams();
+      params.set("page", page.toString());
+      params.set("limit", pageSize.toString());
+      if (debouncedSearch) params.set("search", debouncedSearch);
+      if (category && category !== "all") params.set("category", category);
+
+      const res = await fetch(`/api/admin/blogs?${params.toString()}`, { signal });
       if (!res.ok) throw new Error("Failed to fetch blog posts");
       const data = await res.json();
-      setBlogs(data.blogs || []);
+      const fetchedBlogs = data.blogs || [];
+      setBlogs(fetchedBlogs);
+
+      if (data.pagination) {
+        setPagination(data.pagination);
+      }
+
+      // Populate unique categories for filter
+      setCategories((prev) => {
+        const newCats = Array.from(
+          new Set([...prev, ...fetchedBlogs.map((b: BlogPost) => b.category)])
+        ).filter(Boolean);
+        return newCats;
+      });
     } catch (err: unknown) {
+      if ((err as Error)?.name === "AbortError") return;
       addToast("error", "Error loading blogs", err instanceof Error ? err.message : "Error");
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [page, pageSize, debouncedSearch, category]);
 
   useEffect(() => {
-    fetchBlogs();
+    const controller = new AbortController();
+    fetchBlogs(controller.signal);
+    return () => controller.abort();
   }, [fetchBlogs]);
 
   function handleCreateNew() {
@@ -80,7 +138,22 @@ export function BlogManager() {
     setIsModalOpen(true);
   }
 
-  function handleEdit(post: BlogPost) {
+  async function handleEdit(post: BlogPost) {
+    if (!post.content) {
+      try {
+        const res = await fetch(`/api/admin/blogs/${post.slug || post.id}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.blog) {
+            setEditingBlog(data.blog);
+            setIsModalOpen(true);
+            return;
+          }
+        }
+      } catch (err) {
+        console.error("Failed to fetch full blog post content:", err);
+      }
+    }
     setEditingBlog({ ...post });
     setIsModalOpen(true);
   }
@@ -174,6 +247,67 @@ export function BlogManager() {
         </button>
       </div>
 
+      {/* Search and Filters Bar */}
+      <div className="admin-filters-bar" style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "18px", flexWrap: "wrap" }}>
+        <div style={{ flex: "1 1 240px", position: "relative" }}>
+          <input
+            type="text"
+            className="admin-input"
+            placeholder="Search articles by title, excerpt, or category..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{ width: "100%", paddingLeft: "36px" }}
+          />
+          <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#64748b", pointerEvents: "none" }}>
+            🔍
+          </span>
+          {search && (
+            <button
+              type="button"
+              onClick={() => setSearch("")}
+              style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
+            >
+              ✕
+            </button>
+          )}
+        </div>
+
+        {categories.length > 0 && (
+          <div style={{ minWidth: "180px" }}>
+            <select
+              className="admin-input"
+              value={category}
+              onChange={(e) => {
+                setCategory(e.target.value);
+                setPage(1);
+              }}
+            >
+              <option value="all">All Categories</option>
+              {categories.map((c) => (
+                <option key={c} value={c}>
+                  {c}
+                </option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div style={{ minWidth: "120px" }}>
+          <select
+            className="admin-input"
+            value={pageSize}
+            onChange={(e) => {
+              setPageSize(Number(e.target.value));
+              setPage(1);
+            }}
+          >
+            <option value={10}>10 per page</option>
+            <option value={20}>20 per page</option>
+            <option value={50}>50 per page</option>
+          </select>
+        </div>
+      </div>
+
       {loading ? (
         <div className="admin-loading-state">Loading articles...</div>
       ) : blogs.length === 0 ? (
@@ -238,6 +372,19 @@ export function BlogManager() {
               </div>
             </div>
           ))}
+        </div>
+      )}
+
+      {/* Backend Pagination */}
+      {!loading && blogs.length > 0 && pagination.totalPages > 1 && (
+        <div style={{ marginTop: "24px" }}>
+          <Pagination
+            currentPage={pagination.page}
+            totalPages={pagination.totalPages}
+            onPageChange={(p) => setPage(p)}
+            totalItems={pagination.total}
+            pageSize={pagination.limit}
+          />
         </div>
       )}
 

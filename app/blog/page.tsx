@@ -5,7 +5,8 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FloatingContact } from "@/components/FloatingContact";
 import { Arrow } from "@/components/ui/Arrow";
-import { getAllSettings, getBlogPosts } from "@/lib/db";
+import { BlogPaginationControls } from "@/components/blog/BlogPaginationControls";
+import { getAllSettings, getBlogPosts, getPaginatedBlogPosts } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -35,15 +36,38 @@ function formatDisplayDate(dateStr?: string): string {
   }
 }
 
-export default async function BlogIndexPage() {
-  const [settings, posts] = await Promise.all([
+interface BlogIndexPageProps {
+  searchParams: Promise<{
+    category?: string;
+    page?: string;
+    search?: string;
+  }>;
+}
+
+export default async function BlogIndexPage({ searchParams }: BlogIndexPageProps) {
+  const resolvedParams = await searchParams;
+  const currentCategory = resolvedParams.category || "all";
+  const currentPage = Math.max(1, parseInt(resolvedParams.page || "1", 10));
+  const currentSearch = resolvedParams.search?.trim() || "";
+  const pageSize = 6;
+
+  const [settings, allPublishedPosts, paginatedResult] = await Promise.all([
     getAllSettings(),
-    getBlogPosts(true), // published only
+    getBlogPosts(true), // To obtain complete category list & total count
+    getPaginatedBlogPosts({
+      publishedOnly: true,
+      page: currentPage,
+      limit: pageSize,
+      search: currentSearch,
+      category: currentCategory === "all" ? undefined : currentCategory,
+      includeContent: false, // Heavy markdown excluded from card list
+    }),
   ]);
 
   const { site_info, sections, media, social_links } = settings;
+  const posts = paginatedResult.items;
 
-  const categories = Array.from(new Set(posts.map((p) => p.category))).filter(Boolean);
+  const categories = Array.from(new Set(allPublishedPosts.map((p) => p.category))).filter(Boolean);
 
   return (
     <>
@@ -64,69 +88,97 @@ export default async function BlogIndexPage() {
           <h1 className="blog-catalog-title">{site_info.blogHeadline}</h1>
           <p className="blog-catalog-lead">{site_info.blogDescription}</p>
 
-          {/* Category Chips */}
+          {/* Category Chips with Interactive Links */}
           {categories.length > 0 && (
             <div className="blog-categories-bar" aria-label="Article categories">
-              <span className="cat-chip is-active">All Insights ({posts.length})</span>
-              {categories.map((cat) => (
-                <span key={cat} className="cat-chip">
-                  {cat}
-                </span>
-              ))}
+              <Link
+                href="/blog"
+                className={`cat-chip ${currentCategory === "all" ? "is-active" : ""}`}
+              >
+                All Insights ({allPublishedPosts.length})
+              </Link>
+              {categories.map((cat) => {
+                const count = allPublishedPosts.filter((p) => p.category === cat).length;
+                return (
+                  <Link
+                    key={cat}
+                    href={`/blog?category=${encodeURIComponent(cat)}`}
+                    className={`cat-chip ${currentCategory === cat ? "is-active" : ""}`}
+                  >
+                    {cat} ({count})
+                  </Link>
+                );
+              })}
             </div>
           )}
         </section>
 
         {/* Blog Posts Grid */}
-        <section className="blog-catalog-content page-wrap">
+        <section className="blog-catalog-content page-wrap" id="catalog">
           {posts.length === 0 ? (
             <div className="blog-empty-state">
-              <h3>No articles published yet.</h3>
-              <p>Check back shortly for upcoming industrial market reports.</p>
-              <Link href="/" className="button button-gold">
-                Return to Homepage
+              <h3>No articles found.</h3>
+              <p>
+                {currentCategory !== "all"
+                  ? `No published articles found in category "${currentCategory}".`
+                  : "Check back shortly for upcoming industrial market reports."}
+              </p>
+              <Link href="/blog" className="button button-gold">
+                View All Insights
               </Link>
             </div>
           ) : (
-            <div className="blog-grid blog-grid-catalog">
-              {posts.map((post) => (
-                <article key={post.id} className="blog-card">
-                  <Link href={`/blog/${post.slug}`} className="blog-card-media">
-                    <Image
-                      src={
-                        post.coverImage ||
-                        "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80"
-                      }
-                      alt={post.title}
-                      fill
-                      sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                      className="blog-card-img"
-                    />
-                    <span className="blog-category-tag">{post.category}</span>
-                  </Link>
+            <>
+              <div className="blog-grid blog-grid-catalog">
+                {posts.map((post) => (
+                  <article key={post.id} className="blog-card">
+                    <Link href={`/blog/${post.slug}`} className="blog-card-media">
+                      <Image
+                        src={
+                          post.coverImage ||
+                          "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=800&q=80"
+                        }
+                        alt={post.title}
+                        fill
+                        sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                        className="blog-card-img"
+                      />
+                      <span className="blog-category-tag">{post.category}</span>
+                    </Link>
 
-                  <div className="blog-card-body">
-                    <div className="blog-meta-row">
-                      <span className="blog-date">{formatDisplayDate(post.publishedAt) || post.publishedAt}</span>
-                      <span className="blog-dot">•</span>
-                      <span className="blog-read-time">{post.readTime}</span>
+                    <div className="blog-card-body">
+                      <div className="blog-meta-row">
+                        <span className="blog-date">{formatDisplayDate(post.publishedAt) || post.publishedAt}</span>
+                        <span className="blog-dot">•</span>
+                        <span className="blog-read-time">{post.readTime}</span>
+                      </div>
+
+                      <h2 className="blog-card-title">
+                        <Link href={`/blog/${post.slug}`}>{post.title}</Link>
+                      </h2>
+
+                      <p className="blog-card-excerpt">{post.excerpt}</p>
+
+                      <div className="blog-card-foot">
+                        <Link href={`/blog/${post.slug}`} className="text-link">
+                          Read Full Article <Arrow diagonal />
+                        </Link>
+                      </div>
                     </div>
+                  </article>
+                ))}
+              </div>
 
-                    <h2 className="blog-card-title">
-                      <Link href={`/blog/${post.slug}`}>{post.title}</Link>
-                    </h2>
-
-                    <p className="blog-card-excerpt">{post.excerpt}</p>
-
-                    <div className="blog-card-foot">
-                      <Link href={`/blog/${post.slug}`} className="text-link">
-                        Read Full Article <Arrow diagonal />
-                      </Link>
-                    </div>
-                  </div>
-                </article>
-              ))}
-            </div>
+              {/* Dynamic URL-Synced Pagination */}
+              {paginatedResult.totalPages > 1 && (
+                <BlogPaginationControls
+                  currentPage={paginatedResult.page}
+                  totalPages={paginatedResult.totalPages}
+                  totalItems={paginatedResult.total}
+                  pageSize={paginatedResult.limit}
+                />
+              )}
+            </>
           )}
         </section>
       </main>
