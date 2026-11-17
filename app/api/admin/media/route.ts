@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { getAllSettings, getProjects, getBlogPosts } from "@/lib/db";
-import { MediaItem } from "@/lib/types";
+import { MediaItem, MasterPlanItem } from "@/lib/types";
 import path from "node:path";
 import fs from "node:fs/promises";
 
