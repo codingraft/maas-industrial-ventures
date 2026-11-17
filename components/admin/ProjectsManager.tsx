@@ -9,6 +9,7 @@ import { CardSkeleton } from "@/components/admin/ui/AdminSkeleton";
 import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminToolbar, AdminSearchInput } from "@/components/admin/ui/AdminToolbar";
 import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
+import { uploadImage } from "@/lib/imageOptimizer";
 
 type ProjectStudioTab = "general" | "specs" | "media";
 
@@ -209,17 +210,9 @@ export function ProjectsManager() {
 
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Upload failed");
-
-      setEditingProject((prev) => (prev ? { ...prev, coverImage: data.url } : null));
-      addToast("success", "Cover image uploaded successfully!");
+      const url = await uploadImage(file);
+      setEditingProject((prev) => (prev ? { ...prev, coverImage: url } : null));
+      addToast("success", "Cover image uploaded & converted to WebP successfully!");
     } catch (err: unknown) {
       addToast("error", "Upload error", err instanceof Error ? err.message : "Upload error");
     } finally {

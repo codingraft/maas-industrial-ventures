@@ -10,11 +10,32 @@ const ALLOWED_MIME_TYPES = new Set([
   "image/jpeg",
   "image/png",
   "image/webp",
+  "image/avif",
   "image/svg+xml",
   "image/gif",
+  "image/bmp",
+  "image/tiff",
+  "image/heic",
+  "image/heif",
+  "image/x-icon",
 ]);
 
-const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024; // 10MB
+const ALLOWED_EXTENSIONS = new Set([
+  ".jpg",
+  ".jpeg",
+  ".png",
+  ".webp",
+  ".avif",
+  ".svg",
+  ".gif",
+  ".bmp",
+  ".tiff",
+  ".heic",
+  ".heif",
+  ".ico",
+]);
+
+const MAX_FILE_SIZE_BYTES = 15 * 1024 * 1024; // 15MB
 
 export async function POST(request: Request) {
   if (!(await isAuthenticated())) {
@@ -29,16 +50,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ message: "No file provided" }, { status: 400 });
     }
 
-    if (!ALLOWED_MIME_TYPES.has(file.type)) {
+    const fileExt = (path.extname(file.name) || "").toLowerCase();
+    const isAllowedImage =
+      file.type.startsWith("image/") ||
+      ALLOWED_MIME_TYPES.has(file.type) ||
+      ALLOWED_EXTENSIONS.has(fileExt);
+
+    if (!isAllowedImage) {
       return NextResponse.json(
-        { message: "Invalid file type. Only JPG, PNG, WEBP, and SVG images are allowed." },
+        { message: "Invalid file type. Only image files (JPG, PNG, WEBP, AVIF, SVG, GIF, etc.) are allowed." },
         { status: 400 }
       );
     }
 
     if (file.size > MAX_FILE_SIZE_BYTES) {
       return NextResponse.json(
-        { message: "File exceeds 10MB limit." },
+        { message: "File exceeds 15MB limit. Please upload a smaller image." },
         { status: 400 }
       );
     }

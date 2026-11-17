@@ -5,6 +5,7 @@ import Image from "next/image";
 import { SeoSettings } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
 import { AdminTabs } from "@/components/admin/ui/AdminTabs";
+import { uploadImage } from "@/lib/imageOptimizer";
 
 interface SeoManagerProps {
   initialSeo: SeoSettings;
@@ -59,22 +60,9 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
 
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-
-      if (!res.ok) {
-        const errorData = await res.json().catch(() => ({}));
-        throw new Error(errorData.message || "Upload failed");
-      }
-
-      const data = await res.json();
-      setSeo((prev) => ({ ...prev, ogImage: data.url }));
-      notify("Social Share (OG) image uploaded successfully!", "success");
+      const url = await uploadImage(file);
+      setSeo((prev) => ({ ...prev, ogImage: url }));
+      notify("Social Share (OG) image uploaded & converted to WebP successfully!", "success");
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Image upload failed";
       notify(msg, "error");
@@ -339,7 +327,7 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
                   type="file"
                   ref={fileInputRef}
                   style={{ display: "none" }}
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/*"
                   onChange={handleImageUpload}
                 />
                 <button

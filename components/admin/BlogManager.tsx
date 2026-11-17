@@ -10,6 +10,7 @@ import { TableSkeleton } from "@/components/admin/ui/AdminSkeleton";
 import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminToolbar, AdminSearchInput } from "@/components/admin/ui/AdminToolbar";
 import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
+import { uploadImage } from "@/lib/imageOptimizer";
 
 const RichMarkdownEditor = dynamic(
   () => import("@/components/admin/RichMarkdownEditor"),
@@ -237,17 +238,9 @@ export function BlogManager() {
 
     setUploadingImage(true);
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-      const res = await fetch("/api/admin/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || "Upload failed");
-
-      setEditingBlog((prev) => (prev ? { ...prev, coverImage: data.url } : null));
-      addToast("success", "Cover image uploaded successfully!");
+      const url = await uploadImage(file);
+      setEditingBlog((prev) => (prev ? { ...prev, coverImage: url } : null));
+      addToast("success", "Cover image uploaded & converted to WebP successfully!");
     } catch (err: unknown) {
       addToast("error", "Upload error", err instanceof Error ? err.message : "Upload error");
     } finally {

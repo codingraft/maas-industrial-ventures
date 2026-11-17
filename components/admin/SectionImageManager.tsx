@@ -5,6 +5,7 @@ import Image from "next/image";
 import { SiteSettings, HeroSlide, GalleryItem, SectionImage, MasterPlanItem, GalleryCategory } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
 import { AdminTabs } from "@/components/admin/ui/AdminTabs";
+import { uploadImage } from "@/lib/imageOptimizer";
 
 interface SectionImageManagerProps {
   initialMedia: SiteSettings["media"];
@@ -64,17 +65,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
   }
 
   async function uploadFile(file: File): Promise<string> {
-    const formData = new FormData();
-    formData.append("file", file);
-
-    const res = await fetch("/api/admin/upload", {
-      method: "POST",
-      body: formData,
-    });
-
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.message || "Upload failed");
-    return data.url;
+    return await uploadImage(file);
   }
 
   /* --- 1. HERO SLIDER HANDLERS --- */
@@ -449,7 +440,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                     {uploadingField === `hero-${idx}` ? "Uploading…" : "Replace Photo"}
                     <input
                       type="file"
-                      accept="image/jpeg,image/png,image/webp"
+                      accept="image/*"
                       style={{ display: "none" }}
                       onChange={(e) => handleHeroSlideImageUpload(idx, e)}
                       disabled={uploadingField === `hero-${idx}`}
@@ -551,7 +542,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 {uploadingField === "overviewImage" ? "Uploading…" : "📁 Replace Overview Photo"}
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/*"
                   style={{ display: "none" }}
                   onChange={(e) => handleSectionImageUpload("overviewImage", e)}
                   disabled={uploadingField === "overviewImage"}
@@ -588,7 +579,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 {uploadingField === "infraImage" ? "Uploading…" : "📁 Replace Infrastructure Visual"}
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/*"
                   style={{ display: "none" }}
                   onChange={(e) => handleSectionImageUpload("infraImage", e)}
                   disabled={uploadingField === "infraImage"}
@@ -635,7 +626,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                       {uploadingField === `plan-${pIdx}` ? "Uploading…" : "Replace Blueprint File"}
                       <input
                         type="file"
-                        accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                        accept="image/*"
                         style={{ display: "none" }}
                         onChange={(e) => handleReplacePlanImage(pIdx, e)}
                         disabled={uploadingField === `plan-${pIdx}`}
@@ -758,7 +749,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 {uploadingField === "new-plan" ? "Uploading Plan…" : "📁 Choose Blueprint File & Add Perspective"}
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                  accept="image/*"
                   style={{ display: "none" }}
                   onChange={handleAddMasterPlan}
                   disabled={uploadingField === "new-plan"}
@@ -794,7 +785,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 {uploadingField === "locationImage" ? "Uploading…" : "📁 Replace Connectivity Map"}
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/svg+xml"
+                  accept="image/*"
                   style={{ display: "none" }}
                   onChange={(e) => handleSectionImageUpload("locationImage", e)}
                   disabled={uploadingField === "locationImage"}
@@ -1002,7 +993,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 {uploadingField === "new-gal" ? "Uploading…" : "📁 Choose Image File & Add to Gallery"}
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp"
+                  accept="image/*"
                   style={{ display: "none" }}
                   onChange={handleAddGalleryPhoto}
                   disabled={uploadingField === "new-gal"}
