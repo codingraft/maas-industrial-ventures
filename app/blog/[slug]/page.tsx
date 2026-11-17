@@ -5,7 +5,6 @@ import Image from "next/image";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FloatingContact } from "@/components/FloatingContact";
-import { EnquiryModal } from "@/components/EnquiryModal";
 import { Arrow } from "@/components/ui/Arrow";
 import { ShareArticleButtons } from "@/components/ShareArticleButtons";
 import { getAllSettings, getBlogPostBySlug, getBlogPosts, getProjects } from "@/lib/db";
@@ -382,8 +381,6 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
         whatsapp={site_info.whatsapp}
         brochureUrl={site_info.brochureUrl}
       />
-
-      <EnquiryModal />
     </>
   );
 }

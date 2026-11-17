@@ -70,7 +70,7 @@ export function MasterPlanViewer({ plans }: MasterPlanViewerProps) {
               src={activePlan.src}
               alt={activePlan.alt || activePlan.title}
               fill
-              priority
+              loading="lazy"
               sizes="(max-width: 900px) 100vw, 60vw"
               style={{ objectFit: "contain", padding: "16px" }}
             />
@@ -182,7 +182,7 @@ export function MasterPlanViewer({ plans }: MasterPlanViewerProps) {
               src={activePlan.src}
               alt={activePlan.alt || activePlan.title}
               fill
-              priority
+              loading="lazy"
               sizes="95vw"
               style={{ objectFit: "contain" }}
             />

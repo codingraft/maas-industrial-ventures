@@ -3,16 +3,40 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
+import dynamic from "next/dynamic";
 import { SiteSettings } from "@/lib/types";
 import { LeadsTable } from "@/components/admin/LeadsTable";
 import { SectionToggles } from "@/components/admin/SectionToggles";
-import { SectionImageManager } from "@/components/admin/SectionImageManager";
 import { ContentManager } from "@/components/admin/ContentManager";
 import { ContactSocialForm } from "@/components/admin/ContactSocialForm";
 import { TrackingConfig } from "@/components/admin/TrackingConfig";
 import { SeoManager } from "@/components/admin/SeoManager";
-import { ProjectsManager } from "@/components/admin/ProjectsManager";
-import { BlogManager } from "@/components/admin/BlogManager";
+import { TableSkeleton, CardSkeleton } from "@/components/admin/ui/AdminSkeleton";
+
+// Dynamically code-split heavy studio managers so initial /admin leads page load is lightweight
+const ProjectsManager = dynamic(
+  () => import("@/components/admin/ProjectsManager").then((m) => m.ProjectsManager),
+  {
+    ssr: false,
+    loading: () => <CardSkeleton />,
+  }
+);
+
+const BlogManager = dynamic(
+  () => import("@/components/admin/BlogManager").then((m) => m.BlogManager),
+  {
+    ssr: false,
+    loading: () => <TableSkeleton rows={6} cols={5} />,
+  }
+);
+
+const SectionImageManager = dynamic(
+  () => import("@/components/admin/SectionImageManager").then((m) => m.SectionImageManager),
+  {
+    ssr: false,
+    loading: () => <CardSkeleton />,
+  }
+);
 
 export type AdminTab =
   | "leads"

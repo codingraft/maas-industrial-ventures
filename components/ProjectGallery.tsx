@@ -307,7 +307,6 @@ export function ProjectGallery({
                 fill
                 sizes="95vw"
                 style={{ objectFit: "contain" }}
-                priority
                 onError={() => {
                   const source = filteredImages[lightboxIndex].src;
                   if (!failedImages[source]) {

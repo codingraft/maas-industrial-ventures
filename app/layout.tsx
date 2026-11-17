@@ -138,14 +138,14 @@ export default async function RootLayout({
           </Script>
         )}
 
-        {/* Google Ads / GA4 */}
+        {/* Google Ads / GA4 - Loaded during idle time to prevent hydration blocking */}
         {tracking.googleAdsId && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${tracking.googleAdsId}`}
-              strategy="afterInteractive"
+              strategy="lazyOnload"
             />
-            <Script id="google-ads-script" strategy="afterInteractive">
+            <Script id="google-ads-script" strategy="lazyOnload">
               {`
                 window.dataLayer = window.dataLayer || [];
                 function gtag(){dataLayer.push(arguments);}
@@ -156,9 +156,9 @@ export default async function RootLayout({
           </>
         )}
 
-        {/* Meta Pixel */}
+        {/* Meta Pixel - Loaded during idle time to maintain 100fps rendering */}
         {tracking.metaPixelId && (
-          <Script id="meta-pixel-script" strategy="afterInteractive">
+          <Script id="meta-pixel-script" strategy="lazyOnload">
             {`
               !function(f,b,e,v,n,t,s)
               {if(f.fbq)return;n=f.fbq=function(){n.callMethod?

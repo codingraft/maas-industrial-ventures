@@ -38,7 +38,16 @@ export function SiteHeader({
   }, []);
 
   useEffect(() => {
-    const update = () => setScrolled(window.scrollY > 24);
+    let ticking = false;
+    const update = () => {
+      if (!ticking) {
+        window.requestAnimationFrame(() => {
+          setScrolled(window.scrollY > 24);
+          ticking = false;
+        });
+        ticking = true;
+      }
+    };
     update();
     window.addEventListener("scroll", update, { passive: true });
     return () => window.removeEventListener("scroll", update);
@@ -178,7 +187,7 @@ export function SiteHeader({
                   alt={`${brandName} Logo`}
                   width={200}
                   height={56}
-                  priority
+                  loading="lazy"
                   unoptimized={resolvedLogo.endsWith(".svg") || resolvedLogo.startsWith("data:")}
                   className="brand-logo-img"
                 />

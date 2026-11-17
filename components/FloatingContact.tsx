@@ -16,11 +16,15 @@ export function FloatingContact({ phone, whatsapp, brochureUrl }: FloatingContac
   const menuRef = useRef<HTMLDivElement>(null);
 
   // Auto-hide when user approaches the contact / enquiry form section or near page bottom
+  // Throttled via requestAnimationFrame to eliminate forced synchronous reflows & 60fps jank
   useEffect(() => {
-    const handleScroll = () => {
+    let rafId: number | null = null;
+    let contactEl: HTMLElement | null = null;
+
+    const checkScroll = () => {
       const scrollPos = window.scrollY + window.innerHeight;
       const docHeight = document.documentElement.scrollHeight;
-      
+
       // If within 550px of page bottom (in or near contact form/footer), hide
       if (docHeight - scrollPos < 550) {
         setIsHidden(true);
@@ -28,8 +32,11 @@ export function FloatingContact({ phone, whatsapp, brochureUrl }: FloatingContac
         return;
       }
 
-      // Check contact section bounding rect
-      const contactEl = document.getElementById("contact") || document.querySelector(".enquire");
+      // Check contact section bounding rect (lazy lookup with cache)
+      if (!contactEl) {
+        contactEl = document.getElementById("contact") || document.querySelector<HTMLElement>(".enquire");
+      }
+
       if (contactEl) {
         const rect = contactEl.getBoundingClientRect();
         // If the contact section is entering viewport (top < viewport height + 80)
@@ -43,10 +50,23 @@ export function FloatingContact({ phone, whatsapp, brochureUrl }: FloatingContac
       setIsHidden(false);
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    handleScroll(); // Initial check
+    const handleScroll = () => {
+      if (rafId !== null) return;
+      rafId = window.requestAnimationFrame(() => {
+        checkScroll();
+        rafId = null;
+      });
+    };
 
-    return () => window.removeEventListener("scroll", handleScroll);
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    checkScroll(); // Initial check
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== null) {
+        window.cancelAnimationFrame(rafId);
+      }
+    };
   }, []);
 
   // Close speed dial when clicking outside

@@ -865,8 +865,13 @@ function getBlogPostsFromSqlite(publishedOnly: boolean): BlogPost[] {
   return rows.map((r) => JSON.parse(r.data) as BlogPost);
 }
 
-export async function getBlogPosts(publishedOnly: boolean = false): Promise<BlogPost[]> {
-  const cacheKey = publishedOnly ? CACHE_KEYS.BLOGS_PUBLISHED : CACHE_KEYS.BLOGS_ALL;
+export async function getBlogPosts(
+  publishedOnly: boolean = false,
+  includeContent: boolean = false
+): Promise<BlogPost[]> {
+  const cacheKey = includeContent
+    ? (publishedOnly ? `${CACHE_KEYS.BLOGS_PUBLISHED}:full` : `${CACHE_KEYS.BLOGS_ALL}:full`)
+    : (publishedOnly ? CACHE_KEYS.BLOGS_PUBLISHED : CACHE_KEYS.BLOGS_ALL);
   const cached = cacheGet<BlogPost[]>(cacheKey);
   if (cached) return cached;
 
@@ -877,7 +882,11 @@ export async function getBlogPosts(publishedOnly: boolean = false): Promise<Blog
       const coll = db.collection("blogs");
 
       const filter = publishedOnly ? { isPublished: true } : {};
-      const docs = await coll.find(filter).sort({ publishedAt: -1, _id: -1 }).toArray();
+      const projection = includeContent ? {} : { content: 0 };
+      const docs = await coll
+        .find(filter, { projection })
+        .sort({ publishedAt: -1, _id: -1 })
+        .toArray();
 
       if (docs.length === 0 && !publishedOnly) {
         // Seed default blogs to Mongo in 1 bulk write
@@ -889,9 +898,14 @@ export async function getBlogPosts(publishedOnly: boolean = false): Promise<Blog
           },
         }));
         await coll.bulkWrite(ops);
-        blogs = defaultBlogs;
+        blogs = includeContent
+          ? defaultBlogs
+          : defaultBlogs.map((b) => ({ ...b, content: "" }));
       } else if (docs.length === 0) {
-        blogs = defaultBlogs.filter((b) => b.isPublished);
+        const published = defaultBlogs.filter((b) => b.isPublished);
+        blogs = includeContent
+          ? published
+          : published.map((b) => ({ ...b, content: "" }));
       } else {
         blogs = docs.map((d: any) => ({
           id: d.id || d._id.toString(),
@@ -899,7 +913,7 @@ export async function getBlogPosts(publishedOnly: boolean = false): Promise<Blog
           slug: d.slug || "",
           category: d.category || "General",
           excerpt: d.excerpt || "",
-          content: d.content || "",
+          content: includeContent ? (d.content || "") : "",
           coverImage: d.coverImage || "",
           author: d.author || "MAAS Research Desk",
           authorBio: d.authorBio || "",
@@ -915,9 +929,15 @@ export async function getBlogPosts(publishedOnly: boolean = false): Promise<Blog
     } catch (err) {
       console.error("MongoDB getBlogPosts failed, falling back to SQLite:", err);
       blogs = getBlogPostsFromSqlite(publishedOnly);
+      if (!includeContent) {
+        blogs = blogs.map((b) => ({ ...b, content: "" }));
+      }
     }
   } else {
     blogs = getBlogPostsFromSqlite(publishedOnly);
+    if (!includeContent) {
+      blogs = blogs.map((b) => ({ ...b, content: "" }));
+    }
   }
 
   cacheSet(cacheKey, blogs, 60000);
@@ -1050,14 +1070,18 @@ export async function getPaginatedBlogPosts(
 export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
   if (!slug) return null;
 
-  // 1. Try cache if full blog list is already memory-resident
-  const cachedList = cacheGet<BlogPost[]>(CACHE_KEYS.BLOGS_ALL) || cacheGet<BlogPost[]>(CACHE_KEYS.BLOGS_PUBLISHED);
+  // 1. Try single post cache
+  const cachedSingle = cacheGet<BlogPost>(`blogs:single:${slug}`);
+  if (cachedSingle && cachedSingle.content) return cachedSingle;
+
+  // 2. Try cache if full blog list is already memory-resident with content
+  const cachedList = cacheGet<BlogPost[]>(`${CACHE_KEYS.BLOGS_ALL}:full`) || cacheGet<BlogPost[]>(`${CACHE_KEYS.BLOGS_PUBLISHED}:full`);
   if (cachedList) {
     const found = cachedList.find((b) => b.slug === slug || b.id === slug);
-    if (found) return found;
+    if (found && found.content) return found;
   }
 
-  // 2. Targeted lookup in MongoDB
+  // 3. Targeted lookup in MongoDB
   if (isMongoConfigured()) {
     try {
       const db = await getMongoDb();
@@ -1065,7 +1089,7 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
         $or: [{ slug }, { id: slug }],
       });
       if (d) {
-        return {
+        const post: BlogPost = {
           id: d.id || d._id.toString(),
           title: d.title || "",
           slug: d.slug || "",
@@ -1083,25 +1107,30 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
           metaDescription: d.metaDescription || d.excerpt,
           keywords: Array.isArray(d.keywords) ? d.keywords : [],
         };
+        cacheSet(`blogs:single:${slug}`, post, 60000);
+        return post;
       }
     } catch (err) {
       console.error("MongoDB getBlogPostBySlug failed, falling back to SQLite:", err);
     }
   }
 
-  // 3. Targeted lookup in SQLite
+  // 4. Targeted lookup in SQLite
   try {
     const db = getDb();
     const stmt = db.prepare("SELECT data FROM blogs WHERE slug = ? OR id = ? LIMIT 1");
     const row = stmt.get(slug, slug) as { data: string } | undefined;
     if (row?.data) {
-      return JSON.parse(row.data) as BlogPost;
+      const post = JSON.parse(row.data) as BlogPost;
+      cacheSet(`blogs:single:${slug}`, post, 60000);
+      return post;
     }
   } catch {
     // Fall back to default blogs list
   }
 
-  return defaultBlogs.find((b) => b.slug === slug || b.id === slug) || null;
+  const fallback = defaultBlogs.find((b) => b.slug === slug || b.id === slug) || null;
+  return fallback;
 }
 
 export async function saveBlogPost(post: BlogPost): Promise<BlogPost> {
