@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
 import {
   SiteSettings,
   FactItem,
@@ -217,56 +218,20 @@ export function ContentManager({ settings, onUpdate, onUpdateFull }: ContentMana
       </div>
 
       {/* Sub-tab Navigation */}
-      <div className="content-tabs-nav" style={{ marginTop: "16px", display: "flex", flexWrap: "wrap", gap: "8px" }}>
-        <button
-          type="button"
-          className={`admin-subtab-btn ${activeSubTab === "hero" ? "is-active" : ""}`}
-          onClick={() => setActiveSubTab("hero")}
-        >
-          Hero Section ({bottomHighlights.length} Highlights)
-        </button>
-        <button
-          type="button"
-          className={`admin-subtab-btn ${activeSubTab === "overview" ? "is-active" : ""}`}
-          onClick={() => setActiveSubTab("overview")}
-        >
-          Company Overview &amp; Story
-        </button>
-        <button
-          type="button"
-          className={`admin-subtab-btn ${activeSubTab === "verticals" ? "is-active" : ""}`}
-          onClick={() => setActiveSubTab("verticals")}
-        >
-          4 Development Verticals ({verticals.length})
-        </button>
-        <button
-          type="button"
-          className={`admin-subtab-btn ${activeSubTab === "vision" ? "is-active" : ""}`}
-          onClick={() => setActiveSubTab("vision")}
-        >
-          Vision, Mission &amp; Philosophy
-        </button>
-        <button
-          type="button"
-          className={`admin-subtab-btn ${activeSubTab === "public-copy" ? "is-active" : ""}`}
-          onClick={() => setActiveSubTab("public-copy")}
-        >
-          Contact &amp; Blog Copy
-        </button>
-        <button
-          type="button"
-          className={`admin-subtab-btn ${activeSubTab === "facts" ? "is-active" : ""}`}
-          onClick={() => setActiveSubTab("facts")}
-        >
-          Project Facts Strip ({facts.length})
-        </button>
-        <button
-          type="button"
-          className={`admin-subtab-btn ${activeSubTab === "faqs" ? "is-active" : ""}`}
-          onClick={() => setActiveSubTab("faqs")}
-        >
-          Customer FAQs ({faqs.length})
-        </button>
+      <div style={{ marginTop: "16px" }}>
+        <AdminTabs
+          tabs={[
+            { id: "hero", label: "Hero & Highlights", count: bottomHighlights.length },
+            { id: "overview", label: "Company Story" },
+            { id: "verticals", label: "4 Verticals", count: verticals.length },
+            { id: "vision", label: "Vision & Philosophy" },
+            { id: "public-copy", label: "Public Copy & Headings" },
+            { id: "facts", label: "Project Facts", count: facts.length },
+            { id: "faqs", label: "Customer FAQs", count: faqs.length },
+          ]}
+          activeTab={activeSubTab}
+          onChange={(tabId) => setActiveSubTab(tabId as typeof activeSubTab)}
+        />
       </div>
 
       <div style={{ marginTop: "24px" }}>

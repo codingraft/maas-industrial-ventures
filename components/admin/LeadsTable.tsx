@@ -4,6 +4,25 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { Lead } from "@/lib/types";
 import { Pagination } from "@/components/ui/Pagination";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
+import { TableSkeleton, CardSkeleton } from "@/components/admin/ui/AdminSkeleton";
+import { AdminBadge, AdminBadgeVariant } from "@/components/admin/ui/AdminBadge";
+import { AdminToolbar, AdminSearchInput } from "@/components/admin/ui/AdminToolbar";
+
+function getStatusBadgeVariant(status: string): AdminBadgeVariant {
+  switch (status) {
+    case "new":
+      return "info";
+    case "contacted":
+      return "warning";
+    case "qualified":
+      return "gold";
+    case "converted":
+      return "success";
+    case "archived":
+    default:
+      return "neutral";
+  }
+}
 
 export function LeadsTable() {
   const [leads, setLeads] = useState<Lead[]>([]);
@@ -50,7 +69,6 @@ export function LeadsTable() {
   }
 
   const fetchLeads = useCallback(async () => {
-    // Abort previous in-flight request if user is still typing or changing page
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
     }
@@ -81,7 +99,6 @@ export function LeadsTable() {
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        // Request intentionally aborted; ignore
         return;
       }
       console.error("Failed to load leads:", err);
@@ -99,9 +116,8 @@ export function LeadsTable() {
     return () => clearTimeout(timer);
   }, [fetchLeads]);
 
-  // Reset to page 1 on search or filter change
-  function handleSearchChange(e: React.ChangeEvent<HTMLInputElement>) {
-    setSearch(e.target.value);
+  function handleSearchChange(val: string) {
+    setSearch(val);
     setCurrentPage(1);
   }
 
@@ -186,6 +202,7 @@ export function LeadsTable() {
     const params = new URLSearchParams();
     if (search) params.set("search", search);
     if (statusFilter !== "all") params.set("status", statusFilter);
+    if (projectFilter !== "all") params.set("project", projectFilter);
     params.set("export", "csv");
     window.open(`/api/admin/leads?${params.toString()}`, "_blank");
   }
@@ -236,108 +253,125 @@ export function LeadsTable() {
         </div>
       )}
 
-      {/* Search and Action Toolbar */}
-      <div className="table-toolbar">
-        <div className="toolbar-filters">
-          <input
-            type="search"
-            className="search-input"
-            placeholder="Search leads by name, phone, email, plot…"
-            value={search}
-            onChange={handleSearchChange}
-          />
-          <select
-            className="filter-select"
-            value={statusFilter}
-            onChange={handleFilterChange}
+      {/* Standardized Search & Action Toolbar */}
+      <AdminToolbar
+        actions={
+          <button
+            type="button"
+            className="btn-gold"
+            onClick={handleExportCsv}
+            title="Download filtered leads for CRM or Excel"
+            style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
           >
-            <option value="all">All Statuses</option>
-            <option value="new">New</option>
-            <option value="contacted">Contacted</option>
-            <option value="qualified">Qualified</option>
-            <option value="converted">Converted</option>
-            <option value="archived">Archived</option>
-          </select>
-          <select
-            className="filter-select"
-            value={projectFilter}
-            onChange={(e) => {
-              setProjectFilter(e.target.value);
-              setCurrentPage(1);
-            }}
-          >
-            <option value="all">All Projects</option>
-            <option value="Gayatri Industrial Park (Bhojpur, Modinagar)">Gayatri Industrial Park</option>
-            <option value="Shri Balaji Industrial Park (Hapur-Modinagar Rd)">Shri Balaji Industrial Park</option>
-            <option value="Residential Plotted Developments">Residential Plotted</option>
-            <option value="General Industrial Land Consultation">General Consultation</option>
-          </select>
-          <select
-            className="filter-select"
-            value={pageSize}
-            onChange={handlePageSizeChange}
-            title="Rows per page"
-          >
-            <option value={10}>10 per page</option>
-            <option value={25}>25 per page</option>
-            <option value={50}>50 per page</option>
-          </select>
-        </div>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            <span>Export CSV</span>
+          </button>
+        }
+      >
+        <AdminSearchInput
+          placeholder="Search by name, phone, email, plot..."
+          value={search}
+          onChange={handleSearchChange}
+        />
 
-        <button className="btn-gold" onClick={handleExportCsv} title="Download leads for CRM or Excel">
-          ↓ Export All (CSV)
-        </button>
-      </div>
+        <select
+          className="admin-select"
+          value={statusFilter}
+          onChange={handleFilterChange}
+          aria-label="Filter by Status"
+        >
+          <option value="all">All Statuses</option>
+          <option value="new">New</option>
+          <option value="contacted">Contacted</option>
+          <option value="qualified">Qualified</option>
+          <option value="converted">Converted</option>
+          <option value="archived">Archived</option>
+        </select>
+
+        <select
+          className="admin-select"
+          value={projectFilter}
+          onChange={(e) => {
+            setProjectFilter(e.target.value);
+            setCurrentPage(1);
+          }}
+          aria-label="Filter by Project"
+        >
+          <option value="all">All Projects</option>
+          <option value="Gayatri Industrial Park (Bhojpur, Modinagar)">Gayatri Industrial Park</option>
+          <option value="Shri Balaji Industrial Park (Hapur-Modinagar Rd)">Shri Balaji Industrial Park</option>
+          <option value="Residential Plotted Developments">Residential Plotted</option>
+          <option value="General Industrial Land Consultation">General Consultation</option>
+        </select>
+
+        <select
+          className="admin-select"
+          value={pageSize}
+          onChange={handlePageSizeChange}
+          title="Rows per page"
+          aria-label="Rows per page"
+        >
+          <option value={10}>10 per page</option>
+          <option value={25}>25 per page</option>
+          <option value={50}>50 per page</option>
+        </select>
+      </AdminToolbar>
 
       {/* Desktop Table View */}
       <div className="admin-table-wrapper desktop-only">
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>ID &amp; Date</th>
-              <th>Lead Contact</th>
-              <th>Project &amp; Requirement</th>
-              <th>Ad Attribution (UTM)</th>
-              <th>Status</th>
-              <th>Quick Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {loading ? (
+        {loading ? (
+          <TableSkeleton rows={pageSize > 10 ? 10 : pageSize} cols={6} />
+        ) : leads.length === 0 ? (
+          <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--admin-text-muted)" }}>
+            <div style={{ fontSize: "28px", marginBottom: "8px" }}>📋</div>
+            <div style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>No leads found</div>
+            <div style={{ fontSize: "12px", marginTop: "4px" }}>Try adjusting your search terms or filters</div>
+          </div>
+        ) : (
+          <table className="admin-table">
+            <thead>
               <tr>
-                <td colSpan={6} style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-                  Loading leads…
-                </td>
+                <th style={{ width: "120px" }}>ID &amp; Date</th>
+                <th>Lead Contact</th>
+                <th>Project &amp; Requirement</th>
+                <th>Ad Attribution</th>
+                <th style={{ width: "130px" }}>Status</th>
+                <th style={{ width: "160px", textAlign: "right" }}>Quick Actions</th>
               </tr>
-            ) : leads.length === 0 ? (
-              <tr>
-                <td colSpan={6} style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-                  No leads found matching your criteria.
-                </td>
-              </tr>
-            ) : (
-              leads.map((lead) => {
+            </thead>
+            <tbody>
+              {leads.map((lead) => {
                 const waPhone = cleanPhoneForWhatsApp(lead.phone);
                 const waMessage = encodeURIComponent(
-                  `Hello ${lead.name}, thank you for enquiring about MAAS Industrial Ventures Pvt Ltd. I am contacting you regarding your space requirements.`
+                  `Hello ${lead.name}, thank you for enquiring with MAAS Industrial Ventures. I am contacting you regarding your space requirements.`
                 );
 
                 return (
                   <tr key={lead.id}>
                     <td>
-                      <div style={{ fontWeight: 600, color: "#fff" }}>#{lead.id}</div>
-                      <div style={{ fontSize: "11px", color: "#64748b" }}>{lead.created_at}</div>
+                      <div style={{ fontWeight: 600, color: "var(--admin-text-main)", fontSize: "12.5px" }}>
+                        #{lead.id}
+                      </div>
+                      <div style={{ fontSize: "11px", color: "var(--admin-text-dim)", marginTop: "2px" }}>
+                        {lead.created_at}
+                      </div>
                     </td>
 
                     <td>
-                      <div style={{ fontWeight: 600, color: "#f8fafc" }}>{lead.name}</div>
-                      <div style={{ fontSize: "12px", color: "#cbd5e1" }}>
-                        <a href={`tel:${lead.phone}`} style={{ color: "#d4af37" }}>
+                      <div style={{ fontWeight: 600, color: "var(--admin-text-main)", fontSize: "13px" }}>
+                        {lead.name}
+                      </div>
+                      <div style={{ fontSize: "12px", marginTop: "2px" }}>
+                        <a href={`tel:${lead.phone}`} style={{ color: "var(--admin-gold)", textDecoration: "none" }}>
                           {lead.phone}
                         </a>
                       </div>
-                      <div style={{ fontSize: "11px", color: "#94a3b8" }}>
-                        <a href={`mailto:${lead.email}`} style={{ color: "#94a3b8" }}>
+                      <div style={{ fontSize: "11px", color: "var(--admin-text-muted)", marginTop: "1px" }}>
+                        <a href={`mailto:${lead.email}`} style={{ color: "var(--admin-text-muted)", textDecoration: "none" }}>
                           {lead.email}
                         </a>
                       </div>
@@ -345,38 +379,28 @@ export function LeadsTable() {
 
                     <td>
                       {lead.project && (
-                        <div style={{ marginBottom: "6px" }}>
-                          <span
-                            style={{
-                              background: "#2a2415",
-                              color: "#facc15",
-                              padding: "2px 6px",
-                              borderRadius: "3px",
-                              fontSize: "11px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {lead.project}
-                          </span>
+                        <div style={{ marginBottom: "5px" }}>
+                          <AdminBadge variant="gold">{lead.project}</AdminBadge>
                         </div>
                       )}
                       {lead.industry && (
-                        <div style={{ fontSize: "12px", color: "#e2e8f0" }}>
-                          <b>Industry:</b> {lead.industry}
+                        <div style={{ fontSize: "12px", color: "var(--admin-text-secondary)" }}>
+                          <span style={{ color: "var(--admin-text-dim)" }}>Sector:</span> {lead.industry}
                         </div>
                       )}
                       {lead.requirement && (
-                        <div style={{ fontSize: "12px", color: "#e2e8f0" }}>
-                          <b>Area:</b> {lead.requirement}
+                        <div style={{ fontSize: "12px", color: "var(--admin-text-secondary)" }}>
+                          <span style={{ color: "var(--admin-text-dim)" }}>Area:</span> {lead.requirement}
                         </div>
                       )}
                       {lead.message && (
                         <div
                           style={{
-                            fontSize: "11px",
-                            color: "#94a3b8",
+                            fontSize: "11.5px",
+                            color: "var(--admin-text-muted)",
                             marginTop: "4px",
-                            maxWidth: "260px",
+                            maxWidth: "280px",
+                            fontStyle: "italic",
                           }}
                         >
                           &ldquo;{lead.message}&rdquo;
@@ -387,48 +411,36 @@ export function LeadsTable() {
                           style={{
                             marginTop: "6px",
                             padding: "4px 8px",
-                            background: "#242c3d",
+                            background: "var(--admin-bg-hover)",
+                            borderLeft: "2px solid var(--admin-gold)",
                             borderRadius: "4px",
                             fontSize: "11px",
-                            color: "#d4af37",
+                            color: "var(--admin-gold)",
                           }}
                         >
-                          <b>Note:</b> {lead.notes}
+                          <strong>Note:</strong> {lead.notes}
                         </div>
                       )}
                     </td>
 
                     <td>
                       {lead.utm_source || lead.utm_campaign ? (
-                        <div style={{ fontSize: "11px" }}>
-                          <span
-                            style={{
-                              background: "#1e3a5f",
-                              color: "#60a5fa",
-                              padding: "2px 6px",
-                              borderRadius: "3px",
-                              fontWeight: 600,
-                            }}
-                          >
-                            {lead.utm_source || "Ad Campaign"}
-                          </span>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                          <AdminBadge variant="info">{lead.utm_source || "Campaign"}</AdminBadge>
                           {lead.utm_campaign && (
-                            <div style={{ color: "#94a3b8", marginTop: "3px" }}>
-                              <b>Camp:</b> {lead.utm_campaign}
+                            <div style={{ fontSize: "11px", color: "var(--admin-text-dim)" }}>
+                              {lead.utm_campaign}
                             </div>
                           )}
-                          {lead.utm_medium && (
-                            <div style={{ color: "#64748b" }}>Med: {lead.utm_medium}</div>
-                          )}
                           {lead.gclid && (
-                            <div style={{ color: "#38bdf8", fontSize: "10px" }}>Google Ads Click</div>
+                            <span style={{ color: "#38bdf8", fontSize: "10px", fontWeight: 600 }}>Google Ads</span>
                           )}
                           {lead.fbclid && (
-                            <div style={{ color: "#818cf8", fontSize: "10px" }}>Meta Ads Click</div>
+                            <span style={{ color: "#818cf8", fontSize: "10px", fontWeight: 600 }}>Meta Ads</span>
                           )}
                         </div>
                       ) : (
-                        <span style={{ fontSize: "11px", color: "#64748b" }}>Direct / Organic</span>
+                        <span style={{ fontSize: "11.5px", color: "var(--admin-text-dim)" }}>Direct / Organic</span>
                       )}
                     </td>
 
@@ -436,24 +448,26 @@ export function LeadsTable() {
                       <select
                         value={lead.status}
                         onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                        className={`badge badge-${lead.status}`}
+                        className={`admin-badge admin-badge-${getStatusBadgeVariant(lead.status)}`}
                         style={{
-                          background: "#171c26",
-                          border: "1px solid #334155",
                           cursor: "pointer",
-                          color: "#fff",
+                          appearance: "none",
+                          padding: "4px 10px",
+                          borderWidth: "1px",
+                          outline: "none",
                         }}
+                        aria-label={`Status for lead ${lead.id}`}
                       >
-                        <option value="new">New</option>
-                        <option value="contacted">Contacted</option>
-                        <option value="qualified">Qualified</option>
-                        <option value="converted">Converted</option>
-                        <option value="archived">Archived</option>
+                        <option value="new" style={{ background: "#111827", color: "#60a5fa" }}>● New</option>
+                        <option value="contacted" style={{ background: "#111827", color: "#fbbf24" }}>● Contacted</option>
+                        <option value="qualified" style={{ background: "#111827", color: "#d4af37" }}>● Qualified</option>
+                        <option value="converted" style={{ background: "#111827", color: "#4ade80" }}>● Converted</option>
+                        <option value="archived" style={{ background: "#111827", color: "#94a3b8" }}>● Archived</option>
                       </select>
                     </td>
 
-                    <td>
-                      <div className="lead-quick-actions">
+                    <td style={{ textAlign: "right" }}>
+                      <div className="lead-quick-actions" style={{ justifyContent: "flex-end" }}>
                         <a
                           href={`https://wa.me/${waPhone}?text=${waMessage}`}
                           target="_blank"
@@ -461,7 +475,7 @@ export function LeadsTable() {
                           className="action-icon-btn action-icon-whatsapp"
                           title="Chat on WhatsApp"
                         >
-                          💬 WhatsApp
+                          💬 WA
                         </a>
                         <a
                           href={`tel:${lead.phone}`}
@@ -477,7 +491,7 @@ export function LeadsTable() {
                             setActiveNotesLead(lead);
                             setNotesText(lead.notes || "");
                           }}
-                          title="Add internal note"
+                          title="Edit internal notes"
                         >
                           📝 Note
                         </button>
@@ -493,27 +507,28 @@ export function LeadsTable() {
                     </td>
                   </tr>
                 );
-              })
-            )}
-          </tbody>
-        </table>
+              })}
+            </tbody>
+          </table>
+        )}
       </div>
 
       {/* Mobile Responsive Cards View */}
       <div className="mobile-cards-list mobile-only">
         {loading ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-            Loading leads…
+          <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+            <CardSkeleton />
+            <CardSkeleton />
           </div>
         ) : leads.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px", color: "#94a3b8" }}>
-            No leads found.
+          <div style={{ textAlign: "center", padding: "40px 16px", color: "var(--admin-text-muted)" }}>
+            No leads found matching criteria.
           </div>
         ) : (
           leads.map((lead) => {
             const waPhone = cleanPhoneForWhatsApp(lead.phone);
             const waMessage = encodeURIComponent(
-              `Hello ${lead.name}, thank you for enquiring about MAAS Industrial Ventures Pvt Ltd. I am contacting you regarding your space requirements.`
+              `Hello ${lead.name}, thank you for enquiring with MAAS Industrial Ventures. I am contacting you regarding your space requirements.`
             );
 
             return (
@@ -526,7 +541,8 @@ export function LeadsTable() {
                   <select
                     value={lead.status}
                     onChange={(e) => handleStatusChange(lead.id, e.target.value)}
-                    className={`badge badge-${lead.status}`}
+                    className={`admin-badge admin-badge-${getStatusBadgeVariant(lead.status)}`}
+                    style={{ cursor: "pointer" }}
                   >
                     <option value="new">New</option>
                     <option value="contacted">Contacted</option>
@@ -635,10 +651,10 @@ export function LeadsTable() {
             className="admin-modal-card"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 style={{ margin: "0 0 8px", color: "#fff" }}>
+            <h3 style={{ margin: "0 0 8px", color: "var(--admin-text-main)" }}>
               Lead Notes: {activeNotesLead.name} (#{activeNotesLead.id})
             </h3>
-            <p style={{ margin: "0 0 16px", color: "#94a3b8", fontSize: "12px" }}>
+            <p style={{ margin: "0 0 16px", color: "var(--admin-text-muted)", fontSize: "12px" }}>
               Record discussion summary, budget, site visit appointments, or specific infrastructure requests.
             </p>
             <textarea

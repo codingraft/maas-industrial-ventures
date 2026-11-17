@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { SeoSettings } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
+import { AdminTabs } from "@/components/admin/ui/AdminTabs";
 
 interface SeoManagerProps {
   initialSeo: SeoSettings;
@@ -140,35 +141,17 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
         </div>
 
         {/* Sub-Tabs Navigation */}
-        <div className="section-studio-nav" style={{ marginBottom: "20px" }}>
-          <button
-            type="button"
-            className={`studio-tab ${activeSubTab === "general" ? "is-active" : ""}`}
-            onClick={() => setActiveSubTab("general")}
-          >
-            🔍 Search Engine Meta
-          </button>
-          <button
-            type="button"
-            className={`studio-tab ${activeSubTab === "social" ? "is-active" : ""}`}
-            onClick={() => setActiveSubTab("social")}
-          >
-            📱 Social Media &amp; OpenGraph
-          </button>
-          <button
-            type="button"
-            className={`studio-tab ${activeSubTab === "indexing" ? "is-active" : ""}`}
-            onClick={() => setActiveSubTab("indexing")}
-          >
-            🤖 Indexing &amp; Webmasters
-          </button>
-          <button
-            type="button"
-            className={`studio-tab ${activeSubTab === "schema" ? "is-active" : ""}`}
-            onClick={() => setActiveSubTab("schema")}
-          >
-            📋 Schema.org Structured Data
-          </button>
+        <div style={{ marginBottom: "20px" }}>
+          <AdminTabs
+            tabs={[
+              { id: "general", label: "Search Engine Meta" },
+              { id: "social", label: "Social Media & OpenGraph" },
+              { id: "indexing", label: "Indexing & Webmasters" },
+              { id: "schema", label: "Schema.org Structured Data" },
+            ]}
+            activeTab={activeSubTab}
+            onChange={(tabId) => setActiveSubTab(tabId as typeof activeSubTab)}
+          />
         </div>
 
         {/* =========================================================================

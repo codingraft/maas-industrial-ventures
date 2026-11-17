@@ -5,12 +5,25 @@ import Image from "next/image";
 import { ProjectItem } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
 import { Pagination } from "@/components/ui/Pagination";
+import { CardSkeleton } from "@/components/admin/ui/AdminSkeleton";
+import { AdminBadge } from "@/components/admin/ui/AdminBadge";
+import { AdminToolbar, AdminSearchInput } from "@/components/admin/ui/AdminToolbar";
+import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
+
+type ProjectModalTab = "general" | "specs" | "media";
+
+const PROJECT_MODAL_TABS: TabOption<ProjectModalTab>[] = [
+  { id: "general", label: "General & Location" },
+  { id: "specs", label: "Specs & Narrative" },
+  { id: "media", label: "Media & Subsidies" },
+];
 
 export function ProjectsManager() {
   const [projects, setProjects] = useState<ProjectItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingProject, setEditingProject] = useState<ProjectItem | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalTab, setModalTab] = useState<ProjectModalTab>("general");
   const [uploadingImage, setUploadingImage] = useState(false);
 
   // Pagination & Filtering state
@@ -114,11 +127,13 @@ export function ProjectsManager() {
       isActive: true,
     };
     setEditingProject(newProj);
+    setModalTab("general");
     setIsModalOpen(true);
   }
 
   function handleEdit(proj: ProjectItem) {
     setEditingProject({ ...proj });
+    setModalTab("general");
     setIsModalOpen(true);
   }
 
@@ -150,10 +165,12 @@ export function ProjectsManager() {
     if (!editingProject) return;
     if (!editingProject.title.trim()) {
       addToast("error", "Validation error", "Project title is required.");
+      setModalTab("general");
       return;
     }
     if (!editingProject.location.trim()) {
       addToast("error", "Validation error", "Project location is required.");
+      setModalTab("general");
       return;
     }
 
@@ -203,70 +220,64 @@ export function ProjectsManager() {
             Manage active industrial hubs, plotted developments, specifications, UP MSME Policy subsidies, and brochures.
           </p>
         </div>
-        <button type="button" className="admin-btn admin-btn-primary" onClick={handleCreateNew}>
-          + Add New Project
+        <button
+          type="button"
+          className="admin-btn admin-btn-primary"
+          onClick={handleCreateNew}
+          style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="12" y1="5" x2="12" y2="19" />
+            <line x1="5" y1="12" x2="19" y2="12" />
+          </svg>
+          <span>Add New Project</span>
         </button>
       </div>
 
-      {/* Search and Filters Bar */}
-      <div className="admin-filters-bar" style={{ display: "flex", gap: "12px", alignItems: "center", marginBottom: "18px", flexWrap: "wrap" }}>
-        <div style={{ flex: "1 1 240px", position: "relative" }}>
-          <input
-            type="text"
-            className="admin-input"
-            placeholder="Search projects by title, location, or specs..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{ width: "100%", paddingLeft: "36px" }}
-          />
-          <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", color: "#64748b", pointerEvents: "none" }}>
-            🔍
-          </span>
-          {search && (
-            <button
-              type="button"
-              onClick={() => setSearch("")}
-              style={{ position: "absolute", right: "12px", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", background: "none", border: "none", cursor: "pointer" }}
-            >
-              ✕
-            </button>
-          )}
-        </div>
+      {/* Standardized Search & Filter Toolbar */}
+      <AdminToolbar>
+        <AdminSearchInput
+          placeholder="Search projects by title, location, or specs..."
+          value={search}
+          onChange={(val) => setSearch(val)}
+        />
 
-        <div style={{ minWidth: "180px" }}>
-          <select
-            className="admin-input"
-            value={status}
-            onChange={(e) => {
-              setStatus(e.target.value);
-              setPage(1);
-            }}
-          >
-            <option value="all">All Development Statuses</option>
-            <option value="Active Plots Available">Active Plots Available</option>
-            <option value="Under Development">Under Development</option>
-            <option value="Ready for Possession">Ready for Possession</option>
-          </select>
-        </div>
+        <select
+          className="admin-select"
+          value={status}
+          onChange={(e) => {
+            setStatus(e.target.value);
+            setPage(1);
+          }}
+          aria-label="Filter by Development Status"
+        >
+          <option value="all">All Development Statuses</option>
+          <option value="Active Plots Available">Active Plots Available</option>
+          <option value="Under Development">Under Development</option>
+          <option value="Ready for Possession">Ready for Possession</option>
+        </select>
 
-        <div style={{ minWidth: "120px" }}>
-          <select
-            className="admin-input"
-            value={pageSize}
-            onChange={(e) => {
-              setPageSize(Number(e.target.value));
-              setPage(1);
-            }}
-          >
-            <option value={10}>10 per page</option>
-            <option value={20}>20 per page</option>
-            <option value={50}>50 per page</option>
-          </select>
-        </div>
-      </div>
+        <select
+          className="admin-select"
+          value={pageSize}
+          onChange={(e) => {
+            setPageSize(Number(e.target.value));
+            setPage(1);
+          }}
+          aria-label="Projects per page"
+        >
+          <option value={10}>10 per page</option>
+          <option value={20}>20 per page</option>
+          <option value={50}>50 per page</option>
+        </select>
+      </AdminToolbar>
 
       {loading ? (
-        <div className="admin-loading-state">Loading projects...</div>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
+          <CardSkeleton />
+          <CardSkeleton />
+          <CardSkeleton />
+        </div>
       ) : projects.length === 0 ? (
         <div className="admin-empty-state">
           <p>No projects found. Click &quot;Add New Project&quot; to create your first development.</p>
@@ -350,13 +361,13 @@ export function ProjectsManager() {
         </div>
       )}
 
-      {/* Edit / Create Modal */}
+      {/* Tabbed Edit / Create Modal */}
       {isModalOpen && editingProject && (
         <div className="admin-modal-backdrop" onClick={() => setIsModalOpen(false)}>
           <div className="admin-modal-card admin-modal-large" onClick={(e) => e.stopPropagation()}>
             <div className="admin-modal-header">
               <div>
-                <h3>{editingProject.title ? `Edit Project: ${editingProject.title}` : "Create New Project"}</h3>
+                <h3>{editingProject.title ? `Edit: ${editingProject.title}` : "Create New Project"}</h3>
                 <p className="admin-modal-subtitle">Configure plot sizing, connectivity, infrastructure specs, and incentives.</p>
               </div>
               <button
@@ -369,243 +380,295 @@ export function ProjectsManager() {
               </button>
             </div>
 
-            <div className="admin-modal-body admin-form-grid">
-              <div className="admin-field admin-field-full">
-                <label>Project Title *</label>
-                <input
-                  type="text"
-                  value={editingProject.title}
-                  onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      title: e.target.value,
-                      slug:
-                        editingProject.slug ||
-                        e.target.value
-                          .toLowerCase()
-                          .replace(/[^a-z0-9]+/g, "-")
-                          .replace(/(^-|-$)/g, ""),
-                    })
-                  }
-                  placeholder="e.g. Gayatri Industrial Park"
-                />
-              </div>
+            {/* Segmented Modal Tabs */}
+            <div style={{ padding: "0 24px", marginTop: "12px" }}>
+              <AdminTabs
+                tabs={PROJECT_MODAL_TABS}
+                activeTab={modalTab}
+                onChange={(tabId) => setModalTab(tabId)}
+              />
+            </div>
 
-              <div className="admin-field">
-                <label>Slug (URL identifier) *</label>
-                <input
-                  type="text"
-                  value={editingProject.slug}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, slug: e.target.value })
-                  }
-                  placeholder="e.g. gayatri-industrial-park"
-                />
-              </div>
-
-              <div className="admin-field">
-                <label>Tagline / Subhead</label>
-                <input
-                  type="text"
-                  value={editingProject.tagline || ""}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, tagline: e.target.value })
-                  }
-                  placeholder="e.g. Gated Industrial & Warehousing Hub"
-                />
-              </div>
-
-              <div className="admin-field admin-field-full">
-                <label>Full Location Address *</label>
-                <input
-                  type="text"
-                  value={editingProject.location}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, location: e.target.value })
-                  }
-                  placeholder="e.g. Bhojpur, Modinagar (Ghaziabad district), Uttar Pradesh"
-                />
-              </div>
-
-              <div className="admin-field">
-                <label>Short Location Display</label>
-                <input
-                  type="text"
-                  value={editingProject.addressShort || ""}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, addressShort: e.target.value })
-                  }
-                  placeholder="e.g. Bhojpur, Modinagar (Ghaziabad)"
-                />
-              </div>
-
-              <div className="admin-field">
-                <label>Status Badge</label>
-                <select
-                  value={editingProject.status}
-                  onChange={(e) =>
-                    setEditingProject({
-                      ...editingProject,
-                      status: e.target.value as ProjectItem["status"],
-                    })
-                  }
-                >
-                  <option value="Active Plots Available">Active Plots Available</option>
-                  <option value="Under Development">Under Development</option>
-                  <option value="Ready for Possession">Ready for Possession</option>
-                </select>
-              </div>
-
-              <div className="admin-field">
-                <label>Plot Sizes Typology</label>
-                <input
-                  type="text"
-                  value={editingProject.plotSizes}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, plotSizes: e.target.value })
-                  }
-                  placeholder="e.g. Starting from 500 Sq. Yards or 500 to 3,000 Sq. Yards"
-                />
-              </div>
-
-              <div className="admin-field">
-                <label>Road Width &amp; Construction</label>
-                <input
-                  type="text"
-                  value={editingProject.roadWidth}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, roadWidth: e.target.value })
-                  }
-                  placeholder="e.g. 45–52 ft. Concrete Roads"
-                />
-              </div>
-
-              <div className="admin-field admin-field-full">
-                <label>Short Description (Homepage summary)</label>
-                <textarea
-                  rows={2}
-                  value={editingProject.shortDescription}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, shortDescription: e.target.value })
-                  }
-                  placeholder="Summary for project cards on the homepage"
-                />
-              </div>
-
-              <div className="admin-field admin-field-full">
-                <label>Full Narrative Description</label>
-                <textarea
-                  rows={4}
-                  value={editingProject.fullDescription}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, fullDescription: e.target.value })
-                  }
-                  placeholder="Complete project overview and industrial scope"
-                />
-              </div>
-
-              <div className="admin-field admin-field-full">
-                <label>Government Policy Subsidies / Incentives Note</label>
-                <textarea
-                  rows={2}
-                  value={editingProject.subsidiesInfo || ""}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, subsidiesInfo: e.target.value })
-                  }
-                  placeholder="e.g. Potential investment benefits under Uttar Pradesh MSME Promotion Policy 2022: eligible capital investment subsidies, stamp duty exemptions..."
-                />
-              </div>
-
-              {/* Cover Image Upload */}
-              <div className="admin-field admin-field-full">
-                <label>Cover Image (CDN / Cloudinary)</label>
-                <div className="admin-image-upload-row">
-                  <input
-                    type="text"
-                    value={editingProject.coverImage}
-                    onChange={(e) =>
-                      setEditingProject({ ...editingProject, coverImage: e.target.value })
-                    }
-                    placeholder="https://..."
-                  />
-                  <label className="admin-btn admin-btn-outline admin-upload-btn">
-                    {uploadingImage ? "Uploading..." : "Upload New File"}
+            <div className="admin-modal-body admin-form-grid" style={{ maxHeight: "60vh", overflowY: "auto" }}>
+              {/* TAB 1: GENERAL & LOCATION */}
+              {modalTab === "general" && (
+                <>
+                  <div className="admin-field admin-field-full">
+                    <label>Project Title *</label>
                     <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      disabled={uploadingImage}
-                      style={{ display: "none" }}
-                    />
-                  </label>
-                </div>
-                {editingProject.coverImage && (
-                  <div className="admin-preview-thumbnail" style={{ marginTop: "10px" }}>
-                    <Image
-                      src={editingProject.coverImage}
-                      alt="Project Preview"
-                      width={200}
-                      height={110}
-                      style={{ objectFit: "cover", borderRadius: "6px" }}
-                    />
-                  </div>
-                )}
-              </div>
-
-              <div className="admin-field">
-                <label>Brochure URL</label>
-                <input
-                  type="text"
-                  value={editingProject.brochureUrl || ""}
-                  onChange={(e) =>
-                    setEditingProject({ ...editingProject, brochureUrl: e.target.value })
-                  }
-                  placeholder="https://... (PDF link)"
-                />
-              </div>
-
-              <div className="admin-field">
-                <label>Display Order &amp; Status</label>
-                <div style={{ display: "flex", gap: "14px", alignItems: "center", marginTop: "8px" }}>
-                  <label style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    <input
-                      type="checkbox"
-                      checked={editingProject.isActive}
-                      onChange={(e) =>
-                        setEditingProject({ ...editingProject, isActive: e.target.checked })
-                      }
-                    />
-                    Published / Active on Site
-                  </label>
-                  <label style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "6px" }}>
-                    Order:
-                    <input
-                      type="number"
-                      style={{ width: "60px", padding: "4px 8px" }}
-                      value={editingProject.order}
+                      type="text"
+                      value={editingProject.title}
                       onChange={(e) =>
                         setEditingProject({
                           ...editingProject,
-                          order: Number(e.target.value) || 1,
+                          title: e.target.value,
+                          slug:
+                            editingProject.slug ||
+                            e.target.value
+                              .toLowerCase()
+                              .replace(/[^a-z0-9]+/g, "-")
+                              .replace(/(^-|-$)/g, ""),
                         })
                       }
+                      placeholder="e.g. Gayatri Industrial Park"
                     />
-                  </label>
-                </div>
-              </div>
+                  </div>
+
+                  <div className="admin-field">
+                    <label>Slug (URL Identifier) *</label>
+                    <input
+                      type="text"
+                      value={editingProject.slug}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, slug: e.target.value })
+                      }
+                      placeholder="e.g. gayatri-industrial-park"
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>Tagline / Subhead</label>
+                    <input
+                      type="text"
+                      value={editingProject.tagline || ""}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, tagline: e.target.value })
+                      }
+                      placeholder="e.g. Gated Industrial & Warehousing Hub"
+                    />
+                  </div>
+
+                  <div className="admin-field admin-field-full">
+                    <label>Full Location Address *</label>
+                    <input
+                      type="text"
+                      value={editingProject.location}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, location: e.target.value })
+                      }
+                      placeholder="e.g. Bhojpur, Modinagar (Ghaziabad district), Uttar Pradesh"
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>Short Location Display</label>
+                    <input
+                      type="text"
+                      value={editingProject.addressShort || ""}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, addressShort: e.target.value })
+                      }
+                      placeholder="e.g. Bhojpur, Modinagar (Ghaziabad)"
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>Status Badge</label>
+                    <select
+                      value={editingProject.status}
+                      onChange={(e) =>
+                        setEditingProject({
+                          ...editingProject,
+                          status: e.target.value as ProjectItem["status"],
+                        })
+                      }
+                    >
+                      <option value="Active Plots Available">Active Plots Available</option>
+                      <option value="Under Development">Under Development</option>
+                      <option value="Ready for Possession">Ready for Possession</option>
+                    </select>
+                  </div>
+
+                  <div className="admin-field admin-field-full">
+                    <label>Display Order &amp; Published Status</label>
+                    <div style={{ display: "flex", gap: "20px", alignItems: "center", marginTop: "4px" }}>
+                      <label style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "8px", cursor: "pointer" }}>
+                        <input
+                          type="checkbox"
+                          checked={editingProject.isActive}
+                          onChange={(e) =>
+                            setEditingProject({ ...editingProject, isActive: e.target.checked })
+                          }
+                        />
+                        <span>Published / Live on Website</span>
+                      </label>
+                      <label style={{ fontSize: "13px", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span>Sort Order:</span>
+                        <input
+                          type="number"
+                          style={{ width: "70px", padding: "4px 8px" }}
+                          value={editingProject.order}
+                          onChange={(e) =>
+                            setEditingProject({
+                              ...editingProject,
+                              order: Number(e.target.value) || 1,
+                            })
+                          }
+                        />
+                      </label>
+                    </div>
+                  </div>
+                </>
+              )}
+
+              {/* TAB 2: SPECS & NARRATIVE */}
+              {modalTab === "specs" && (
+                <>
+                  <div className="admin-field">
+                    <label>Plot Sizes Typology</label>
+                    <input
+                      type="text"
+                      value={editingProject.plotSizes}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, plotSizes: e.target.value })
+                      }
+                      placeholder="e.g. Starting from 500 Sq. Yards or 500 to 3,000 Sq. Yards"
+                    />
+                  </div>
+
+                  <div className="admin-field">
+                    <label>Road Width &amp; Construction</label>
+                    <input
+                      type="text"
+                      value={editingProject.roadWidth}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, roadWidth: e.target.value })
+                      }
+                      placeholder="e.g. 45–52 ft. Heavy-Duty Concrete Roads"
+                    />
+                  </div>
+
+                  <div className="admin-field admin-field-full">
+                    <label>Short Description (Homepage Card Summary)</label>
+                    <textarea
+                      rows={2}
+                      value={editingProject.shortDescription}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, shortDescription: e.target.value })
+                      }
+                      placeholder="Summary shown on project cards across the website"
+                    />
+                  </div>
+
+                  <div className="admin-field admin-field-full">
+                    <label>Full Narrative Description</label>
+                    <textarea
+                      rows={5}
+                      value={editingProject.fullDescription}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, fullDescription: e.target.value })
+                      }
+                      placeholder="Comprehensive project narrative and industrial scope"
+                    />
+                  </div>
+                </>
+              )}
+
+              {/* TAB 3: MEDIA & SUBSIDIES */}
+              {modalTab === "media" && (
+                <>
+                  <div className="admin-field admin-field-full">
+                    <label>Cover Image (CDN / Cloudinary)</label>
+                    <div className="admin-image-upload-row">
+                      <input
+                        type="text"
+                        value={editingProject.coverImage}
+                        onChange={(e) =>
+                          setEditingProject({ ...editingProject, coverImage: e.target.value })
+                        }
+                        placeholder="https://..."
+                      />
+                      <label className="admin-btn admin-btn-outline admin-upload-btn">
+                        {uploadingImage ? "Uploading..." : "Upload New File"}
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleFileUpload}
+                          disabled={uploadingImage}
+                          style={{ display: "none" }}
+                        />
+                      </label>
+                    </div>
+                    {editingProject.coverImage && (
+                      <div className="admin-preview-thumbnail" style={{ marginTop: "10px" }}>
+                        <Image
+                          src={editingProject.coverImage}
+                          alt="Project Preview"
+                          width={240}
+                          height={130}
+                          style={{ objectFit: "cover", borderRadius: "6px" }}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="admin-field admin-field-full">
+                    <label>Government Policy Subsidies / Incentives Note</label>
+                    <textarea
+                      rows={3}
+                      value={editingProject.subsidiesInfo || ""}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, subsidiesInfo: e.target.value })
+                      }
+                      placeholder="e.g. Potential investment benefits under Uttar Pradesh MSME Promotion Policy 2022: eligible capital investment subsidies, stamp duty exemptions..."
+                    />
+                  </div>
+
+                  <div className="admin-field admin-field-full">
+                    <label>Brochure URL (PDF download link)</label>
+                    <input
+                      type="text"
+                      value={editingProject.brochureUrl || ""}
+                      onChange={(e) =>
+                        setEditingProject({ ...editingProject, brochureUrl: e.target.value })
+                      }
+                      placeholder="https://... (PDF link)"
+                    />
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="admin-modal-footer">
-              <button
-                type="button"
-                className="admin-btn admin-btn-outline"
-                onClick={() => setIsModalOpen(false)}
-              >
-                Cancel
-              </button>
-              <button type="button" className="admin-btn admin-btn-primary" onClick={handleSave}>
-                Save Project Changes
-              </button>
+              <div style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                {modalTab !== "general" && (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-outline"
+                    onClick={() => {
+                      if (modalTab === "media") setModalTab("specs");
+                      else if (modalTab === "specs") setModalTab("general");
+                    }}
+                  >
+                    ← Previous Step
+                  </button>
+                )}
+                {modalTab !== "media" && (
+                  <button
+                    type="button"
+                    className="admin-btn admin-btn-secondary"
+                    onClick={() => {
+                      if (modalTab === "general") setModalTab("specs");
+                      else if (modalTab === "specs") setModalTab("media");
+                    }}
+                  >
+                    Next Step →
+                  </button>
+                )}
+              </div>
+
+              <div style={{ display: "flex", gap: "10px" }}>
+                <button
+                  type="button"
+                  className="admin-btn admin-btn-outline"
+                  onClick={() => setIsModalOpen(false)}
+                >
+                  Cancel
+                </button>
+                <button type="button" className="admin-btn admin-btn-primary" onClick={handleSave}>
+                  Save Project Changes
+                </button>
+              </div>
             </div>
           </div>
         </div>

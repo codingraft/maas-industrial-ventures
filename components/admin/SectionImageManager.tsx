@@ -4,6 +4,7 @@ import { useState } from "react";
 import Image from "next/image";
 import { SiteSettings, HeroSlide, GalleryItem, SectionImage, MasterPlanItem, GalleryCategory } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
+import { AdminTabs } from "@/components/admin/ui/AdminTabs";
 
 interface SectionImageManagerProps {
   initialMedia: SiteSettings["media"];
@@ -400,56 +401,20 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
       />
 
       {/* Section Sub-Navigation Tabs */}
-      <div className="section-studio-nav">
-        <button
-          type="button"
-          className={`studio-tab ${activeSection === "hero" ? "active" : ""}`}
-          onClick={() => setActiveSection("hero")}
-        >
-          🚀 Hero Carousel ({media.heroSlides.length})
-        </button>
-        <button
-          type="button"
-          className={`studio-tab ${activeSection === "overview" ? "active" : ""}`}
-          onClick={() => setActiveSection("overview")}
-        >
-          🏭 Overview
-        </button>
-        <button
-          type="button"
-          className={`studio-tab ${activeSection === "infra" ? "active" : ""}`}
-          onClick={() => setActiveSection("infra")}
-        >
-          ⚙️ Infrastructure
-        </button>
-        <button
-          type="button"
-          className={`studio-tab ${activeSection === "masterplan" ? "active" : ""}`}
-          onClick={() => setActiveSection("masterplan")}
-        >
-          📐 Master Plan ({(media.masterplanPlans || []).length})
-        </button>
-        <button
-          type="button"
-          className={`studio-tab ${activeSection === "location" ? "active" : ""}`}
-          onClick={() => setActiveSection("location")}
-        >
-          📍 Location Map
-        </button>
-        <button
-          type="button"
-          className={`studio-tab ${activeSection === "gallery" ? "active" : ""}`}
-          onClick={() => setActiveSection("gallery")}
-        >
-          🖼 Gallery ({media.gallery.length})
-        </button>
-        <button
-          type="button"
-          className={`studio-tab ${activeSection === "logo" ? "active" : ""}`}
-          onClick={() => setActiveSection("logo")}
-        >
-          🏷 Brand Logo
-        </button>
+      <div style={{ marginBottom: "20px" }}>
+        <AdminTabs
+          tabs={[
+            { id: "hero", label: "Hero Carousel", count: media.heroSlides.length },
+            { id: "overview", label: "Overview Image" },
+            { id: "infra", label: "Infrastructure Image" },
+            { id: "masterplan", label: "Master Plan", count: (media.masterplanPlans || []).length },
+            { id: "location", label: "Location Map" },
+            { id: "gallery", label: "Gallery Photos", count: media.gallery.length },
+            { id: "logo", label: "Brand Logo" },
+          ]}
+          activeTab={activeSection}
+          onChange={(tabId) => setActiveSection(tabId as typeof activeSection)}
+        />
       </div>
 
       {/* 1. HERO CAROUSEL STUDIO */}

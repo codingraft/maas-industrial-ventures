@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { SiteSettings } from "@/lib/types";
@@ -13,6 +13,29 @@ import { TrackingConfig } from "@/components/admin/TrackingConfig";
 import { SeoManager } from "@/components/admin/SeoManager";
 import { ProjectsManager } from "@/components/admin/ProjectsManager";
 import { BlogManager } from "@/components/admin/BlogManager";
+
+export type AdminTab =
+  | "leads"
+  | "projects"
+  | "blogs"
+  | "media"
+  | "content"
+  | "sections"
+  | "contact"
+  | "tracking"
+  | "seo";
+
+const VALID_TABS: AdminTab[] = [
+  "leads",
+  "projects",
+  "blogs",
+  "media",
+  "content",
+  "sections",
+  "contact",
+  "tracking",
+  "seo",
+];
 
 interface AdminDashboardClientProps {
   initialSettings: SiteSettings;
@@ -28,11 +51,60 @@ export function AdminDashboardClient({
   metrics,
 }: AdminDashboardClientProps) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<
-    "leads" | "projects" | "blogs" | "media" | "content" | "sections" | "contact" | "tracking" | "seo"
-  >("leads");
+  const [activeTab, setActiveTab] = useState<AdminTab>("leads");
   const [settings, setSettings] = useState(initialSettings);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+
+  // Sync active tab with URL query parameter & browser history
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const tabParam = params.get("tab") as AdminTab | null;
+    if (tabParam && VALID_TABS.includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
+    const savedCollapsed = localStorage.getItem("maas_admin_sidebar_collapsed");
+    if (savedCollapsed === "true") {
+      setSidebarCollapsed(true);
+    }
+
+    const handlePopState = () => {
+      const currentParams = new URLSearchParams(window.location.search);
+      const currentTab = currentParams.get("tab") as AdminTab | null;
+      if (currentTab && VALID_TABS.includes(currentTab)) {
+        setActiveTab(currentTab);
+      } else {
+        setActiveTab("leads");
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
+
+  function handleTabChange(tab: AdminTab) {
+    setActiveTab(tab);
+    setSidebarOpen(false);
+
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      if (tab === "leads") {
+        url.searchParams.delete("tab");
+      } else {
+        url.searchParams.set("tab", tab);
+      }
+      window.history.pushState({}, "", url.toString());
+    }
+  }
+
+  function toggleSidebarCollapsed() {
+    setSidebarCollapsed((prev) => {
+      const next = !prev;
+      localStorage.setItem("maas_admin_sidebar_collapsed", String(next));
+      return next;
+    });
+  }
 
   async function handleLogout() {
     try {
@@ -60,16 +132,16 @@ export function AdminDashboardClient({
 
   const activeSectionsCount = Object.values(settings.sections).filter(Boolean).length;
 
-  const tabLabels: Record<typeof activeTab, string> = {
-    leads: "Leads CRM & Inquiries",
-    projects: "Projects & Landmark Developments",
-    blogs: "Insights & News Blog Studio",
-    media: "Section Media Studio",
-    content: "Township Content, Verticals & Vision Studio",
-    sections: "Homepage Section Controls",
-    contact: "Contact Information & Social Links",
-    tracking: "Ad Pixels & Analytics Tracking",
-    seo: "SEO, Meta Tags & Social Share Studio",
+  const tabLabels: Record<AdminTab, { title: string; category: string }> = {
+    leads: { title: "Leads CRM & Inquiries", category: "Overview & CRM" },
+    projects: { title: "Projects & Landmark Developments", category: "Portfolio & Media" },
+    blogs: { title: "Insights & News Blog Studio", category: "Editorial & Content" },
+    media: { title: "Section Media & Gallery Studio", category: "Portfolio & Media" },
+    content: { title: "Township Content, Verticals & Vision", category: "Editorial & Content" },
+    sections: { title: "Homepage Section Controls", category: "Site Architecture" },
+    contact: { title: "Contact Information & Social Channels", category: "Site Architecture" },
+    tracking: { title: "Ad Pixels, GTM & Analytics", category: "Marketing & Intelligence" },
+    seo: { title: "SEO, Meta Tags & Social Share Previews", category: "Marketing & Intelligence" },
   };
 
   return (
@@ -83,8 +155,12 @@ export function AdminDashboardClient({
         />
       )}
 
-      {/* Left-Side Minimal Navigation Sidebar */}
-      <aside className={`admin-sidebar ${sidebarOpen ? "is-open" : ""}`}>
+      {/* Left-Side Navigation Sidebar */}
+      <aside
+        className={`admin-sidebar ${sidebarOpen ? "is-open" : ""} ${
+          sidebarCollapsed ? "is-collapsed" : ""
+        }`}
+      >
         {/* Brand Header */}
         <div className="admin-sidebar-header">
           <a href="/admin" className="admin-sidebar-logo">
@@ -94,7 +170,7 @@ export function AdminDashboardClient({
               width={180}
               height={44}
               priority
-              style={{ width: "auto", height: "34px", objectFit: "contain" }}
+              style={{ width: "auto", height: sidebarCollapsed ? "24px" : "34px", objectFit: "contain" }}
             />
           </a>
           <button
@@ -117,10 +193,8 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "leads" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("leads");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("leads")}
+            title="Leads & CRM"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -136,17 +210,13 @@ export function AdminDashboardClient({
             )}
           </button>
 
-          <div className="sidebar-group-label">
-            Site Content &amp; Media
-          </div>
+          <div className="sidebar-group-label">Site Content &amp; Media</div>
 
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "projects" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("projects");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("projects")}
+            title="Projects Portfolio"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -164,10 +234,8 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "blogs" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("blogs");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("blogs")}
+            title="Insights & Blog"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -182,10 +250,8 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "media" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("media");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("media")}
+            title="Section Images"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -200,10 +266,8 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "content" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("content");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("content")}
+            title="Content & FAQs"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -220,10 +284,8 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "sections" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("sections");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("sections")}
+            title="Section Toggles"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -240,10 +302,8 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "contact" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("contact");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("contact")}
+            title="Contact & Social"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -253,23 +313,19 @@ export function AdminDashboardClient({
             <span className="sidebar-item-label">Contact &amp; Social</span>
           </button>
 
-          <div className="sidebar-group-label">
-            Marketing &amp; Ads
-          </div>
+          <div className="sidebar-group-label">Marketing &amp; Ads</div>
 
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "tracking" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("tracking");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("tracking")}
+            title="Ad Pixels & Tags"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <circle cx="12" cy="12" r="10" />
-                <circle cx="12" cy="12" r="6" />
-                <circle cx="12" cy="12" r="2" />
+                <circle cx="12" cy="6" r="6" />
+                <circle cx="12" cy="2" r="2" />
               </svg>
             </span>
             <span className="sidebar-item-label">Ad Pixels &amp; Tags</span>
@@ -278,10 +334,8 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "seo" ? "is-active" : ""}`}
-            onClick={() => {
-              setActiveTab("seo");
-              setSidebarOpen(false);
-            }}
+            onClick={() => handleTabChange("seo")}
+            title="SEO & Social Meta"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -295,11 +349,36 @@ export function AdminDashboardClient({
 
         {/* Sidebar Footer */}
         <div className="admin-sidebar-footer">
+          {/* Desktop Sidebar Collapse Toggle */}
+          <button
+            type="button"
+            className="sidebar-collapse-toggle desktop-only"
+            onClick={toggleSidebarCollapsed}
+            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          >
+            {sidebarCollapsed ? (
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="13 17 18 12 13 7" />
+                <polyline points="6 17 11 12 6 7" />
+              </svg>
+            ) : (
+              <>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="11 17 6 12 11 7" />
+                  <polyline points="18 17 13 12 18 7" />
+                </svg>
+                <span>Collapse Navigation</span>
+              </>
+            )}
+          </button>
+
           <a
             href="/"
             target="_blank"
             rel="noopener noreferrer"
             className="sidebar-footer-link"
+            title="View Live Website"
           >
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M15 3h6v6" />
@@ -332,8 +411,8 @@ export function AdminDashboardClient({
         </div>
       </aside>
 
-      {/* Main Content Area (On the right of the sidebar) */}
-      <div className="admin-main-wrap">
+      {/* Main Content Area */}
+      <div className={`admin-main-wrap ${sidebarCollapsed ? "sidebar-is-collapsed" : ""}`}>
         {/* Minimal Top Header */}
         <header className="admin-minimal-topbar">
           <div className="topbar-left">
@@ -350,8 +429,14 @@ export function AdminDashboardClient({
               </svg>
             </button>
             <div className="topbar-titles-wrap">
-              <div className="topbar-breadcrumb">MAAS Admin &bull; {activeTab.toUpperCase()}</div>
-              <h1 className="topbar-title">{tabLabels[activeTab]}</h1>
+              <div className="topbar-breadcrumb">
+                <span>Admin</span>
+                <span style={{ margin: "0 6px", opacity: 0.5 }}>/</span>
+                <span>{tabLabels[activeTab].category}</span>
+                <span style={{ margin: "0 6px", opacity: 0.5 }}>/</span>
+                <span style={{ color: "var(--admin-gold)" }}>{tabLabels[activeTab].title}</span>
+              </div>
+              <h1 className="topbar-title">{tabLabels[activeTab].title}</h1>
             </div>
           </div>
 
@@ -379,30 +464,50 @@ export function AdminDashboardClient({
 
         {/* Main Content Body */}
         <main className="admin-main-content">
-          {/* Minimal KPI Metric Strip */}
+          {/* KPI Metric Strip */}
           <div className="minimal-stats-strip">
-            <div className="minimal-stat-card">
+            <div
+              className="minimal-stat-card"
+              style={{ cursor: "pointer" }}
+              onClick={() => handleTabChange("leads")}
+              title="Click to view Leads CRM"
+            >
               <span className="minimal-stat-num">{metrics.totalLeads}</span>
               <span className="minimal-stat-lbl">Total Enquiries</span>
             </div>
 
-            <div className="minimal-stat-card">
+            <div
+              className="minimal-stat-card"
+              style={{ cursor: "pointer" }}
+              onClick={() => handleTabChange("leads")}
+              title="Click to view New Leads"
+            >
               <span className="minimal-stat-num" style={{ color: "#60a5fa" }}>
                 {metrics.newLeads}
               </span>
               <span className="minimal-stat-lbl">New Uncontacted</span>
             </div>
 
-            <div className="minimal-stat-card">
+            <div
+              className="minimal-stat-card"
+              style={{ cursor: "pointer" }}
+              onClick={() => handleTabChange("leads")}
+              title="Click to view Today's Leads"
+            >
               <span className="minimal-stat-num" style={{ color: "#fb923c" }}>
                 {metrics.todayLeads}
               </span>
               <span className="minimal-stat-lbl">Past 24 Hours</span>
             </div>
 
-            <div className="minimal-stat-card">
+            <div
+              className="minimal-stat-card"
+              style={{ cursor: "pointer" }}
+              onClick={() => handleTabChange("sections")}
+              title="Click to manage Section Controls"
+            >
               <span className="minimal-stat-num" style={{ color: "var(--admin-gold)" }}>
-                {activeSectionsCount}
+                {activeSectionsCount}/11
               </span>
               <span className="minimal-stat-lbl">Active Sections</span>
             </div>
