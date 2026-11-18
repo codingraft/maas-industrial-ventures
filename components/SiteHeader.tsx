@@ -79,7 +79,7 @@ export function SiteHeader({
       }
     }
     function onResize() {
-      if (window.innerWidth > 768 && menuOpen) {
+      if (window.innerWidth > 1024 && menuOpen) {
         setMenuOpen(false);
       }
     }
