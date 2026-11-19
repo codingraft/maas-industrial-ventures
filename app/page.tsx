@@ -123,7 +123,9 @@ export default async function Home() {
         {sections.faq !== false && (
           <FaqSection
             faqs={content?.faqs?.length ? content.faqs : defaultContent.faqs}
-            sectionNumber="05"
+            sectionNumber="06"
+            phone={site_info?.phone}
+            whatsapp={site_info?.whatsapp}
           />
         )}
 
@@ -132,7 +134,7 @@ export default async function Home() {
           <section className="enquire section-pad" id="contact">
             <div className="page-wrap">
               <div className="section-label">
-                <span>06</span> / Contact &amp; Request Details
+                <span>07</span> / Contact &amp; Request Details
               </div>
               <div className="enquire-grid">
                 <div className="enquire-intro">
