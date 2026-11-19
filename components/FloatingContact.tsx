@@ -25,14 +25,21 @@ export function FloatingContact({ phone, whatsapp, brochureUrl }: FloatingContac
       const scrollPos = window.scrollY + window.innerHeight;
       const docHeight = document.documentElement.scrollHeight;
 
-      // If within 550px of page bottom (in or near contact form/footer), hide
+      // 1. Hide on hero fold (top of page) to avoid overlapping hero controls & glance bar
+      if (window.scrollY < 240) {
+        setIsHidden(true);
+        setIsOpen(false);
+        return;
+      }
+
+      // 2. If within 550px of page bottom (in or near contact form/footer), hide
       if (docHeight - scrollPos < 550) {
         setIsHidden(true);
         setIsOpen(false);
         return;
       }
 
-      // Check contact section bounding rect (lazy lookup with cache)
+      // 3. Check contact section bounding rect (lazy lookup with cache)
       if (!contactEl) {
         contactEl = document.getElementById("contact") || document.querySelector<HTMLElement>(".enquire");
       }

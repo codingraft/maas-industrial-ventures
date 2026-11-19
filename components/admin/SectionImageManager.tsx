@@ -171,6 +171,18 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
     });
   }
 
+  async function handleMoveHeroSlide(fromIndex: number, direction: "up" | "down") {
+    const toIndex = direction === "up" ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= media.heroSlides.length) return;
+    const nextSlides = [...media.heroSlides];
+    const [moved] = nextSlides.splice(fromIndex, 1);
+    nextSlides.splice(toIndex, 0, moved);
+    const nextMedia = { ...media, heroSlides: nextSlides, hero: nextSlides[0].src };
+    setMedia(nextMedia);
+    await onUpdate(nextMedia);
+    notify(`Slide moved ${direction}!`);
+  }
+
   /* --- 2. SINGLE SECTION IMAGE HANDLERS --- */
   async function handleSectionImageUpload(
     field: "overviewImage" | "infraImage" | "locationImage",
@@ -414,17 +426,88 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
       />
 
+      {/* Sleek Visuals & Blueprints Studio Action Header */}
+      <div
+        className="admin-content-toolbar"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          flexWrap: "wrap",
+          gap: "14px",
+          paddingBottom: "18px",
+          marginBottom: "20px",
+          borderBottom: "1px solid var(--admin-border-subtle)",
+        }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div
+            style={{
+              width: "40px",
+              height: "40px",
+              borderRadius: "10px",
+              background: "rgba(212, 175, 55, 0.12)",
+              border: "1px solid rgba(212, 175, 55, 0.28)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "var(--admin-gold)",
+              flexShrink: 0,
+            }}
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polygon points="12 2 2 7 12 12 22 7 12 2" />
+              <polyline points="2 17 12 22 22 17" />
+              <polyline points="2 12 12 17 22 12" />
+            </svg>
+          </div>
+          <div>
+            <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--admin-text-main)", margin: 0, letterSpacing: "-0.01em" }}>
+              Visuals, Media &amp; Blueprints Studio
+            </h2>
+            <p style={{ fontSize: "12.5px", color: "var(--admin-text-muted)", margin: "3px 0 0 0" }}>
+              Configure homepage hero carousel slides, section photos, blueprint schematics, and photo gallery.
+            </p>
+          </div>
+        </div>
+
+        {activeSection === "hero" && (
+          <button
+            type="button"
+            className="btn-gold"
+            onClick={handleAddNewHeroSlide}
+            style={{
+              display: "inline-flex",
+              alignItems: "center",
+              gap: "8px",
+              padding: "9px 20px",
+              fontSize: "13.5px",
+              fontWeight: 700,
+              borderRadius: "6px",
+              boxShadow: "0 2px 10px rgba(212, 175, 55, 0.22)",
+              cursor: "pointer",
+            }}
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="12" y1="5" x2="12" y2="19" />
+              <line x1="5" y1="12" x2="19" y2="12" />
+            </svg>
+            <span>+ Add New Slide</span>
+          </button>
+        )}
+      </div>
+
       {/* Section Sub-Navigation Tabs */}
       <div style={{ marginBottom: "20px" }}>
         <AdminTabs
           tabs={[
-            { id: "hero", label: "Hero Carousel", count: media.heroSlides.length },
-            { id: "overview", label: "Overview Image" },
-            { id: "infra", label: "Infrastructure Image" },
-            { id: "masterplan", label: "Master Plan", count: (media.masterplanPlans || []).length },
-            { id: "location", label: "Location Map" },
-            { id: "gallery", label: "Gallery Photos", count: media.gallery.length },
-            { id: "logo", label: "Brand Logo" },
+            { id: "hero", label: "🌟 Hero Carousel", count: media.heroSlides.length },
+            { id: "overview", label: "🏢 Overview Photo" },
+            { id: "infra", label: "🏗️ Infrastructure Visual" },
+            { id: "masterplan", label: "📐 Master Plan Blueprints", count: (media.masterplanPlans || []).length },
+            { id: "location", label: "📍 Location & Connectivity" },
+            { id: "gallery", label: "🖼️ Project Gallery", count: media.gallery.length },
+            { id: "logo", label: "✨ Brand Logo" },
           ]}
           activeTab={activeSection}
           onChange={(tabId) => setActiveSection(tabId as typeof activeSection)}
@@ -433,166 +516,297 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
       {/* 1. HERO CAROUSEL STUDIO */}
       {activeSection === "hero" && (
-        <div className="admin-card">
-          <div className="admin-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <div>
-              <h2 className="admin-card-title">Hero Carousel Slider Studio</h2>
-              <p className="admin-card-desc">
-                Configure the multi-slide carousel displayed at the top of the homepage.
-              </p>
-            </div>
-            <button
-              type="button"
-              className="btn-gold"
-              onClick={handleAddNewHeroSlide}
-              style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}
+        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+          {/* Slides List */}
+          {media.heroSlides.map((slide, idx) => (
+            <div
+              key={slide.id || idx}
+              className="admin-card-inner"
+              style={{
+                padding: "20px",
+                background: "var(--admin-bg-card-subtle)",
+                borderRadius: "10px",
+                border: "1px solid var(--admin-border-subtle)",
+              }}
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="12" y1="5" x2="12" y2="19" />
-                <line x1="5" y1="12" x2="19" y2="12" />
-              </svg>
-              <span>+ Add New Slide</span>
-            </button>
-          </div>
+              {/* Slide Card Header */}
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                  paddingBottom: "14px",
+                  marginBottom: "16px",
+                  borderBottom: "1px solid var(--admin-border-subtle)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "var(--admin-gold)",
+                      padding: "3px 8px",
+                      background: "rgba(212, 175, 55, 0.12)",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    SLIDE 0{idx + 1} OF 0{media.heroSlides.length}
+                  </span>
+                  <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--admin-text-main)" }}>
+                    {slide.title || `Perspective #${idx + 1}`}
+                  </span>
+                </div>
 
-          <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "16px" }}>
-            {media.heroSlides.map((slide, idx) => (
-              <div key={slide.id || idx} className="slide-editor-card">
-                <div className="slide-editor-preview">
-                  <div style={{ position: "relative", width: "100%", height: "140px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  {/* Reorder Up / Down */}
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ padding: "4px 8px", fontSize: "11px" }}
+                    onClick={() => handleMoveHeroSlide(idx, "up")}
+                    disabled={idx === 0}
+                    title="Move slide earlier in carousel"
+                  >
+                    ▲ Move Up
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ padding: "4px 8px", fontSize: "11px" }}
+                    onClick={() => handleMoveHeroSlide(idx, "down")}
+                    disabled={idx === media.heroSlides.length - 1}
+                    title="Move slide later in carousel"
+                  >
+                    ▼ Move Down
+                  </button>
+                  {media.heroSlides.length > 1 && (
+                    <button
+                      type="button"
+                      className="btn-danger"
+                      style={{ padding: "4px 10px", fontSize: "11.5px" }}
+                      onClick={() => handleDeleteHeroSlide(idx)}
+                    >
+                      Delete Slide
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              {/* Slide Body: 2 Columns */}
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+                {/* Left: Image Preview & Actions */}
+                <div>
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "180px",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                      border: "1px solid var(--admin-border-subtle)",
+                      background: "#070a12",
+                    }}
+                  >
                     <Image
                       src={slide.src}
                       alt={slide.alt || `Slide ${idx + 1}`}
                       fill
-                      style={{ objectFit: "cover", borderRadius: "6px" }}
+                      style={{ objectFit: "cover" }}
                     />
+                    <div
+                      style={{
+                        position: "absolute",
+                        bottom: "8px",
+                        left: "8px",
+                        padding: "3px 8px",
+                        background: "rgba(0, 0, 0, 0.75)",
+                        borderRadius: "4px",
+                        fontSize: "10.5px",
+                        color: "#cbd5e1",
+                      }}
+                    >
+                      16:9 Hero Perspective
+                    </div>
                   </div>
-                  <label
-                    className="btn-secondary"
-                    style={{ marginTop: "10px", width: "100%", textAlign: "center", cursor: "pointer", justifyContent: "center" }}
-                  >
-                    {uploadingField === `hero-${idx}` ? "Uploading…" : "Replace Photo"}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      style={{ display: "none" }}
-                      onChange={(e) => handleHeroSlideImageUpload(idx, e)}
-                      disabled={uploadingField === `hero-${idx}`}
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    style={{ marginTop: "6px", width: "100%", textAlign: "center", justifyContent: "center" }}
-                    onClick={() =>
-                      setPickerModal({
-                        isOpen: true,
-                        title: `Select Image for Hero Slide #${idx + 1}`,
-                        currentUrl: slide.src,
-                        onSelect: (url, alt) => {
-                          handleHeroSlideFieldChange(idx, "src", url);
-                          if (alt && !slide.alt) handleHeroSlideFieldChange(idx, "alt", alt);
-                        },
-                      })
-                    }
-                  >
-                    Choose from Library
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-danger"
-                    style={{ marginTop: "8px" }}
-                    onClick={() => handleDeleteHeroSlide(idx)}
-                  >
-                    Delete Slide
-                  </button>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "12px" }}>
+                    <button
+                      type="button"
+                      className="btn-secondary"
+                      style={{ justifyContent: "center", fontSize: "12px", padding: "8px" }}
+                      onClick={() =>
+                        setPickerModal({
+                          isOpen: true,
+                          title: `Select Image for Hero Slide #${idx + 1}`,
+                          currentUrl: slide.src,
+                          onSelect: (url, alt) => {
+                            handleHeroSlideFieldChange(idx, "src", url);
+                            if (alt && !slide.alt) handleHeroSlideFieldChange(idx, "alt", alt);
+                          },
+                        })
+                      }
+                    >
+                      🖼️ Library
+                    </button>
+
+                    <label
+                      className="btn-secondary"
+                      style={{ justifyContent: "center", fontSize: "12px", padding: "8px", cursor: "pointer", textAlign: "center" }}
+                    >
+                      {uploadingField === `hero-${idx}` ? "Uploading…" : "📁 Upload New"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => handleHeroSlideImageUpload(idx, e)}
+                        disabled={uploadingField === `hero-${idx}`}
+                      />
+                    </label>
+                  </div>
                 </div>
 
-                <div className="slide-editor-fields">
-                  <div style={{ fontSize: "12px", fontWeight: 700, color: "#d4af37", marginBottom: "8px" }}>
-                    SLIDE #{idx + 1} SPECIFICATIONS
-                  </div>
-                  <div className="form-row">
-                    <label className="form-label">Photo URL / Direct Link</label>
+                {/* Right: Slide Copy Inputs */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      Category Eyebrow Pill
+                    </label>
                     <input
                       type="text"
-                      className="form-control"
-                      value={slide.src}
-                      onChange={(e) => handleHeroSlideFieldChange(idx, "src", e.target.value)}
-                      placeholder="https://... or uploaded image URL"
-                    />
-                  </div>
-                  <div className="form-row">
-                    <label className="form-label">Image Alt Text (SEO & Accessibility)</label>
-                    <input
-                      type="text"
-                      className="form-control"
-                      value={slide.alt || ""}
-                      onChange={(e) => handleHeroSlideFieldChange(idx, "alt", e.target.value)}
-                      placeholder="e.g. MAAS Industrial infrastructure perspective"
-                    />
-                  </div>
-                  <div className="form-row">
-                    <label className="form-label">Category Eyebrow</label>
-                    <input
-                      type="text"
-                      className="form-control"
+                      className="admin-input"
                       value={slide.eyebrow || ""}
                       onChange={(e) => handleHeroSlideFieldChange(idx, "eyebrow", e.target.value)}
                       placeholder="e.g. HIGH-CAPACITY INFRASTRUCTURE"
                     />
                   </div>
-                  <div className="form-row">
-                    <label className="form-label">Main Headline</label>
+
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      Main Slide Headline
+                    </label>
                     <input
                       type="text"
-                      className="form-control"
+                      className="admin-input"
                       value={slide.title}
                       onChange={(e) => handleHeroSlideFieldChange(idx, "title", e.target.value)}
-                      placeholder="e.g. Built for industry. Designed for what's next."
+                      placeholder="e.g. Developing Land. Building Opportunities."
                     />
                   </div>
-                  <div className="form-row">
-                    <label className="form-label">Subheading Copy</label>
+
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      Subheading Copy
+                    </label>
                     <textarea
-                      className="form-control"
                       rows={2}
+                      className="admin-textarea"
                       value={slide.subtitle}
                       onChange={(e) => handleHeroSlideFieldChange(idx, "subtitle", e.target.value)}
                       placeholder="Brief descriptive highlight..."
                     />
                   </div>
+
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      Image Alt Text (SEO &amp; Accessibility)
+                    </label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={slide.alt || ""}
+                      onChange={(e) => handleHeroSlideFieldChange(idx, "alt", e.target.value)}
+                      placeholder="e.g. MAAS Industrial infrastructure perspective"
+                    />
+                  </div>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       )}
 
       {/* 2. OVERVIEW VISUAL */}
       {activeSection === "overview" && (
-        <div className="admin-card">
-          <div className="admin-card-header">
-            <h2 className="admin-card-title">Overview Section Visual</h2>
-            <p className="admin-card-desc">
-              High-resolution photo displayed alongside the core project proposition.
+        <div
+          className="admin-card-inner"
+          style={{
+            padding: "24px",
+            background: "var(--admin-bg-card-subtle)",
+            borderRadius: "10px",
+            border: "1px solid var(--admin-border-subtle)",
+          }}
+        >
+          <div style={{ marginBottom: "20px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>🏢</span>
+              <span>Company Overview Section Visual</span>
+            </h3>
+            <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
+              High-resolution photo displayed alongside the core project proposition and company story.
             </p>
           </div>
 
-          <div className="image-preview-box">
-            <div className="image-preview-thumb">
-              <Image
-                src={media.overviewImage.src}
-                alt="Overview"
-                fill
-                style={{ objectFit: "cover" }}
-              />
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", alignItems: "start" }}>
+            {/* Visual Preview */}
+            <div>
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: "220px",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  border: "1px solid var(--admin-border-subtle)",
+                  background: "#070a12",
+                }}
+              >
+                <Image
+                  src={media.overviewImage.src}
+                  alt={media.overviewImage.alt || "Overview"}
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "8px",
+                    left: "8px",
+                    padding: "4px 8px",
+                    background: "rgba(0, 0, 0, 0.75)",
+                    borderRadius: "4px",
+                    fontSize: "10.5px",
+                    color: "#cbd5e1",
+                  }}
+                >
+                  16:10 Aspect Ratio · 1920×1080 Recommended
+                </div>
+              </div>
 
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
-                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
-                  {uploadingField === "overviewImage" ? "Uploading…" : "📁 Upload Overview Photo"}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
+                <button
+                  type="button"
+                  className="btn-gold"
+                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px" }}
+                  onClick={() =>
+                    setPickerModal({
+                      isOpen: true,
+                      title: "Select Overview Section Visual",
+                      currentUrl: media.overviewImage.src,
+                      onSelect: (url, alt) => handleDirectSectionUrlChange("overviewImage", url, alt),
+                    })
+                  }
+                >
+                  🖼️ Library
+                </button>
+
+                <label
+                  className="btn-secondary"
+                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px", cursor: "pointer", textAlign: "center" }}
+                >
+                  {uploadingField === "overviewImage" ? "Uploading…" : "📁 Upload New"}
                   <input
                     type="file"
                     accept="image/*"
@@ -601,22 +815,49 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                     disabled={uploadingField === "overviewImage"}
                   />
                 </label>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() =>
-                    setPickerModal({
-                      isOpen: true,
-                      title: "Select Overview Section Visual",
-                      currentUrl: media.overviewImage.src,
-                      onSelect: (url) => handleDirectSectionUrlChange("overviewImage", url),
-                    })
-                  }
-                >
-                  Choose from Library
-                </button>
               </div>
-              <div className="form-help">Recommended resolution: 1920x1080 or higher.</div>
+            </div>
+
+            {/* Inputs */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Direct Image URL
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={media.overviewImage.src}
+                  onChange={(e) => handleDirectSectionUrlChange("overviewImage", e.target.value)}
+                  placeholder="https://... or uploaded image URL"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Image Alt Text (SEO &amp; Accessibility)
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={media.overviewImage.alt || ""}
+                  placeholder="e.g. Master industrial infrastructure aerial perspective"
+                  onChange={async (e) => {
+                    const nextMedia = {
+                      ...media,
+                      overviewImage: { ...media.overviewImage, alt: e.target.value },
+                    };
+                    setMedia(nextMedia);
+                    await onUpdate(nextMedia);
+                  }}
+                />
+              </div>
+
+              <div style={{ padding: "12px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--admin-border-subtle)", borderRadius: "6px" }}>
+                <span style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", display: "block" }}>
+                  💡 <strong>Display Placement:</strong> Renders inside the Company Story &amp; Proposition section alongside the 3 narrative paragraphs.
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -624,28 +865,83 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
       {/* 3. INFRASTRUCTURE FRAMEWORK */}
       {activeSection === "infra" && (
-        <div className="admin-card">
-          <div className="admin-card-header">
-            <h2 className="admin-card-title">Infrastructure Framework Visual</h2>
-            <p className="admin-card-desc">
+        <div
+          className="admin-card-inner"
+          style={{
+            padding: "24px",
+            background: "var(--admin-bg-card-subtle)",
+            borderRadius: "10px",
+            border: "1px solid var(--admin-border-subtle)",
+          }}
+        >
+          <div style={{ marginBottom: "20px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>🏗️</span>
+              <span>Infrastructure Framework Visual</span>
+            </h3>
+            <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
               Displayed in the 3rd pillar card (Utilities &amp; Heavy Operations).
             </p>
           </div>
 
-          <div className="image-preview-box">
-            <div className="image-preview-thumb">
-              <Image
-                src={media.infraImage.src}
-                alt="Infrastructure"
-                fill
-                style={{ objectFit: "cover" }}
-              />
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", alignItems: "start" }}>
+            {/* Visual Preview */}
+            <div>
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: "220px",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  border: "1px solid var(--admin-border-subtle)",
+                  background: "#070a12",
+                }}
+              >
+                <Image
+                  src={media.infraImage.src}
+                  alt={media.infraImage.alt || "Infrastructure"}
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "8px",
+                    left: "8px",
+                    padding: "4px 8px",
+                    background: "rgba(0, 0, 0, 0.75)",
+                    borderRadius: "4px",
+                    fontSize: "10.5px",
+                    color: "#cbd5e1",
+                  }}
+                >
+                  Utilities Framework · 1920×1080 Recommended
+                </div>
+              </div>
 
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
-                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
-                  {uploadingField === "infraImage" ? "Uploading…" : "📁 Upload Infrastructure Visual"}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
+                <button
+                  type="button"
+                  className="btn-gold"
+                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px" }}
+                  onClick={() =>
+                    setPickerModal({
+                      isOpen: true,
+                      title: "Select Infrastructure Framework Visual",
+                      currentUrl: media.infraImage.src,
+                      onSelect: (url, alt) => handleDirectSectionUrlChange("infraImage", url, alt),
+                    })
+                  }
+                >
+                  🖼️ Library
+                </button>
+
+                <label
+                  className="btn-secondary"
+                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px", cursor: "pointer", textAlign: "center" }}
+                >
+                  {uploadingField === "infraImage" ? "Uploading…" : "📁 Upload New"}
                   <input
                     type="file"
                     accept="image/*"
@@ -654,22 +950,49 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                     disabled={uploadingField === "infraImage"}
                   />
                 </label>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() =>
-                    setPickerModal({
-                      isOpen: true,
-                      title: "Select Infrastructure Framework Visual",
-                      currentUrl: media.infraImage.src,
-                      onSelect: (url) => handleDirectSectionUrlChange("infraImage", url),
-                    })
-                  }
-                >
-                  Choose from Library
-                </button>
               </div>
-              <div className="form-help">Recommended: High-voltage sub-stations, water plants, or clean machinery.</div>
+            </div>
+
+            {/* Inputs */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Direct Image URL
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={media.infraImage.src}
+                  onChange={(e) => handleDirectSectionUrlChange("infraImage", e.target.value)}
+                  placeholder="https://... or uploaded image URL"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Image Alt Text (SEO &amp; Accessibility)
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={media.infraImage.alt || ""}
+                  placeholder="e.g. High-voltage power sub-station and clean water feeds"
+                  onChange={async (e) => {
+                    const nextMedia = {
+                      ...media,
+                      infraImage: { ...media.infraImage, alt: e.target.value },
+                    };
+                    setMedia(nextMedia);
+                    await onUpdate(nextMedia);
+                  }}
+                />
+              </div>
+
+              <div style={{ padding: "12px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--admin-border-subtle)", borderRadius: "6px" }}>
+                <span style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", display: "block" }}>
+                  💡 <strong>Recommended:</strong> High-voltage substations, modern drainage networks, or clean manufacturing machinery.
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -677,231 +1000,317 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
       {/* 4. MASTER PLAN MULTI-PERSPECTIVE STUDIO */}
       {activeSection === "masterplan" && (
-        <div>
-          <div className="admin-card">
-            <div className="admin-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <h2 className="admin-card-title">
-                  Master Plan Perspectives Studio ({(media.masterplanPlans || []).length} Plans)
-                </h2>
-                <p className="admin-card-desc">
-                  Visitors on the homepage can switch between these perspectives (e.g. Overall Zoning, Phase 1 Demarcation, Utility Grid) and click to expand high-res blueprints.
-                </p>
-              </div>
-            </div>
-
-            {/* List of Configured Master Plans */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "20px", marginTop: "16px" }}>
-              {(media.masterplanPlans || []).map((plan, pIdx) => (
-                <div key={plan.id || pIdx} className="slide-editor-card">
-                  <div className="slide-editor-preview">
-                    <div style={{ position: "relative", width: "100%", height: "160px", background: "#090d16", borderRadius: "6px", overflow: "hidden" }}>
-                      <Image
-                        src={plan.src}
-                        alt={plan.title}
-                        fill
-                        style={{ objectFit: "contain", padding: "8px" }}
-                      />
-                    </div>
-                    <div style={{ display: "flex", gap: "6px", marginTop: "10px", flexWrap: "wrap" }}>
-                      <label
-                        className="btn-secondary"
-                        style={{ flex: 1, textAlign: "center", cursor: "pointer", justifyContent: "center" }}
-                      >
-                        {uploadingField === `plan-${pIdx}` ? "Uploading…" : "Upload Blueprint"}
-                        <input
-                          type="file"
-                          accept="image/*"
-                          style={{ display: "none" }}
-                          onChange={(e) => handleReplacePlanImage(pIdx, e)}
-                          disabled={uploadingField === `plan-${pIdx}`}
-                        />
-                      </label>
-                      <button
-                        type="button"
-                        className="btn-secondary"
-                        onClick={() =>
-                          setPickerModal({
-                            isOpen: true,
-                            title: `Select Blueprint for ${plan.title || `Perspective #${pIdx + 1}`}`,
-                            currentUrl: plan.src,
-                            onSelect: async (url) => {
-                              const updatedPlans = [...(media.masterplanPlans || [])];
-                              updatedPlans[pIdx] = { ...updatedPlans[pIdx], src: url };
-                              const nextMedia = { ...media, masterplanPlans: updatedPlans };
-                              setMedia(nextMedia);
-                              await onUpdate(nextMedia);
-                              notify("Master plan image updated from library!");
-                            },
-                          })
-                        }
-                      >
-                        Library
-                      </button>
-                    </div>
-                    <button
-                      type="button"
-                      className="btn-danger"
-                      style={{ marginTop: "8px" }}
-                      onClick={() => handleDeleteMasterPlan(plan.id)}
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
+          {/* List of Configured Master Plans */}
+          {(media.masterplanPlans || []).map((plan, pIdx) => (
+            <div
+              key={plan.id || pIdx}
+              className="admin-card-inner"
+              style={{
+                padding: "20px",
+                background: "var(--admin-bg-card-subtle)",
+                borderRadius: "10px",
+                border: "1px solid var(--admin-border-subtle)",
+              }}
+            >
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "10px",
+                  paddingBottom: "12px",
+                  marginBottom: "16px",
+                  borderBottom: "1px solid var(--admin-border-subtle)",
+                }}
+              >
+                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 700,
+                      color: "var(--admin-gold)",
+                      padding: "3px 8px",
+                      background: "rgba(212, 175, 55, 0.12)",
+                      borderRadius: "4px",
+                    }}
+                  >
+                    PERSPECTIVE 0{pIdx + 1}
+                  </span>
+                  <span style={{ fontSize: "14px", fontWeight: 600, color: "var(--admin-text-main)" }}>
+                    {plan.title}
+                  </span>
+                  {plan.tag && (
+                    <span
+                      style={{
+                        fontSize: "10.5px",
+                        padding: "2px 8px",
+                        borderRadius: "999px",
+                        background: "rgba(255, 255, 255, 0.08)",
+                        color: "#94a3b8",
+                      }}
                     >
-                      Delete Perspective
-                    </button>
-                  </div>
-
-                  <div className="slide-editor-fields">
-                    <div style={{ fontSize: "12px", fontWeight: 700, color: "#d4af37", marginBottom: "8px" }}>
-                      PLAN PERSPECTIVE #{pIdx + 1}
-                    </div>
-                    <div className="form-grid-2">
-                      <div className="form-row">
-                        <label className="form-label">Perspective Title</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={plan.title}
-                          onChange={(e) => handlePlanFieldChange(pIdx, "title", e.target.value)}
-                          placeholder="e.g. Overall Zoning & Master Layout"
-                        />
-                      </div>
-                      <div className="form-row">
-                        <label className="form-label">Tag Badge</label>
-                        <input
-                          type="text"
-                          className="form-control"
-                          value={plan.tag || ""}
-                          onChange={(e) => handlePlanFieldChange(pIdx, "tag", e.target.value)}
-                          placeholder="e.g. Phase 1 & 2 Blueprint"
-                        />
-                      </div>
-                    </div>
-
-                    <div className="form-row">
-                      <label className="form-label">Subtitle Summary</label>
-                      <input
-                        type="text"
-                        className="form-control"
-                        value={plan.subtitle || ""}
-                        onChange={(e) => handlePlanFieldChange(pIdx, "subtitle", e.target.value)}
-                        placeholder="e.g. Macro sectoral demarcation & green buffer perimeter"
-                      />
-                    </div>
-
-                    <div className="form-row" style={{ marginBottom: 0 }}>
-                      <label className="form-label">Technical Description</label>
-                      <textarea
-                        className="form-control"
-                        rows={2}
-                        value={plan.description || ""}
-                        onChange={(e) => handlePlanFieldChange(pIdx, "description", e.target.value)}
-                        placeholder="Details about zoning division, road widths, setbacks..."
-                      />
-                    </div>
-                  </div>
+                      {plan.tag}
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
 
-            {/* Add New Master Plan Perspective Form */}
-            <div style={{ background: "#11151f", border: "1px dashed #334155", borderRadius: "8px", padding: "20px", marginTop: "24px" }}>
-              <h3 style={{ margin: "0 0 12px", fontSize: "14px", color: "#d4af37" }}>
-                + Add New Master Plan Perspective
-              </h3>
-              <div className="form-grid-2" style={{ marginBottom: "14px" }}>
-                <div>
-                  <label className="form-label">Perspective Title *</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={newPlanTitle}
-                    onChange={(e) => setNewPlanTitle(e.target.value)}
-                    placeholder="e.g. Phase 2 Heavy Engineering Layout"
-                  />
-                </div>
-                <div>
-                  <label className="form-label">Tag Badge</label>
-                  <input
-                    type="text"
-                    className="form-control"
-                    value={newPlanTag}
-                    onChange={(e) => setNewPlanTag(e.target.value)}
-                    placeholder="e.g. Phase 2 Demarcation"
-                  />
-                </div>
-              </div>
-
-              <div className="form-row">
-                <label className="form-label">Subtitle</label>
-                <input
-                  type="text"
-                  className="form-control"
-                  value={newPlanSubtitle}
-                  onChange={(e) => setNewPlanSubtitle(e.target.value)}
-                  placeholder="e.g. 50-acre dedicated heavy engineering cluster"
-                />
-              </div>
-
-              <div className="form-row" style={{ marginBottom: "16px" }}>
-                <label className="form-label">Technical Description</label>
-                <textarea
-                  className="form-control"
-                  rows={2}
-                  value={newPlanDesc}
-                  onChange={(e) => setNewPlanDesc(e.target.value)}
-                  placeholder="Specify setbacks, road circulation, power connection details..."
-                />
-              </div>
-
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
-                  {uploadingField === "new-plan" ? "Uploading Plan…" : "📁 Upload Blueprint File"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleAddMasterPlan}
-                    disabled={uploadingField === "new-plan"}
-                  />
-                </label>
                 <button
                   type="button"
-                  className="btn-secondary"
-                  onClick={() => {
-                    if (!newPlanTitle.trim()) {
-                      addToast("error", "Perspective title required", "Please enter a perspective title first.");
-                      return;
-                    }
-                    setPickerModal({
-                      isOpen: true,
-                      title: "Select Blueprint for New Perspective",
-                      onSelect: async (url) => {
-                        const newPlan: MasterPlanItem = {
-                          id: `plan-${Date.now()}`,
-                          title: newPlanTitle.trim(),
-                          subtitle: newPlanSubtitle.trim(),
-                          description: newPlanDesc.trim(),
-                          tag: newPlanTag.trim() || "Blueprint",
-                          src: url,
-                          alt: newPlanTitle.trim() || "Master Plan Perspective",
-                        };
-                        const nextMedia = {
-                          ...media,
-                          masterplanPlans: [...(media.masterplanPlans || []), newPlan],
-                        };
-                        setMedia(nextMedia);
-                        await onUpdate(nextMedia);
-                        setNewPlanTitle("");
-                        setNewPlanSubtitle("");
-                        setNewPlanDesc("");
-                        setNewPlanTag("");
-                        notify("New Master Plan perspective added!");
-                      },
-                    });
-                  }}
+                  className="btn-danger"
+                  style={{ padding: "4px 10px", fontSize: "11.5px" }}
+                  onClick={() => handleDeleteMasterPlan(plan.id)}
                 >
-                  Choose from Library
+                  Delete Perspective
                 </button>
               </div>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+                {/* Left: Blueprint Visual Preview */}
+                <div>
+                  <div
+                    style={{
+                      position: "relative",
+                      width: "100%",
+                      height: "190px",
+                      background: "#070a12",
+                      borderRadius: "8px",
+                      overflow: "hidden",
+                      border: "1px solid var(--admin-border-subtle)",
+                    }}
+                  >
+                    <Image
+                      src={plan.src}
+                      alt={plan.title}
+                      fill
+                      style={{ objectFit: "contain", padding: "10px" }}
+                    />
+                  </div>
+
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "12px" }}>
+                    <button
+                      type="button"
+                      className="btn-gold"
+                      style={{ justifyContent: "center", fontSize: "12px", padding: "8px" }}
+                      onClick={() =>
+                        setPickerModal({
+                          isOpen: true,
+                          title: `Select Blueprint for ${plan.title || `Perspective #${pIdx + 1}`}`,
+                          currentUrl: plan.src,
+                          onSelect: async (url) => {
+                            const updatedPlans = [...(media.masterplanPlans || [])];
+                            updatedPlans[pIdx] = { ...updatedPlans[pIdx], src: url };
+                            const nextMedia = { ...media, masterplanPlans: updatedPlans };
+                            setMedia(nextMedia);
+                            await onUpdate(nextMedia);
+                            notify("Master plan image updated from library!");
+                          },
+                        })
+                      }
+                    >
+                      🖼️ Library
+                    </button>
+
+                    <label
+                      className="btn-secondary"
+                      style={{ justifyContent: "center", fontSize: "12px", padding: "8px", cursor: "pointer", textAlign: "center" }}
+                    >
+                      {uploadingField === `plan-${pIdx}` ? "Uploading…" : "📁 Upload File"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        style={{ display: "none" }}
+                        onChange={(e) => handleReplacePlanImage(pIdx, e)}
+                        disabled={uploadingField === `plan-${pIdx}`}
+                      />
+                    </label>
+                  </div>
+                </div>
+
+                {/* Right: Technical Fields */}
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "10px" }}>
+                    <div>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                        Perspective Title
+                      </label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={plan.title}
+                        onChange={(e) => handlePlanFieldChange(pIdx, "title", e.target.value)}
+                        placeholder="e.g. Overall Zoning & Master Layout"
+                      />
+                    </div>
+                    <div>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                        Tag Badge
+                      </label>
+                      <input
+                        type="text"
+                        className="admin-input"
+                        value={plan.tag || ""}
+                        onChange={(e) => handlePlanFieldChange(pIdx, "tag", e.target.value)}
+                        placeholder="e.g. Phase 1 & 2 Blueprint"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      Subtitle Summary
+                    </label>
+                    <input
+                      type="text"
+                      className="admin-input"
+                      value={plan.subtitle || ""}
+                      onChange={(e) => handlePlanFieldChange(pIdx, "subtitle", e.target.value)}
+                      placeholder="e.g. Macro sectoral demarcation & green buffer perimeter"
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      Technical Description
+                    </label>
+                    <textarea
+                      rows={2}
+                      className="admin-textarea"
+                      value={plan.description || ""}
+                      onChange={(e) => handlePlanFieldChange(pIdx, "description", e.target.value)}
+                      placeholder="Details about zoning division, road widths, setbacks..."
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+
+          {/* Add New Master Plan Perspective Elevated Card */}
+          <div
+            className="admin-card-inner"
+            style={{
+              padding: "24px",
+              background: "var(--admin-bg-card-subtle)",
+              borderRadius: "10px",
+              border: "1px dashed rgba(212, 175, 55, 0.35)",
+            }}
+          >
+            <h3 style={{ margin: "0 0 6px", fontSize: "15px", fontWeight: 700, color: "var(--admin-gold)", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>+</span>
+              <span>Add New Master Plan Perspective</span>
+            </h3>
+            <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: "0 0 16px" }}>
+              Add a specialized zoning diagram, utilities overlay, or phase delivery schematic.
+            </p>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "14px", marginBottom: "14px" }}>
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Perspective Title *
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={newPlanTitle}
+                  onChange={(e) => setNewPlanTitle(e.target.value)}
+                  placeholder="e.g. Phase 2 Heavy Engineering Layout"
+                />
+              </div>
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Tag Badge
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={newPlanTag}
+                  onChange={(e) => setNewPlanTag(e.target.value)}
+                  placeholder="e.g. Phase 2 Demarcation"
+                />
+              </div>
+            </div>
+
+            <div style={{ marginBottom: "14px" }}>
+              <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                Subtitle
+              </label>
+              <input
+                type="text"
+                className="admin-input"
+                value={newPlanSubtitle}
+                onChange={(e) => setNewPlanSubtitle(e.target.value)}
+                placeholder="e.g. 50-acre dedicated heavy engineering cluster"
+              />
+            </div>
+
+            <div style={{ marginBottom: "18px" }}>
+              <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                Technical Description
+              </label>
+              <textarea
+                rows={2}
+                className="admin-textarea"
+                value={newPlanDesc}
+                onChange={(e) => setNewPlanDesc(e.target.value)}
+                placeholder="Specify setbacks, road circulation, power connection details..."
+              />
+            </div>
+
+            <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
+              <button
+                type="button"
+                className="btn-gold"
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                onClick={() => {
+                  if (!newPlanTitle.trim()) {
+                    addToast("error", "Perspective title required", "Please enter a perspective title first.");
+                    return;
+                  }
+                  setPickerModal({
+                    isOpen: true,
+                    title: "Select Blueprint for New Perspective",
+                    onSelect: async (url) => {
+                      const newPlan: MasterPlanItem = {
+                        id: `plan-${Date.now()}`,
+                        title: newPlanTitle.trim(),
+                        subtitle: newPlanSubtitle.trim(),
+                        description: newPlanDesc.trim(),
+                        tag: newPlanTag.trim() || "Blueprint",
+                        src: url,
+                        alt: newPlanTitle.trim() || "Master Plan Perspective",
+                      };
+                      const nextMedia = {
+                        ...media,
+                        masterplanPlans: [...(media.masterplanPlans || []), newPlan],
+                      };
+                      setMedia(nextMedia);
+                      await onUpdate(nextMedia);
+                      setNewPlanTitle("");
+                      setNewPlanSubtitle("");
+                      setNewPlanDesc("");
+                      setNewPlanTag("");
+                      notify("New Master Plan perspective added!");
+                    },
+                  });
+                }}
+              >
+                <span>🖼️</span>
+                <span>Choose Blueprint from Library</span>
+              </button>
+
+              <label className="btn-secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <span>📁</span>
+                <span>{uploadingField === "new-plan" ? "Uploading Plan…" : "Upload Blueprint File"}</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  style={{ display: "none" }}
+                  onChange={handleAddMasterPlan}
+                  disabled={uploadingField === "new-plan"}
+                />
+              </label>
             </div>
           </div>
         </div>
@@ -909,28 +1318,83 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
       {/* 5. LOCATION MAP */}
       {activeSection === "location" && (
-        <div className="admin-card">
-          <div className="admin-card-header">
-            <h2 className="admin-card-title">Strategic Location &amp; Connectivity Map</h2>
-            <p className="admin-card-desc">
-              Highway and freight connectivity map displayed in the location section.
+        <div
+          className="admin-card-inner"
+          style={{
+            padding: "24px",
+            background: "var(--admin-bg-card-subtle)",
+            borderRadius: "10px",
+            border: "1px solid var(--admin-border-subtle)",
+          }}
+        >
+          <div style={{ marginBottom: "20px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>📍</span>
+              <span>Strategic Location &amp; Connectivity Map</span>
+            </h3>
+            <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
+              Highway, freight corridors, and multi-modal port connectivity map displayed in the location section.
             </p>
           </div>
 
-          <div className="image-preview-box">
-            <div className="image-preview-thumb">
-              <Image
-                src={media.locationImage.src || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1200&q=82"}
-                alt="Location Map"
-                fill
-                style={{ objectFit: "cover" }}
-              />
-            </div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", alignItems: "start" }}>
+            {/* Visual Preview */}
+            <div>
+              <div
+                style={{
+                  position: "relative",
+                  width: "100%",
+                  height: "220px",
+                  borderRadius: "8px",
+                  overflow: "hidden",
+                  border: "1px solid var(--admin-border-subtle)",
+                  background: "#070a12",
+                }}
+              >
+                <Image
+                  src={media.locationImage.src || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1200&q=82"}
+                  alt="Location Map"
+                  fill
+                  style={{ objectFit: "cover" }}
+                />
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: "8px",
+                    left: "8px",
+                    padding: "4px 8px",
+                    background: "rgba(0, 0, 0, 0.75)",
+                    borderRadius: "4px",
+                    fontSize: "10.5px",
+                    color: "#cbd5e1",
+                  }}
+                >
+                  Connectivity Map · 1920×1080 Recommended
+                </div>
+              </div>
 
-            <div style={{ flex: 1 }}>
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "14px" }}>
-                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
-                  {uploadingField === "locationImage" ? "Uploading…" : "📁 Replace Connectivity Map"}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
+                <button
+                  type="button"
+                  className="btn-gold"
+                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px" }}
+                  onClick={() =>
+                    setPickerModal({
+                      isOpen: true,
+                      title: "Select Connectivity Map Image",
+                      currentUrl: media.locationImage.src,
+                      onSelect: (url, alt) => handleDirectSectionUrlChange("locationImage", url, alt),
+                    })
+                  }
+                >
+                  🖼️ Library
+                </button>
+
+                <label
+                  className="btn-secondary"
+                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px", cursor: "pointer", textAlign: "center" }}
+                >
+                  {uploadingField === "locationImage" ? "Uploading…" : "📁 Upload New"}
                   <input
                     type="file"
                     accept="image/*"
@@ -939,22 +1403,49 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                     disabled={uploadingField === "locationImage"}
                   />
                 </label>
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  onClick={() =>
-                    setPickerModal({
-                      isOpen: true,
-                      title: "Select Connectivity Map Image",
-                      currentUrl: media.locationImage.src,
-                      onSelect: (url) => handleDirectSectionUrlChange("locationImage", url),
-                    })
-                  }
-                >
-                  Choose from Library
-                </button>
               </div>
-              <div className="form-help">Annotated aerial highways, rail corridors, and ports work best.</div>
+            </div>
+
+            {/* Inputs */}
+            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Direct Map URL
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={media.locationImage.src}
+                  onChange={(e) => handleDirectSectionUrlChange("locationImage", e.target.value)}
+                  placeholder="https://... or uploaded image URL"
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Image Alt Text (SEO &amp; Accessibility)
+                </label>
+                <input
+                  type="text"
+                  className="admin-input"
+                  value={media.locationImage.alt || ""}
+                  placeholder="e.g. Strategic Highway and Rail Freight Connectivity Map"
+                  onChange={async (e) => {
+                    const nextMedia = {
+                      ...media,
+                      locationImage: { ...media.locationImage, alt: e.target.value },
+                    };
+                    setMedia(nextMedia);
+                    await onUpdate(nextMedia);
+                  }}
+                />
+              </div>
+
+              <div style={{ padding: "12px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--admin-border-subtle)", borderRadius: "6px" }}>
+                <span style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", display: "block" }}>
+                  💡 <strong>Best Practice:</strong> Annotated aerial maps highlighting National Highway access, railway sidings, and air cargo distances convert highest.
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -962,13 +1453,24 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
       {/* 6. PROJECT GALLERY & CATEGORIES STUDIO */}
       {activeSection === "gallery" && (
-        <div>
+        <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           {/* Category Management Studio */}
-          <div className="admin-card" style={{ marginBottom: "20px" }}>
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">Gallery Sector Categories</h2>
-              <p className="admin-card-desc">
-                Create and manage categories for your project photos. On the website, category tabs with zero images will automatically stay hidden.
+          <div
+            className="admin-card-inner"
+            style={{
+              padding: "22px",
+              background: "var(--admin-bg-card-subtle)",
+              borderRadius: "10px",
+              border: "1px solid var(--admin-border-subtle)",
+            }}
+          >
+            <div style={{ marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>📁</span>
+                <span>Gallery Sector Categories</span>
+              </h3>
+              <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
+                Filter categories for project photos. On the live site, categories with zero images stay automatically hidden.
               </p>
             </div>
 
@@ -983,16 +1485,16 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "8px",
-                      background: "#161c2c",
-                      border: "1px solid #283042",
-                      padding: "6px 12px",
-                      borderRadius: "20px",
-                      fontSize: "12.5px",
+                      background: "rgba(255, 255, 255, 0.04)",
+                      border: "1px solid var(--admin-border-subtle)",
+                      padding: "6px 14px",
+                      borderRadius: "999px",
+                      fontSize: "12px",
                     }}
                   >
                     <span style={{ color: "#fff", fontWeight: 600 }}>{cat.label}</span>
-                    <span style={{ fontSize: "11px", color: count > 0 ? "#4ade80" : "#64748b" }}>
-                      ({count} {count === 1 ? "photo" : "photos"})
+                    <span style={{ fontSize: "11px", color: count > 0 ? "var(--admin-gold)" : "#64748b" }}>
+                      ({count})
                     </span>
                     <button
                       type="button"
@@ -1016,10 +1518,10 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </div>
 
             {/* Add New Category Input */}
-            <div style={{ display: "flex", gap: "10px", alignItems: "center", maxWidth: "420px", flexWrap: "wrap" }}>
+            <div style={{ display: "flex", gap: "10px", alignItems: "center", maxWidth: "460px", flexWrap: "wrap" }}>
               <input
                 type="text"
-                className="form-control"
+                className="admin-input"
                 placeholder="New Category Name (e.g. Commercial, Pharma, Solar)"
                 value={newCatLabel}
                 onChange={(e) => setNewCatLabel(e.target.value)}
@@ -1034,26 +1536,48 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 type="button"
                 className="btn-gold"
                 onClick={handleCreateCategory}
-                style={{ whiteSpace: "nowrap" }}
+                style={{ whiteSpace: "nowrap", display: "inline-flex", alignItems: "center", gap: "6px" }}
               >
-                + Add Category
+                <span>+</span>
+                <span>Add Category</span>
               </button>
             </div>
           </div>
 
           {/* Photo Assets Grid */}
-          <div className="admin-card">
-            <div className="admin-card-header">
-              <h2 className="admin-card-title">Project Gallery Photos ({media.gallery.length} Images)</h2>
-              <p className="admin-card-desc">
-                Photos rendered in the paginated gallery. Only sectors with at least 1 photo will appear on the frontend.
+          <div
+            className="admin-card-inner"
+            style={{
+              padding: "22px",
+              background: "var(--admin-bg-card-subtle)",
+              borderRadius: "10px",
+              border: "1px solid var(--admin-border-subtle)",
+            }}
+          >
+            <div style={{ marginBottom: "16px" }}>
+              <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>🖼️</span>
+                <span>Project Gallery Photos ({media.gallery.length} Images)</span>
+              </h3>
+              <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
+                High-definition photos in the lightbox gallery.
               </p>
             </div>
 
             {/* Gallery Grid */}
-            <div className="admin-gallery-grid">
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "16px" }}>
               {media.gallery.map((item) => (
-                <div key={item.id} className="admin-gallery-card">
+                <div
+                  key={item.id}
+                  style={{
+                    background: "rgba(255, 255, 255, 0.03)",
+                    border: "1px solid var(--admin-border-subtle)",
+                    borderRadius: "8px",
+                    overflow: "hidden",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
                   <div style={{ position: "relative", width: "100%", height: "140px" }}>
                     <Image
                       src={item.src}
@@ -1061,21 +1585,36 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                       fill
                       style={{ objectFit: "cover" }}
                     />
-                    <span className="gallery-card-badge">
+                    <span
+                      style={{
+                        position: "absolute",
+                        top: "8px",
+                        left: "8px",
+                        padding: "3px 8px",
+                        borderRadius: "4px",
+                        background: "rgba(0, 0, 0, 0.75)",
+                        fontSize: "10.5px",
+                        color: "var(--admin-gold)",
+                        fontWeight: 600,
+                      }}
+                    >
                       {item.category}
                     </span>
                   </div>
+
                   <div style={{ padding: "12px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <div>
-                      <div style={{ fontSize: "12px", fontWeight: 600, color: "#fff" }}>{item.caption}</div>
+                      <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#fff", marginBottom: "8px" }}>
+                        {item.caption}
+                      </div>
 
-                      <div style={{ marginTop: "10px" }}>
-                        <label style={{ fontSize: "10px", color: "#94a3b8", display: "block", marginBottom: "3px" }}>
+                      <div style={{ marginBottom: "10px" }}>
+                        <label style={{ fontSize: "10.5px", color: "#94a3b8", display: "block", marginBottom: "3px" }}>
                           Sector Category:
                         </label>
                         <select
-                          className="form-control"
-                          style={{ fontSize: "11px", padding: "5px 8px" }}
+                          className="admin-input"
+                          style={{ fontSize: "11.5px", padding: "5px 8px" }}
                           value={item.category}
                           onChange={async (e) => {
                             const nextCat = e.target.value;
@@ -1096,10 +1635,11 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                         </select>
                       </div>
                     </div>
+
                     <button
                       type="button"
                       className="btn-danger"
-                      style={{ marginTop: "12px", width: "100%", padding: "6px" }}
+                      style={{ width: "100%", padding: "5px", fontSize: "11.5px" }}
                       onClick={() => handleDeleteGalleryPhoto(item.id)}
                     >
                       Remove Photo
@@ -1110,15 +1650,27 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </div>
 
             {/* Add New Gallery Item Card */}
-            <div style={{ background: "#11151f", border: "1px dashed #334155", borderRadius: "8px", padding: "20px", marginTop: "24px" }}>
-              <h3 style={{ margin: "0 0 12px", fontSize: "14px", color: "#d4af37" }}>
-                + Add Photo to Project Gallery
-              </h3>
-              <div className="form-grid-2" style={{ marginBottom: "14px" }}>
+            <div
+              style={{
+                marginTop: "24px",
+                padding: "20px",
+                background: "rgba(255, 255, 255, 0.02)",
+                border: "1px dashed rgba(212, 175, 55, 0.35)",
+                borderRadius: "8px",
+              }}
+            >
+              <h4 style={{ margin: "0 0 12px", fontSize: "14px", color: "var(--admin-gold)", display: "flex", alignItems: "center", gap: "6px" }}>
+                <span>+</span>
+                <span>Add Photo to Project Gallery</span>
+              </h4>
+
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px", marginBottom: "12px" }}>
                 <div>
-                  <label className="form-label">Category</label>
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                    Category
+                  </label>
                   <select
-                    className="form-control"
+                    className="admin-input"
                     value={newGalCategory}
                     onChange={(e) => setNewGalCategory(e.target.value)}
                   >
@@ -1129,11 +1681,14 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                     ))}
                   </select>
                 </div>
+
                 <div>
-                  <label className="form-label">Photo Headline / Caption</label>
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                    Photo Headline / Caption
+                  </label>
                   <input
                     type="text"
-                    className="form-control"
+                    className="admin-input"
                     value={newGalCaption}
                     onChange={(e) => setNewGalCaption(e.target.value)}
                     placeholder="e.g. Heavy Fabrication Bay"
@@ -1141,11 +1696,13 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 </div>
               </div>
 
-              <div className="form-row" style={{ marginBottom: "16px" }}>
-                <label className="form-label">Alt Accessibility Description</label>
+              <div style={{ marginBottom: "16px" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  Alt Accessibility Description
+                </label>
                 <input
                   type="text"
-                  className="form-control"
+                  className="admin-input"
                   value={newGalAlt}
                   onChange={(e) => setNewGalAlt(e.target.value)}
                   placeholder="e.g. Modern high bay overhead crane assembly line"
@@ -1153,19 +1710,10 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
               </div>
 
               <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-                <label className="btn-gold" style={{ cursor: "pointer", display: "inline-flex" }}>
-                  {uploadingField === "new-gal" ? "Uploading…" : "📁 Choose Image File & Add to Gallery"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={handleAddGalleryPhoto}
-                    disabled={uploadingField === "new-gal"}
-                  />
-                </label>
                 <button
                   type="button"
-                  className="btn-secondary"
+                  className="btn-gold"
+                  style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
                   onClick={() => {
                     setPickerModal({
                       isOpen: true,
@@ -1188,8 +1736,21 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                     });
                   }}
                 >
-                  Choose from Library
+                  <span>🖼️</span>
+                  <span>Choose from Library</span>
                 </button>
+
+                <label className="btn-secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                  <span>📁</span>
+                  <span>{uploadingField === "new-gal" ? "Uploading…" : "Upload & Add to Gallery"}</span>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    style={{ display: "none" }}
+                    onChange={handleAddGalleryPhoto}
+                    disabled={uploadingField === "new-gal"}
+                  />
+                </label>
               </div>
             </div>
           </div>
@@ -1198,18 +1759,56 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
       {/* 7. BRAND LOGO */}
       {activeSection === "logo" && (
-        <div className="admin-card">
-          <div className="admin-card-header">
-            <h2 className="admin-card-title">Corporate Logo Assets</h2>
-            <p className="admin-card-desc">
-              Transparent vector SVG and high-resolution PNG variants of the MAAS Industrial Ventures logo.
+        <div
+          className="admin-card-inner"
+          style={{
+            padding: "24px",
+            background: "var(--admin-bg-card-subtle)",
+            borderRadius: "10px",
+            border: "1px solid var(--admin-border-subtle)",
+          }}
+        >
+          <div style={{ marginBottom: "20px" }}>
+            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+              <span>✨</span>
+              <span>Corporate Logo Assets</span>
+            </h3>
+            <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
+              Transparent vector SVG and high-resolution PNG variants of the MAAS Industrial Ventures brand logo.
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 240px), 1fr))", gap: "16px", marginBottom: "24px" }}>
-            <div style={{ background: "#0b0e14", border: "1px solid #232b3b", borderRadius: "8px", padding: "20px", textAlign: "center" }}>
-              <span style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "12px" }}>
-                WHITE TRANSPARENT SVG (ACTIVE)
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "16px", marginBottom: "24px" }}>
+            {/* White SVG */}
+            <div
+              style={{
+                background: "#080c14",
+                border: "1px solid " + (media.logo === "/images/maas-logo-white.svg" ? "var(--admin-gold)" : "var(--admin-border-subtle)"),
+                borderRadius: "8px",
+                padding: "20px",
+                textAlign: "center",
+                position: "relative",
+              }}
+            >
+              {media.logo === "/images/maas-logo-white.svg" && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: "var(--admin-gold)",
+                    padding: "2px 6px",
+                    background: "rgba(212, 175, 55, 0.15)",
+                    borderRadius: "4px",
+                  }}
+                >
+                  ACTIVE
+                </span>
+              )}
+              <span style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "12px", textTransform: "uppercase" }}>
+                White Transparent SVG
               </span>
               <div style={{ height: "50px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Image
@@ -1217,13 +1816,13 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   alt="White Logo"
                   width={200}
                   height={50}
-                  style={{ maxHeight: "40px", width: "auto" }}
+                  style={{ maxHeight: "38px", width: "auto" }}
                 />
               </div>
               <button
                 type="button"
-                className="btn-secondary"
-                style={{ marginTop: "14px", width: "100%", justifyContent: "center" }}
+                className={media.logo === "/images/maas-logo-white.svg" ? "btn-gold" : "btn-secondary"}
+                style={{ marginTop: "14px", width: "100%", justifyContent: "center", fontSize: "12px" }}
                 onClick={async () => {
                   const next = { ...media, logo: "/images/maas-logo-white.svg" };
                   setMedia(next);
@@ -1231,13 +1830,40 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   notify("Active logo set to White SVG!");
                 }}
               >
-                Use as Active Logo
+                {media.logo === "/images/maas-logo-white.svg" ? "Currently Active" : "Use as Active Logo"}
               </button>
             </div>
 
-            <div style={{ background: "#0b0e14", border: "1px solid #232b3b", borderRadius: "8px", padding: "20px", textAlign: "center" }}>
-              <span style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "12px" }}>
-                GOLD TRANSPARENT SVG
+            {/* Gold SVG */}
+            <div
+              style={{
+                background: "#080c14",
+                border: "1px solid " + (media.logo === "/images/maas-logo-gold.svg" ? "var(--admin-gold)" : "var(--admin-border-subtle)"),
+                borderRadius: "8px",
+                padding: "20px",
+                textAlign: "center",
+                position: "relative",
+              }}
+            >
+              {media.logo === "/images/maas-logo-gold.svg" && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: "var(--admin-gold)",
+                    padding: "2px 6px",
+                    background: "rgba(212, 175, 55, 0.15)",
+                    borderRadius: "4px",
+                  }}
+                >
+                  ACTIVE
+                </span>
+              )}
+              <span style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "12px", textTransform: "uppercase" }}>
+                Gold Transparent SVG
               </span>
               <div style={{ height: "50px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Image
@@ -1245,13 +1871,13 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   alt="Gold Logo"
                   width={200}
                   height={50}
-                  style={{ maxHeight: "40px", width: "auto" }}
+                  style={{ maxHeight: "38px", width: "auto" }}
                 />
               </div>
               <button
                 type="button"
-                className="btn-secondary"
-                style={{ marginTop: "14px", width: "100%", justifyContent: "center" }}
+                className={media.logo === "/images/maas-logo-gold.svg" ? "btn-gold" : "btn-secondary"}
+                style={{ marginTop: "14px", width: "100%", justifyContent: "center", fontSize: "12px" }}
                 onClick={async () => {
                   const next = { ...media, logo: "/images/maas-logo-gold.svg" };
                   setMedia(next);
@@ -1259,13 +1885,40 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   notify("Active logo set to Gold SVG!");
                 }}
               >
-                Use as Active Logo
+                {media.logo === "/images/maas-logo-gold.svg" ? "Currently Active" : "Use as Active Logo"}
               </button>
             </div>
 
-            <div style={{ background: "#ffffff", border: "1px solid #cbd5e1", borderRadius: "8px", padding: "20px", textAlign: "center" }}>
-              <span style={{ fontSize: "11px", color: "#475569", display: "block", marginBottom: "12px" }}>
-                DARK TRANSPARENT SVG
+            {/* Dark SVG */}
+            <div
+              style={{
+                background: "#ffffff",
+                border: "1px solid " + (media.logo === "/images/maas-logo-dark.svg" ? "var(--admin-gold)" : "#cbd5e1"),
+                borderRadius: "8px",
+                padding: "20px",
+                textAlign: "center",
+                position: "relative",
+              }}
+            >
+              {media.logo === "/images/maas-logo-dark.svg" && (
+                <span
+                  style={{
+                    position: "absolute",
+                    top: "8px",
+                    right: "8px",
+                    fontSize: "10px",
+                    fontWeight: 700,
+                    color: "#000",
+                    padding: "2px 6px",
+                    background: "rgba(212, 175, 55, 0.4)",
+                    borderRadius: "4px",
+                  }}
+                >
+                  ACTIVE
+                </span>
+              )}
+              <span style={{ fontSize: "11px", color: "#475569", display: "block", marginBottom: "12px", textTransform: "uppercase" }}>
+                Dark Transparent SVG (Light BG)
               </span>
               <div style={{ height: "50px", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Image
@@ -1273,13 +1926,13 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   alt="Dark Logo"
                   width={200}
                   height={50}
-                  style={{ maxHeight: "40px", width: "auto" }}
+                  style={{ maxHeight: "38px", width: "auto" }}
                 />
               </div>
               <button
                 type="button"
-                className="btn-secondary"
-                style={{ marginTop: "14px", width: "100%", justifyContent: "center" }}
+                className={media.logo === "/images/maas-logo-dark.svg" ? "btn-gold" : "btn-secondary"}
+                style={{ marginTop: "14px", width: "100%", justifyContent: "center", fontSize: "12px" }}
                 onClick={async () => {
                   const next = { ...media, logo: "/images/maas-logo-dark.svg" };
                   setMedia(next);
@@ -1287,19 +1940,50 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   notify("Active logo set to Dark SVG!");
                 }}
               >
-                Use as Active Logo
+                {media.logo === "/images/maas-logo-dark.svg" ? "Currently Active" : "Use as Active Logo"}
               </button>
             </div>
           </div>
 
           {/* Custom Logo Upload or Choose from Library */}
-          <div style={{ marginTop: "24px", padding: "18px", background: "#0b0e14", border: "1px dashed #334155", borderRadius: "8px" }}>
-            <h3 style={{ margin: "0 0 10px", fontSize: "13px", color: "#d4af37" }}>
-              Upload or Select Custom Logo
-            </h3>
+          <div
+            style={{
+              padding: "20px",
+              background: "rgba(255, 255, 255, 0.02)",
+              border: "1px dashed rgba(212, 175, 55, 0.35)",
+              borderRadius: "8px",
+            }}
+          >
+            <h4 style={{ margin: "0 0 10px", fontSize: "14px", color: "var(--admin-gold)", display: "flex", alignItems: "center", gap: "6px" }}>
+              <span>📁</span>
+              <span>Upload or Select Custom Brand Logo</span>
+            </h4>
             <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", alignItems: "center" }}>
-              <label className="btn-secondary" style={{ cursor: "pointer", display: "inline-flex" }}>
-                {uploadingField === "logo" ? "Uploading…" : "📁 Upload Custom Logo"}
+              <button
+                type="button"
+                className="btn-gold"
+                style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                onClick={() =>
+                  setPickerModal({
+                    isOpen: true,
+                    title: "Select Brand Logo from Library",
+                    currentUrl: media.logo,
+                    onSelect: async (url) => {
+                      const next = { ...media, logo: url };
+                      setMedia(next);
+                      await onUpdate(next);
+                      notify("Brand logo updated from library!");
+                    },
+                  })
+                }
+              >
+                <span>🖼️</span>
+                <span>Choose from Library</span>
+              </button>
+
+              <label className="btn-secondary" style={{ cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                <span>📁</span>
+                <span>{uploadingField === "logo" ? "Uploading…" : "Upload Custom File"}</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -1323,25 +2007,6 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   disabled={uploadingField === "logo"}
                 />
               </label>
-              <button
-                type="button"
-                className="btn-secondary"
-                onClick={() =>
-                  setPickerModal({
-                    isOpen: true,
-                    title: "Select Brand Logo from Library",
-                    currentUrl: media.logo,
-                    onSelect: async (url) => {
-                      const next = { ...media, logo: url };
-                      setMedia(next);
-                      await onUpdate(next);
-                      notify("Brand logo updated from library!");
-                    },
-                  })
-                }
-              >
-                Choose from Library
-              </button>
             </div>
           </div>
         </div>

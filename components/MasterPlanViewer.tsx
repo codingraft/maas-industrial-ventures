@@ -112,27 +112,27 @@ export function MasterPlanViewer({ plans }: MasterPlanViewerProps) {
             <div className="blueprint-specs-grid">
               <div className="blueprint-spec-item">
                 <span className="spec-lbl">Land Parcel Area</span>
-                <strong className="spec-val">150+ Acres Master Planned</strong>
+                <strong className="spec-val" style={{ color: "#ffffff" }}>150+ Acres Master Planned</strong>
               </div>
               <div className="blueprint-spec-item">
                 <span className="spec-lbl">Permissible FAR / FSI</span>
-                <strong className="spec-val">Up to 2.0 (High-Cube Ready)</strong>
+                <strong className="spec-val" style={{ color: "#ffffff" }}>Up to 2.0 (High-Cube Ready)</strong>
               </div>
               <div className="blueprint-spec-item">
                 <span className="spec-lbl">Internal Road Spines</span>
-                <strong className="spec-val">45m Arterial / 30m Secondary</strong>
+                <strong className="spec-val" style={{ color: "#ffffff" }}>45m Arterial / 30m Secondary</strong>
               </div>
               <div className="blueprint-spec-item">
                 <span className="spec-lbl">Power Grid Feed</span>
-                <strong className="spec-val">Dedicated 33/11 kV Substation</strong>
+                <strong className="spec-val" style={{ color: "#ffffff" }}>Dedicated 33/11 kV Substation</strong>
               </div>
               <div className="blueprint-spec-item">
                 <span className="spec-lbl">Eco Perimeter Setback</span>
-                <strong className="spec-val">15% Green Buffer Zone</strong>
+                <strong className="spec-val" style={{ color: "#ffffff" }}>15% Green Buffer Zone</strong>
               </div>
               <div className="blueprint-spec-item">
                 <span className="spec-lbl">Zoning Compliance</span>
-                <strong className="spec-val">Pre-Approved Industrial Clearances</strong>
+                <strong className="spec-val" style={{ color: "#ffffff" }}>Pre-Approved Industrial Clearances</strong>
               </div>
             </div>
 

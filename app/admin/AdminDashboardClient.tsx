@@ -166,56 +166,66 @@ export function AdminDashboardClient({
 
   const activeSectionsCount = Object.values(settings.sections).filter(Boolean).length;
 
-  const tabLabels: Record<AdminTab, { title: string; category: string; description: string }> = {
+  const tabLabels: Record<AdminTab, { title: string; category: string; description: string; icon: string }> = {
     leads: {
       title: "Leads & Inquiries",
       category: "Operations",
       description: "Manage incoming buyer enquiries, lead qualification stages, and follow-ups.",
+      icon: "👥",
     },
     projects: {
       title: "Projects Portfolio",
       category: "Operations",
       description: "Manage industrial township developments, master specifications, and brochures.",
+      icon: "🏗️",
     },
     blogs: {
       title: "Blog & Insights",
       category: "Operations",
       description: "Publish market updates, investment guides, and SEO-optimized articles.",
+      icon: "📰",
     },
     media_library: {
       title: "Media Library",
       category: "Operations",
       description: "Centralized storage for all uploaded banners, project photos, and blueprints.",
+      icon: "📁",
     },
     content: {
       title: "Page Content & Copy",
       category: "Website Content",
       description: "Edit headline copy, core propositions, development verticals, and FAQs.",
+      icon: "✍️",
     },
     media: {
       title: "Visuals & Blueprints",
       category: "Website Content",
       description: "Configure homepage hero carousel slides, section photos, and gallery categories.",
+      icon: "🖼️",
     },
     sections: {
       title: "Section Toggles",
       category: "Website Content",
       description: "Turn homepage sections on or off to customize the live layout.",
+      icon: "⚡",
     },
     contact: {
       title: "Company & Contact",
       category: "Configuration",
       description: "Update official contact details, physical office location, and social media channels.",
+      icon: "📞",
     },
     seo: {
       title: "SEO & Social Share",
       category: "Configuration",
       description: "Configure search engine titles, meta descriptions, and OpenGraph preview cards.",
+      icon: "🔍",
     },
     tracking: {
       title: "Analytics & Pixels",
       category: "Configuration",
       description: "Manage Google Tag Manager, Meta Pixel, and conversion tracking IDs.",
+      icon: "📊",
     },
   };
 
@@ -238,15 +248,21 @@ export function AdminDashboardClient({
       >
         {/* Brand Header */}
         <div className="admin-sidebar-header">
-          <a href="/admin" className="admin-sidebar-logo">
-            <Image
-              src="/images/maas-logo-white.svg"
-              alt="MAAS Industrial Ventures"
-              width={180}
-              height={44}
-              priority
-              style={{ width: "auto", height: sidebarCollapsed ? "24px" : "34px", objectFit: "contain" }}
-            />
+          <a href="/admin" className="admin-sidebar-logo" title="MAAS Admin Dashboard">
+            {sidebarCollapsed ? (
+              <div className="admin-sidebar-collapsed-monogram" aria-label="MAAS">
+                M
+              </div>
+            ) : (
+              <Image
+                src="/images/maas-logo-white.svg"
+                alt="MAAS Industrial Ventures"
+                width={170}
+                height={38}
+                priority
+                style={{ width: "auto", height: "30px", objectFit: "contain" }}
+              />
+            )}
           </a>
           <button
             type="button"
@@ -504,9 +520,10 @@ export function AdminDashboardClient({
 
       {/* Main Content Area */}
       <div className={`admin-main-wrap ${sidebarCollapsed ? "sidebar-is-collapsed" : ""}`}>
-        {/* Minimal Top Header */}
+        {/* Sleek Executive Topbar */}
         <header className="admin-minimal-topbar">
           <div className="topbar-left">
+            {/* Mobile Drawer Toggle */}
             <button
               type="button"
               className="sidebar-toggle-btn mobile-only"
@@ -519,40 +536,72 @@ export function AdminDashboardClient({
                 <line x1="4" x2="20" y1="18" y2="18" />
               </svg>
             </button>
-            <div className="topbar-titles-wrap">
-              <div className="topbar-breadcrumb">
-                <span>Admin</span>
-                <span style={{ margin: "0 6px", opacity: 0.5 }}>/</span>
-                <span>{tabLabels[activeTab].category}</span>
-                <span style={{ margin: "0 6px", opacity: 0.5 }}>/</span>
-                <span style={{ color: "var(--admin-gold)" }}>{tabLabels[activeTab].title}</span>
+
+            {/* Desktop Sidebar Collapse Toggle */}
+            <button
+              type="button"
+              className="sidebar-collapse-toggle-btn desktop-only"
+              onClick={toggleSidebarCollapsed}
+              aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+              title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2" />
+                <line x1="9" y1="3" x2="9" y2="21" />
+              </svg>
+            </button>
+
+            {/* Clean Breadcrumb Hierarchy */}
+            <nav className="topbar-breadcrumb-nav" aria-label="Breadcrumb">
+              <span className="breadcrumb-root">Admin</span>
+              <span className="breadcrumb-separator" aria-hidden="true">/</span>
+              <span className="breadcrumb-category">{tabLabels[activeTab].category}</span>
+              <span className="breadcrumb-separator" aria-hidden="true">/</span>
+              <div className="breadcrumb-active-chip">
+                <span className="active-chip-icon" aria-hidden="true">{tabLabels[activeTab].icon}</span>
+                <span className="active-chip-title">{tabLabels[activeTab].title}</span>
               </div>
-              <h1 className="topbar-title">{tabLabels[activeTab].title}</h1>
-              <p className="topbar-desc desktop-only" style={{ margin: "2px 0 0 0", fontSize: "12.5px", color: "var(--admin-text-muted)" }}>
-                {tabLabels[activeTab].description}
-              </p>
-            </div>
+            </nav>
           </div>
 
           <div className="topbar-actions">
-            <div className="live-status-pill">
+            {/* Live Database Status Indicator */}
+            <div className="live-status-pill" title="Database connected and responsive">
               <span className="status-dot-pulse" />
               <span className="status-full">System Live</span>
               <span className="status-short">Live</span>
             </div>
+
+            {/* Direct Link to Live Site */}
             <a
               href="/"
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-minimal desktop-only"
+              className="topbar-link-btn"
+              title="Open public website in new tab"
             >
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <span>View Website</span>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M15 3h6v6" />
                 <path d="M10 14 21 3" />
                 <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
               </svg>
-              <span>View Website</span>
             </a>
+
+            {/* Quick Sign Out Action */}
+            <button
+              type="button"
+              className="topbar-action-icon-btn desktop-only"
+              onClick={handleLogout}
+              title="Sign Out of Admin"
+              aria-label="Sign Out"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" x2="9" y1="12" y2="12" />
+              </svg>
+            </button>
           </div>
         </header>
 

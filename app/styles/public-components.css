@@ -634,26 +634,38 @@
   }
 
   .hero-highlight-chip {
-    padding: 8px 10px;
-    align-items: flex-start;
-  }
-
-  .chip-num {
-    margin-top: 2px;
+    padding: 9px 12px;
+    align-items: center;
   }
 
   .chip-label {
     white-space: normal;
     overflow: visible;
     text-overflow: unset;
-    line-height: 1.28;
-    font-size: 11px;
+    line-height: 1.3;
+    font-size: 11.5px;
   }
 }
 
-@media (max-width: 340px) {
+@media (max-width: 640px) {
   .hero-highlights-strip {
     grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+  }
+
+  .hero-highlight-chip {
+    padding: 10px 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .chip-label {
+    font-size: 12.5px;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
+    line-height: 1.35;
   }
 }
 
@@ -4168,15 +4180,15 @@
 .blueprint-specs-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-  padding: 16px;
-  background: #080c14;
-  border: 1px solid #1e293b;
-  border-radius: 8px;
+  gap: 12px;
+  padding: 18px;
+  background: #090e17;
+  border: 1px solid rgba(212, 175, 55, 0.28);
+  border-radius: 10px;
   margin-bottom: 22px;
 }
 
-@media (max-width: 380px) {
+@media (max-width: 600px) {
   .blueprint-specs-grid {
     grid-template-columns: 1fr;
     gap: 10px;
@@ -4187,27 +4199,34 @@
 .blueprint-spec-item {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
+  padding: 8px 12px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 6px;
 }
 
-.blueprint-specs-grid .spec-lbl {
-  font-size: 10px;
-  color: var(--gold-light);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 700;
-  line-height: 1.2;
+.blueprint-specs-grid .spec-lbl,
+.blueprint-spec-item .spec-lbl {
+  font-size: 10.5px !important;
+  color: var(--gold-light, #dbc39e) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.08em !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
 }
 
-.blueprint-specs-grid .spec-val {
-  font-size: 12.5px;
-  color: #f8fafc;
-  font-weight: 600;
-  line-height: 1.35;
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+.blueprint-specs-grid .spec-val,
+.blueprint-spec-item .spec-val,
+.blueprint-spec-item strong {
+  font-size: 13px !important;
+  color: #ffffff !important;
+  font-weight: 600 !important;
+  line-height: 1.35 !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: unset !important;
 }
 
 .masterplan-actions-bar {
