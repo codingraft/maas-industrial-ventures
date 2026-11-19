@@ -467,22 +467,30 @@ export function LeadsTable() {
                     </td>
 
                     <td style={{ textAlign: "right" }}>
-                      <div className="lead-quick-actions" style={{ justifyContent: "flex-end" }}>
+                      <div className="lead-quick-actions" style={{ justifyContent: "flex-end", gap: "6px" }}>
                         <a
                           href={`https://wa.me/${waPhone}?text=${waMessage}`}
                           target="_blank"
                           rel="noopener noreferrer"
                           className="action-icon-btn action-icon-whatsapp"
                           title="Chat on WhatsApp"
+                          style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 8px" }}
                         >
-                          💬 WA
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                          </svg>
+                          <span>WA</span>
                         </a>
                         <a
                           href={`tel:${lead.phone}`}
                           className="action-icon-btn"
                           title="Call Lead"
+                          style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 8px" }}
                         >
-                          📞 Call
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                          </svg>
+                          <span>Call</span>
                         </a>
                         <button
                           type="button"
@@ -492,16 +500,25 @@ export function LeadsTable() {
                             setNotesText(lead.notes || "");
                           }}
                           title="Edit internal notes"
+                          style={{ display: "inline-flex", alignItems: "center", gap: "4px", padding: "4px 8px" }}
                         >
-                          📝 Note
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M12 20h9" />
+                            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                          </svg>
+                          <span>Note</span>
                         </button>
                         <button
                           type="button"
                           className="btn-danger"
                           onClick={() => promptDelete(lead.id, lead.name)}
                           title="Delete Lead"
+                          style={{ padding: "4px 8px", display: "inline-flex", alignItems: "center" }}
                         >
-                          ✕
+                          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polyline points="3 6 5 6 21 6" />
+                            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                          </svg>
                         </button>
                       </div>
                     </td>
@@ -587,22 +604,28 @@ export function LeadsTable() {
                   )}
                 </div>
 
-                <div className="mobile-lead-actions">
+                <div className="mobile-lead-actions" style={{ display: "flex", gap: "8px", alignItems: "center" }}>
                   <a
                     href={`https://wa.me/${waPhone}?text=${waMessage}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="btn-gold"
-                    style={{ flex: 1, justifyContent: "center", textDecoration: "none" }}
+                    style={{ flex: 1, justifyContent: "center", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", padding: "8px" }}
                   >
-                    💬 WhatsApp
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z" />
+                    </svg>
+                    <span>WhatsApp</span>
                   </a>
                   <a
                     href={`tel:${lead.phone}`}
                     className="btn-secondary"
-                    style={{ flex: 1, justifyContent: "center", textDecoration: "none" }}
+                    style={{ flex: 1, justifyContent: "center", textDecoration: "none", display: "inline-flex", alignItems: "center", gap: "6px", fontSize: "12px", padding: "8px" }}
                   >
-                    📞 Call
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                    </svg>
+                    <span>Call</span>
                   </a>
                   <button
                     type="button"
@@ -613,8 +636,12 @@ export function LeadsTable() {
                     }}
                     title="Edit Note"
                     aria-label="Edit Note"
+                    style={{ padding: "8px" }}
                   >
-                    📝
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M12 20h9" />
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                    </svg>
                   </button>
                   <button
                     type="button"
@@ -622,8 +649,12 @@ export function LeadsTable() {
                     onClick={() => promptDelete(lead.id, lead.name)}
                     title="Delete Lead"
                     aria-label="Delete Lead"
+                    style={{ padding: "8px" }}
                   >
-                    ✕
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
                   </button>
                 </div>
               </div>

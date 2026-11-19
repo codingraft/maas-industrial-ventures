@@ -102,40 +102,93 @@ export function SectionToggles({ initialSections, onUpdate }: SectionTogglesProp
     }
   }
 
+  const activeCount = Object.values(sections).filter(Boolean).length;
+
   return (
     <div className="admin-card">
-      <div className="admin-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+      <div className="admin-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px" }}>
         <div>
           <h2 className="admin-card-title">Homepage Section Visibility</h2>
           <p className="admin-card-desc">
             Turn sections ON or OFF with a single click. When turned off, the section and its navigation anchor are instantly hidden on the live website.
           </p>
         </div>
-        {statusMessage && (
-          <span style={{ color: "#4ade80", fontSize: "12px", fontWeight: 600 }}>
-            {statusMessage}
-          </span>
-        )}
+        <div style={{ display: "flex", alignItems: "center", gap: "12px" }}>
+          <div
+            style={{
+              padding: "5px 12px",
+              background: "rgba(34, 197, 94, 0.12)",
+              border: "1px solid rgba(34, 197, 94, 0.25)",
+              borderRadius: "999px",
+              fontSize: "12px",
+              fontWeight: 600,
+              color: "#4ade80",
+            }}
+          >
+            {activeCount} of {sectionDefinitions.length} Sections Active
+          </div>
+          {statusMessage && (
+            <span style={{ color: "#4ade80", fontSize: "12px", fontWeight: 600 }}>
+              {statusMessage}
+            </span>
+          )}
+        </div>
       </div>
 
-      <div style={{ marginTop: "16px" }}>
-        {sectionDefinitions.map((item) => (
-          <div key={item.key} className="toggle-item">
-            <div className="toggle-info">
-              <h4>{item.title}</h4>
-              <p>{item.description}</p>
+      <div style={{ display: "flex", flexDirection: "column", gap: "10px", marginTop: "16px" }}>
+        {sectionDefinitions.map((item) => {
+          const isActive = !!sections[item.key];
+          return (
+            <div
+              key={item.key}
+              className="toggle-item"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "14px 18px",
+                background: isActive ? "var(--admin-bg-card-subtle)" : "rgba(255, 255, 255, 0.02)",
+                borderRadius: "8px",
+                border: "1px solid " + (isActive ? "var(--admin-border-subtle)" : "rgba(255, 255, 255, 0.04)"),
+                transition: "all 0.15s ease",
+              }}
+            >
+              <div className="toggle-info" style={{ flex: 1, paddingRight: "20px" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "4px" }}>
+                  <h4 style={{ margin: 0, fontSize: "14px", fontWeight: 600, color: "var(--admin-text-main)" }}>
+                    {item.title}
+                  </h4>
+                  <span
+                    style={{
+                      fontSize: "11px",
+                      fontWeight: 600,
+                      padding: "2px 8px",
+                      borderRadius: "999px",
+                      background: isActive ? "rgba(34, 197, 94, 0.15)" : "rgba(148, 163, 184, 0.12)",
+                      color: isActive ? "#4ade80" : "#94a3b8",
+                      border: "1px solid " + (isActive ? "rgba(34, 197, 94, 0.3)" : "rgba(148, 163, 184, 0.2)"),
+                    }}
+                  >
+                    {isActive ? "Visible" : "Hidden"}
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: "12px", color: "var(--admin-text-muted)" }}>
+                  {item.description}
+                </p>
+              </div>
+
+              <label className="switch" title={`Toggle ${item.title}`} style={{ flexShrink: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={() => handleToggle(item.key)}
+                  disabled={saving}
+                />
+                <span className="slider"></span>
+              </label>
             </div>
-            <label className="switch" title={`Toggle ${item.title}`}>
-              <input
-                type="checkbox"
-                checked={sections[item.key]}
-                onChange={() => handleToggle(item.key)}
-                disabled={saving}
-              />
-              <span className="slider"></span>
-            </label>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

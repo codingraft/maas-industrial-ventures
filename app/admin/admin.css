@@ -2043,17 +2043,26 @@ input:checked+.slider:before {
 .admin-textarea,
 .admin-input-field {
   width: 100%;
-  background: #080b13 !important;
+  background: #111827 !important;
   color: var(--admin-text-main) !important;
-  border: 1px solid var(--admin-border) !important;
-  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 8px;
   padding: 10px 14px;
   font-size: 13.5px;
   line-height: 1.5;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: all 0.16s ease;
   box-sizing: border-box;
   font-family: inherit;
+}
+
+.admin-card input:not([type="checkbox"]):not([type="radio"]):hover,
+.admin-card textarea:hover,
+.admin-main input:not([type="checkbox"]):not([type="radio"]):hover,
+.admin-main textarea:hover,
+.admin-input:hover,
+.admin-textarea:hover {
+  border-color: rgba(255, 255, 255, 0.24) !important;
 }
 
 .admin-card input:focus,
@@ -2066,7 +2075,8 @@ input:checked+.slider:before {
 .admin-textarea:focus,
 .admin-input-field:focus {
   border-color: var(--admin-gold) !important;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.18) !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.22) !important;
+  background: #162032 !important;
 }
 
 .admin-card input::placeholder,
@@ -3138,17 +3148,24 @@ input:checked+.slider:before {
 .admin-input,
 .admin-textarea {
   width: 100%;
-  background: #070a12 !important;
+  background: #111827 !important;
   color: #f1f5f9 !important;
-  border: 1px solid #1c263c !important;
-  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.14) !important;
+  border-radius: 8px;
   padding: 10px 14px;
   font-size: 13.5px;
   line-height: 1.5;
   outline: none;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: all 0.16s ease;
   box-sizing: border-box;
   font-family: inherit;
+}
+
+.admin-field input:not([type="checkbox"]):not([type="radio"]):hover,
+.admin-field textarea:hover,
+.admin-modal-card input:hover,
+.admin-modal-card textarea:hover {
+  border-color: rgba(255, 255, 255, 0.25) !important;
 }
 
 .admin-modal-card input:focus,
@@ -3160,8 +3177,8 @@ input:checked+.slider:before {
 .admin-input:focus,
 .admin-textarea:focus {
   border-color: #d4af37 !important;
-  box-shadow: 0 0 0 2px rgba(212, 175, 55, 0.2) !important;
-  background: #090d18 !important;
+  box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.22) !important;
+  background: #162032 !important;
 }
 
 .admin-modal-card input::placeholder,

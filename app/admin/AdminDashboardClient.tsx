@@ -166,17 +166,57 @@ export function AdminDashboardClient({
 
   const activeSectionsCount = Object.values(settings.sections).filter(Boolean).length;
 
-  const tabLabels: Record<AdminTab, { title: string; category: string }> = {
-    leads: { title: "Leads CRM & Inquiries", category: "Overview & CRM" },
-    projects: { title: "Projects & Landmark Developments", category: "Portfolio & Media" },
-    blogs: { title: "Insights & News Blog Studio", category: "Editorial & Content" },
-    media_library: { title: "Digital Asset & Media Library", category: "Portfolio & Media" },
-    media: { title: "Section Media & Gallery Studio", category: "Portfolio & Media" },
-    content: { title: "Township Content, Verticals & Vision", category: "Editorial & Content" },
-    sections: { title: "Homepage Section Controls", category: "Site Architecture" },
-    contact: { title: "Contact Information & Social Channels", category: "Site Architecture" },
-    tracking: { title: "Ad Pixels, GTM & Analytics", category: "Marketing & Intelligence" },
-    seo: { title: "SEO, Meta Tags & Social Share Previews", category: "Marketing & Intelligence" },
+  const tabLabels: Record<AdminTab, { title: string; category: string; description: string }> = {
+    leads: {
+      title: "Leads & Inquiries",
+      category: "Operations",
+      description: "Manage incoming buyer enquiries, lead qualification stages, and follow-ups.",
+    },
+    projects: {
+      title: "Projects Portfolio",
+      category: "Operations",
+      description: "Manage industrial township developments, master specifications, and brochures.",
+    },
+    blogs: {
+      title: "Blog & Insights",
+      category: "Operations",
+      description: "Publish market updates, investment guides, and SEO-optimized articles.",
+    },
+    media_library: {
+      title: "Media Library",
+      category: "Operations",
+      description: "Centralized storage for all uploaded banners, project photos, and blueprints.",
+    },
+    content: {
+      title: "Page Content & Copy",
+      category: "Website Content",
+      description: "Edit headline copy, core propositions, development verticals, and FAQs.",
+    },
+    media: {
+      title: "Visuals & Blueprints",
+      category: "Website Content",
+      description: "Configure homepage hero carousel slides, section photos, and gallery categories.",
+    },
+    sections: {
+      title: "Section Toggles",
+      category: "Website Content",
+      description: "Turn homepage sections on or off to customize the live layout.",
+    },
+    contact: {
+      title: "Company & Contact",
+      category: "Configuration",
+      description: "Update official contact details, physical office location, and social media channels.",
+    },
+    seo: {
+      title: "SEO & Social Share",
+      category: "Configuration",
+      description: "Configure search engine titles, meta descriptions, and OpenGraph preview cards.",
+    },
+    tracking: {
+      title: "Analytics & Pixels",
+      category: "Configuration",
+      description: "Manage Google Tag Manager, Meta Pixel, and conversion tracking IDs.",
+    },
   };
 
   return (
@@ -223,13 +263,14 @@ export function AdminDashboardClient({
 
         {/* Navigation Section */}
         <nav className="admin-sidebar-nav">
-          <div className="sidebar-group-label">Overview &amp; Leads</div>
+          {/* Group 1: Operations */}
+          <div className="sidebar-group-label">Operations</div>
 
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "leads" ? "is-active" : ""}`}
             onClick={() => handleTabChange("leads")}
-            title="Leads & CRM"
+            title="Leads & Inquiries CRM"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -239,13 +280,11 @@ export function AdminDashboardClient({
                 <path d="M16 3.13a4 4 0 0 1 0 7.75" />
               </svg>
             </span>
-            <span className="sidebar-item-label">Leads &amp; CRM</span>
+            <span className="sidebar-item-label">Leads &amp; Inquiries</span>
             {metrics.totalLeads > 0 && (
               <span className="sidebar-item-badge">{metrics.totalLeads}</span>
             )}
           </button>
-
-          <div className="sidebar-group-label">Site Content &amp; Media</div>
 
           <button
             type="button"
@@ -270,7 +309,7 @@ export function AdminDashboardClient({
             type="button"
             className={`sidebar-nav-item ${activeTab === "blogs" ? "is-active" : ""}`}
             onClick={() => handleTabChange("blogs")}
-            title="Insights & Blog"
+            title="Blog & Insights"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -279,14 +318,14 @@ export function AdminDashboardClient({
                 <path d="M6 10h10" />
               </svg>
             </span>
-            <span className="sidebar-item-label">Insights &amp; Blog</span>
+            <span className="sidebar-item-label">Blog &amp; Insights</span>
           </button>
 
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "media_library" ? "is-active" : ""}`}
             onClick={() => handleTabChange("media_library")}
-            title="Media Library"
+            title="Media Asset Library"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -298,26 +337,14 @@ export function AdminDashboardClient({
             <span className="sidebar-item-label">Media Library</span>
           </button>
 
-          <button
-            type="button"
-            className={`sidebar-nav-item ${activeTab === "media" ? "is-active" : ""}`}
-            onClick={() => handleTabChange("media")}
-            title="Section Visuals Studio"
-          >
-            <span className="sidebar-item-icon">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-                <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-              </svg>
-            </span>
-            <span className="sidebar-item-label">Section Visuals</span>
-          </button>
+          {/* Group 2: Website Content */}
+          <div className="sidebar-group-label" style={{ marginTop: "14px" }}>Website Content</div>
 
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "content" ? "is-active" : ""}`}
             onClick={() => handleTabChange("content")}
-            title="Content & FAQs"
+            title="Page Content & Headings"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -328,7 +355,23 @@ export function AdminDashboardClient({
                 <polyline points="10 9 9 9 8 9" />
               </svg>
             </span>
-            <span className="sidebar-item-label">Content &amp; FAQs</span>
+            <span className="sidebar-item-label">Page Content &amp; Copy</span>
+          </button>
+
+          <button
+            type="button"
+            className={`sidebar-nav-item ${activeTab === "media" ? "is-active" : ""}`}
+            onClick={() => handleTabChange("media")}
+            title="Visuals & Blueprints Studio"
+          >
+            <span className="sidebar-item-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polygon points="12 2 2 7 12 12 22 7 12 2" />
+                <polyline points="2 17 12 22 22 17" />
+                <polyline points="2 12 12 17 22 12" />
+              </svg>
+            </span>
+            <span className="sidebar-item-label">Visuals &amp; Blueprints</span>
           </button>
 
           <button
@@ -339,46 +382,29 @@ export function AdminDashboardClient({
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect width="7" height="7" x="3" y="3" rx="1" />
-                <rect width="7" height="7" x="14" y="3" rx="1" />
-                <rect width="7" height="7" x="14" y="14" rx="1" />
-                <rect width="7" height="7" x="3" y="14" rx="1" />
+                <rect width="18" height="12" x="3" y="6" rx="6" ry="6" />
+                <circle cx="9" cy="12" r="3" />
               </svg>
             </span>
             <span className="sidebar-item-label">Section Toggles</span>
             <span className="sidebar-item-count">{activeSectionsCount}/11</span>
           </button>
 
+          {/* Group 3: Configuration */}
+          <div className="sidebar-group-label" style={{ marginTop: "14px" }}>Configuration</div>
+
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "contact" ? "is-active" : ""}`}
             onClick={() => handleTabChange("contact")}
-            title="Contact & Social"
+            title="Company & Contact"
           >
             <span className="sidebar-item-icon">
               <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
               </svg>
             </span>
-            <span className="sidebar-item-label">Contact &amp; Social</span>
-          </button>
-
-          <div className="sidebar-group-label">Marketing &amp; Ads</div>
-
-          <button
-            type="button"
-            className={`sidebar-nav-item ${activeTab === "tracking" ? "is-active" : ""}`}
-            onClick={() => handleTabChange("tracking")}
-            title="Ad Pixels & Tags"
-          >
-            <span className="sidebar-item-icon">
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <circle cx="12" cy="6" r="6" />
-                <circle cx="12" cy="2" r="2" />
-              </svg>
-            </span>
-            <span className="sidebar-item-label">Ad Pixels &amp; Tags</span>
+            <span className="sidebar-item-label">Company &amp; Contact</span>
           </button>
 
           <button
@@ -393,7 +419,22 @@ export function AdminDashboardClient({
                 <line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
             </span>
-            <span className="sidebar-item-label">SEO &amp; Social Meta</span>
+            <span className="sidebar-item-label">SEO &amp; Social Share</span>
+          </button>
+
+          <button
+            type="button"
+            className={`sidebar-nav-item ${activeTab === "tracking" ? "is-active" : ""}`}
+            onClick={() => handleTabChange("tracking")}
+            title="Analytics & Ad Pixels"
+          >
+            <span className="sidebar-item-icon">
+              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10" />
+                <polyline points="12 6 12 12 16 14" />
+              </svg>
+            </span>
+            <span className="sidebar-item-label">Analytics &amp; Pixels</span>
           </button>
         </nav>
 
@@ -487,6 +528,9 @@ export function AdminDashboardClient({
                 <span style={{ color: "var(--admin-gold)" }}>{tabLabels[activeTab].title}</span>
               </div>
               <h1 className="topbar-title">{tabLabels[activeTab].title}</h1>
+              <p className="topbar-desc desktop-only" style={{ margin: "2px 0 0 0", fontSize: "12.5px", color: "var(--admin-text-muted)" }}>
+                {tabLabels[activeTab].description}
+              </p>
             </div>
           </div>
 
@@ -514,54 +558,56 @@ export function AdminDashboardClient({
 
         {/* Main Content Body */}
         <main className="admin-main-content">
-          {/* KPI Metric Strip */}
-          <div className="minimal-stats-strip">
-            <div
-              className="minimal-stat-card"
-              style={{ cursor: "pointer" }}
-              onClick={() => handleTabChange("leads")}
-              title="Click to view Leads CRM"
-            >
-              <span className="minimal-stat-num">{metrics.totalLeads}</span>
-              <span className="minimal-stat-lbl">Total Enquiries</span>
-            </div>
+          {/* KPI Metric Strip - Focused on the Leads & Inquiries Dashboard */}
+          {activeTab === "leads" && (
+            <div className="minimal-stats-strip">
+              <div
+                className="minimal-stat-card"
+                style={{ cursor: "pointer" }}
+                onClick={() => handleTabChange("leads")}
+                title="Total Enquiries received across all channels"
+              >
+                <span className="minimal-stat-num">{metrics.totalLeads}</span>
+                <span className="minimal-stat-lbl">Total Enquiries</span>
+              </div>
 
-            <div
-              className="minimal-stat-card"
-              style={{ cursor: "pointer" }}
-              onClick={() => handleTabChange("leads")}
-              title="Click to view New Leads"
-            >
-              <span className="minimal-stat-num" style={{ color: "#60a5fa" }}>
-                {metrics.newLeads}
-              </span>
-              <span className="minimal-stat-lbl">New Uncontacted</span>
-            </div>
+              <div
+                className="minimal-stat-card"
+                style={{ cursor: "pointer" }}
+                onClick={() => handleTabChange("leads")}
+                title="New Uncontacted buyer leads"
+              >
+                <span className="minimal-stat-num" style={{ color: "#60a5fa" }}>
+                  {metrics.newLeads}
+                </span>
+                <span className="minimal-stat-lbl">New Uncontacted</span>
+              </div>
 
-            <div
-              className="minimal-stat-card"
-              style={{ cursor: "pointer" }}
-              onClick={() => handleTabChange("leads")}
-              title="Click to view Today's Leads"
-            >
-              <span className="minimal-stat-num" style={{ color: "#fb923c" }}>
-                {metrics.todayLeads}
-              </span>
-              <span className="minimal-stat-lbl">Past 24 Hours</span>
-            </div>
+              <div
+                className="minimal-stat-card"
+                style={{ cursor: "pointer" }}
+                onClick={() => handleTabChange("leads")}
+                title="Leads submitted in the past 24 hours"
+              >
+                <span className="minimal-stat-num" style={{ color: "#fb923c" }}>
+                  {metrics.todayLeads}
+                </span>
+                <span className="minimal-stat-lbl">Past 24 Hours</span>
+              </div>
 
-            <div
-              className="minimal-stat-card"
-              style={{ cursor: "pointer" }}
-              onClick={() => handleTabChange("sections")}
-              title="Click to manage Section Controls"
-            >
-              <span className="minimal-stat-num" style={{ color: "var(--admin-gold)" }}>
-                {activeSectionsCount}/11
-              </span>
-              <span className="minimal-stat-lbl">Active Sections</span>
+              <div
+                className="minimal-stat-card"
+                style={{ cursor: "pointer" }}
+                onClick={() => handleTabChange("sections")}
+                title="Click to manage Section Controls"
+              >
+                <span className="minimal-stat-num" style={{ color: "var(--admin-gold)" }}>
+                  {activeSectionsCount}/11
+                </span>
+                <span className="minimal-stat-lbl">Active Sections</span>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Active Tab Panel */}
           <div className="admin-tab-body">

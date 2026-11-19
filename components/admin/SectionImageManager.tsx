@@ -111,20 +111,26 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
     await onUpdate(nextMedia);
   }
 
-  async function handleAddNewHeroSlide() {
-    const newSlide: HeroSlide = {
-      id: `slide-${Date.now()}`,
-      src: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?auto=format&fit=crop&w=1600&q=80",
-      alt: "MAAS Industrial infrastructure perspective",
-      eyebrow: "NEW DEVELOPMENT PERSPECTIVE",
-      title: "Developing Land. Building Opportunities.",
-      subtitle: "High-capacity industrial infrastructure engineered for modern manufacturing and enterprise growth.",
-    };
-    const nextSlides = [...media.heroSlides, newSlide];
-    const nextMedia = { ...media, heroSlides: nextSlides };
-    setMedia(nextMedia);
-    await onUpdate(nextMedia);
-    notify("New Hero Slide created! You can now customize its copy or upload a custom photo.");
+  function handleAddNewHeroSlide() {
+    setPickerModal({
+      isOpen: true,
+      title: "Select or Upload Image for New Hero Slide",
+      onSelect: async (url, alt) => {
+        const newSlide: HeroSlide = {
+          id: `slide-${Date.now()}`,
+          src: url,
+          alt: alt || "MAAS Industrial infrastructure perspective",
+          eyebrow: "NEW DEVELOPMENT PERSPECTIVE",
+          title: "Developing Land. Building Opportunities.",
+          subtitle: "High-capacity industrial infrastructure engineered for modern manufacturing and enterprise growth.",
+        };
+        const nextSlides = [...media.heroSlides, newSlide];
+        const nextMedia = { ...media, heroSlides: nextSlides };
+        setMedia(nextMedia);
+        await onUpdate(nextMedia);
+        notify("New Hero Slide added with your selected image!");
+      },
+    });
   }
 
   async function handleDirectSectionUrlChange(
