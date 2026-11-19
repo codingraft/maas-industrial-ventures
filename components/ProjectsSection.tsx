@@ -38,7 +38,7 @@ export function ProjectsSection({
     <section className="projects-section section-pad" id="projects">
       <div className="page-wrap">
         <div className="section-label">
-          <span>03</span> / Projects Portfolio
+          <span>02</span> / Projects Portfolio
         </div>
 
         <div className="projects-head">

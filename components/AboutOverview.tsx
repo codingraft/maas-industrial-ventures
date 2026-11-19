@@ -59,7 +59,7 @@ export function AboutOverview({
     <section className="overview section-pad" id="overview">
       <div className="page-wrap">
         <div className="section-label">
-          <span>02</span> / About MAAS
+          <span>01</span> / About MAAS
         </div>
 
         {/* Main Narrative Split */}

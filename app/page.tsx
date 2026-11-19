@@ -91,6 +91,13 @@ export default async function Home() {
           />
         )}
 
+        {/* 3. OPTIONAL MASTER PLAN BLUEPRINTS */}
+        {sections.masterplan && media.masterplanPlans && media.masterplanPlans.length > 0 && (
+          <MasterPlanViewer
+            plans={media.masterplanPlans}
+          />
+        )}
+
         {/* 4. GALLERY (REAL SITE PHOTOS & ILLUSTRATIVE RENDERS) */}
         {sections.gallery && (
           <ProjectGallery
@@ -99,13 +106,6 @@ export default async function Home() {
             eyebrow={site_info.galleryEyebrow}
             headline={site_info.galleryHeadline}
             description={site_info.galleryDescription}
-          />
-        )}
-
-        {/* OPTIONAL MASTER PLAN BLUEPRINTS */}
-        {sections.masterplan && media.masterplanPlans && media.masterplanPlans.length > 0 && (
-          <MasterPlanViewer
-            plans={media.masterplanPlans}
           />
         )}
 
