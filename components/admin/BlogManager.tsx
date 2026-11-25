@@ -617,7 +617,7 @@ export function BlogManager() {
             <div className="studio-sidebar-col">
               {/* Google SERP Snippet Preview */}
               <div className="studio-card">
-                <h4 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700, color: "#fff", display: "flex", alignItems: "center", gap: "6px" }}>
+                <h4 style={{ margin: "0 0 12px", fontSize: "14px", fontWeight: 700, color: "var(--admin-text-main)", display: "flex", alignItems: "center", gap: "6px" }}>
                   <span>🔍 Google Search Preview</span>
                 </h4>
 
@@ -654,7 +654,7 @@ export function BlogManager() {
 
               {/* Publishing Controls Card */}
               <div className="studio-card">
-                <h4 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700, color: "#fff" }}>
+                <h4 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700, color: "var(--admin-text-main)" }}>
                   Visibility &amp; Promotion
                 </h4>
 

@@ -596,7 +596,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
               </div>
 
               {/* Slide Body: 2 Columns */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "20px" }}>
                 {/* Left: Image Preview & Actions */}
                 <div>
                   <div
@@ -749,7 +749,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "24px", alignItems: "start" }}>
             {/* Visual Preview */}
             <div>
               <div
@@ -884,7 +884,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "24px", alignItems: "start" }}>
             {/* Visual Preview */}
             <div>
               <div
@@ -1066,7 +1066,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 </button>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: "20px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "20px" }}>
                 {/* Left: Blueprint Visual Preview */}
                 <div>
                   <div
@@ -1130,7 +1130,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
                 {/* Right: Technical Fields */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-                  <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "10px" }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 160px), 1fr))", gap: "10px" }}>
                     <div>
                       <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                         Perspective Title
@@ -1337,7 +1337,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </p>
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "24px", alignItems: "start" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "24px", alignItems: "start" }}>
             {/* Visual Preview */}
             <div>
               <div
@@ -1485,14 +1485,14 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                       display: "inline-flex",
                       alignItems: "center",
                       gap: "8px",
-                      background: "rgba(255, 255, 255, 0.04)",
+                      background: "var(--admin-bg-card-subtle)",
                       border: "1px solid var(--admin-border-subtle)",
                       padding: "6px 14px",
                       borderRadius: "999px",
                       fontSize: "12px",
                     }}
                   >
-                    <span style={{ color: "#fff", fontWeight: 600 }}>{cat.label}</span>
+                    <span style={{ color: "var(--admin-text-main)", fontWeight: 600 }}>{cat.label}</span>
                     <span style={{ fontSize: "11px", color: count > 0 ? "var(--admin-gold)" : "#64748b" }}>
                       ({count})
                     </span>

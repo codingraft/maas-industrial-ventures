@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Arrow } from "@/components/ui/Arrow";
+import { CardSlider } from "@/components/ui/CardSlider";
 import { BlogPost } from "@/lib/types";
 
 interface BlogPreviewSectionProps {
@@ -16,7 +17,7 @@ export function BlogPreviewSection({
   headline = "Industrial Land Insights & Real Estate Updates.",
   description = "Stay informed with our latest news, Uttar Pradesh MSME policy analysis, and corridor infrastructure updates designed to guide manufacturers and investors.",
 }: BlogPreviewSectionProps) {
-  const displayPosts = (posts ?? []).slice(0, 3);
+  const displayPosts = (posts ?? []).slice(0, 6);
 
   return (
     <section className="blog-section section-pad" id="blog">
@@ -38,7 +39,14 @@ export function BlogPreviewSection({
         </div>
       </div>
 
-      <div className="blog-grid">
+      <CardSlider
+        ariaLabel="Market Insights Articles"
+        desktopCols={3}
+        tabletCols={2}
+        mobileCols={1}
+        gap={24}
+        className="blog-slider"
+      >
         {displayPosts.map((post) => (
           <article key={post.id} className="blog-card">
             <Link href={`/blog/${post.slug}`} className="blog-card-media">
@@ -76,7 +84,7 @@ export function BlogPreviewSection({
             </div>
           </article>
         ))}
-      </div>
+      </CardSlider>
       </div>
     </section>
   );

@@ -57,13 +57,30 @@ export default async function ProjectsIndexPage() {
               "Thoughtfully planned industrial hubs, demarcated industrial plots, and plotted real estate developments engineered for business scale, logistics efficiency, and long-term asset value."}
           </p>
 
-          <div className="projects-count-bar">
-            <span className="projects-count-chip">
-              <strong>{projects.length}</strong> Active Developments Available
-            </span>
-            <span className="projects-count-chip">
-              Delhi–Meerut Expressway &amp; Western UP Corridors
-            </span>
+          <div className="projects-hero-meta-bar">
+            <div className="projects-count-bar">
+              <span className="projects-count-chip">
+                <strong>{projects.length}</strong> Active {projects.length === 1 ? "Development" : "Developments"}
+              </span>
+              <span className="projects-count-chip">
+                Delhi–Meerut Expressway &amp; NH-9 Corridors
+              </span>
+              <span className="projects-count-chip">
+                UP MSME Policy 2022 Eligible
+              </span>
+            </div>
+
+            {projects.length > 1 && (
+              <nav className="projects-quick-jump" aria-label="Jump to project">
+                <span className="quick-jump-label">Quick Jump:</span>
+                {projects.map((p, idx) => (
+                  <a key={p.id || idx} href={`#project-${p.slug}`} className="quick-jump-pill">
+                    <span className="jump-idx">0{idx + 1}</span>
+                    <span>{p.title}</span>
+                  </a>
+                ))}
+              </nav>
+            )}
           </div>
         </section>
 
@@ -81,18 +98,25 @@ export default async function ProjectsIndexPage() {
             <div className="projects-catalog-grid">
               {projects.map((project, idx) => {
                 const rawDesc = project.shortDescription || project.fullDescription || "";
-                const cleanLead = rawDesc.includes(".")
-                  ? rawDesc.split(". ")[0].trim() + "."
-                  : rawDesc.slice(0, 140) + "...";
+                const displayDesc =
+                  project.shortDescription ||
+                  (rawDesc.includes(".")
+                    ? rawDesc.split(". ").slice(0, 2).join(". ").trim() + "."
+                    : rawDesc.slice(0, 180) + "...");
 
                 const roadDisplay = /rcc|concrete/i.test(project.roadWidth)
                   ? "Heavy-Duty RCC"
                   : project.roadWidth.split(".")[0] || "45–52 Ft. Wide";
 
                 const corridorDisplay = project.addressShort || project.location.split(",")[0] || "Western UP Corridor";
+                const primaryAccess = project.connectivity?.[0] || corridorDisplay;
 
                 return (
-                  <article key={project.id || idx} className="project-catalog-card">
+                  <article
+                    key={project.id || idx}
+                    id={`project-${project.slug}`}
+                    className="project-catalog-card"
+                  >
                     <div className="project-catalog-media">
                       <Image
                         src={
@@ -101,16 +125,22 @@ export default async function ProjectsIndexPage() {
                         }
                         alt={project.title}
                         fill
-                        sizes="(max-width: 900px) 100vw, 50vw"
+                        priority={idx === 0}
+                        sizes="(max-width: 1024px) 100vw, 48vw"
                         className="project-catalog-img"
                       />
+                      <div className="project-image-gradient" />
                       <div className="project-catalog-badges">
                         <span className="proj-status-badge">
                           <span className="status-live-dot" /> {project.status || "Active Plots Available"}
                         </span>
-                        <span className="proj-location-badge">
-                          {corridorDisplay}
-                        </span>
+                      </div>
+                      <div className="project-media-location">
+                        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                          <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                          <circle cx="12" cy="10" r="3" />
+                        </svg>
+                        <span>{project.location}</span>
                       </div>
                       <span className="project-catalog-index-stamp">0{idx + 1}</span>
                     </div>
@@ -137,7 +167,7 @@ export default async function ProjectsIndexPage() {
                       </div>
 
                       <p className="project-card-desc">
-                        {cleanLead}
+                        {displayDesc}
                       </p>
 
                       {/* Specifications Quick Strip (3 Tiles) */}
@@ -151,15 +181,15 @@ export default async function ProjectsIndexPage() {
                           <strong className="spec-val">{roadDisplay}</strong>
                         </div>
                         <div className="spec-item">
-                          <span className="spec-label">Corridor Access</span>
-                          <strong className="spec-val">{corridorDisplay}</strong>
+                          <span className="spec-label">Highway Access</span>
+                          <strong className="spec-val">{primaryAccess}</strong>
                         </div>
                       </div>
 
                       {/* Key Features Bullets */}
                       {project.features && project.features.length > 0 && (
                         <ul className="project-features-list">
-                          {project.features.slice(0, 3).map((feat, fIdx) => (
+                          {project.features.slice(0, 4).map((feat, fIdx) => (
                             <li key={fIdx}>
                               <span className="feat-check" aria-hidden="true">
                                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">

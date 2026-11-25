@@ -86,69 +86,132 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
       <main className={"project-detail-page " + styles.page} id="top">
         <section className={"page-wrap " + styles.intro} aria-labelledby="project-title">
-          <Link href="/projects" className={styles.back}>← All projects</Link>
+          <nav className="project-breadcrumbs" aria-label="Breadcrumb">
+            <Link href="/">Home</Link>
+            <span className="crumb-sep" aria-hidden="true">/</span>
+            <Link href="/projects">Projects</Link>
+            <span className="crumb-sep" aria-hidden="true">/</span>
+            <span className="crumb-current">{project.title}</span>
+          </nav>
+
           <div className={styles.spread}>
             <div className={styles.identity}>
+              <div className="project-meta-badges">
+                <span className="proj-status-badge">
+                  <span className="status-live-dot" /> {project.status || "Active Plots Available"}
+                </span>
+                {hasSubsidies && (
+                  <span className="proj-policy-badge">UP MSME Policy 2022</span>
+                )}
+              </div>
+
               {project.tagline && <p className={styles.kicker}>{project.tagline}</p>}
               <h1 id="project-title">{project.title}</h1>
               {project.shortDescription && <p className={styles.summary}>{project.shortDescription}</p>}
+
               <div className={styles.actions}>
-                <button type="button" className="button button-gold" data-enquiry-trigger
-                  data-enquiry-project={project.title} data-enquiry-title={`Site visit for ${project.title}`}>
-                  Request a site visit <Arrow diagonal />
+                <button
+                  type="button"
+                  className="button button-gold"
+                  data-enquiry-trigger
+                  data-enquiry-project={project.title}
+                  data-enquiry-title={`Site visit for ${project.title}`}
+                >
+                  Request a Site Visit <Arrow diagonal />
                 </button>
-                {project.brochureUrl && <a href={project.brochureUrl} target="_blank" rel="noopener noreferrer">Project brochure ↗</a>}
-                {cleanWa && <a href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Please share plot availability for " + project.title)}`}
-                  target="_blank" rel="noopener noreferrer">WhatsApp ↗</a>}
+                {project.brochureUrl && (
+                  <a
+                    href={project.brochureUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="button button-outline-dark"
+                  >
+                    Project Brochure <Arrow diagonal />
+                  </a>
+                )}
+                {cleanWa && (
+                  <a
+                    href={`https://wa.me/${cleanWa}?text=${encodeURIComponent("Please share plot availability for " + project.title)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="button button-wa-outline"
+                  >
+                    WhatsApp Desk <Arrow diagonal />
+                  </a>
+                )}
               </div>
             </div>
+
             <div className={styles.cover}>
               <Image src={coverSrc} alt={project.title} fill priority sizes="(max-width: 760px) 100vw, 52vw" />
-              {hasGallery && <a className={styles.photoLink} href="#gallery">View photos ↓</a>}
+              <div className="project-cover-gradient" />
+              <div className={styles.coverFooter}>
+                {(project.location || project.addressShort) && (
+                  <span className="project-cover-geo">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
+                      <circle cx="12" cy="10" r="3" />
+                    </svg>
+                    <span>{project.location || project.addressShort}</span>
+                  </span>
+                )}
+                {hasGallery && (
+                  <a className={styles.photoLink} href="#gallery">
+                    Site Photos ({project.galleryImages.length}) ↓
+                  </a>
+                )}
+              </div>
             </div>
           </div>
+
           <dl className={styles.facts} id="specifications">
             {facts.filter(([, value]) => value).map(([label, value]) => (
-              <div key={label}><dt>{label}</dt><dd>{value}</dd></div>
+              <div key={label} className={styles.factTile}>
+                <dt>{label}</dt>
+                <dd>{value}</dd>
+              </div>
             ))}
           </dl>
+
           <nav aria-label="Project sections" className={styles.contents}>
-            {project.fullDescription && <a href="#overview">Overview</a>}
-            {hasFeatures && <a href="#features">Infrastructure</a>}
-            {hasConnectivity && <a href="#connectivity">Connectivity</a>}
-            {hasSubsidies && <a href="#subsidies">Policy &amp; subsidies</a>}
-            {hasGallery && <a href="#gallery">Photos</a>}
-            <a href="#detailed-enquiry">Enquire</a>
+            {project.fullDescription && <a href="#overview">01 Overview</a>}
+            {hasFeatures && <a href="#features">02 Infrastructure</a>}
+            {hasConnectivity && <a href="#connectivity">03 Connectivity</a>}
+            {hasSubsidies && <a href="#subsidies">04 Policy &amp; Subsidies</a>}
+            {hasGallery && <a href="#gallery">05 Site Photos</a>}
+            <a href="#detailed-enquiry">06 Enquire</a>
           </nav>
         </section>
 
-        {/* Balanced 2-Column Asset Dossier & Sticky Advisory (No Empty Rail) */}
+        {/* Balanced 2-Column Asset Dossier & Sticky Advisory */}
         <section className="project-body-section page-wrap">
           <div className="project-body-grid">
-            {/* Main Asset Column (64%) */}
+            {/* Main Asset Column */}
             <div className="project-dossier-main">
               {/* 01: Master Overview & Vision */}
-              {project.fullDescription && <article className="dossier-card" id="overview">
-                <div className="dossier-card-head">
-                  <h2 className="dossier-title">Project overview</h2>
-                </div>
-                
-                <div className="dossier-body">
-                  {project.fullDescription && (
+              {project.fullDescription && (
+                <article className="dossier-card" id="overview">
+                  <div className="dossier-card-head">
+                    <span className="dossier-kicker">01 / Master Overview</span>
+                    <h2 className="dossier-title">Project Overview</h2>
+                  </div>
+
+                  <div className="dossier-body">
                     <div className="dossier-narrative">
                       {project.fullDescription.split("\n\n").map((para, pIdx) => (
                         <p key={pIdx}>{para}</p>
                       ))}
                     </div>
-                  )}
-                </div>
-              </article>}
+                  </div>
+                </article>
+              )}
 
               {/* 02: Delivered Infrastructure Features (100% Dynamic) */}
               {hasFeatures && (
                 <article className="dossier-card" id="features">
                   <div className="dossier-card-head">
-                    <h2 className="dossier-title">Infrastructure</h2>
+                    <span className="dossier-kicker">02 / Engineered Utilities</span>
+                    <h2 className="dossier-title">Site Infrastructure</h2>
                   </div>
 
                   <div className="features-compact-grid">
@@ -170,7 +233,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               {hasConnectivity && (
                 <article className="dossier-card" id="connectivity">
                   <div className="dossier-card-head">
-                    <h2 className="dossier-title">Connectivity</h2>
+                    <span className="dossier-kicker">03 / Logistics &amp; Corridors</span>
+                    <h2 className="dossier-title">Strategic Connectivity</h2>
                   </div>
 
                   <div className="connectivity-compact-list">
@@ -191,13 +255,14 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
                 <article className="dossier-card dossier-subsidies-card" id="subsidies">
                   <div className="subsidies-head-row">
                     <div className="subsidies-badge-icon" aria-hidden="true">
-                      <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10" />
                         <path d="m9 12 2 2 4-4" />
                       </svg>
                     </div>
                     <div>
-                      <h2 className="dossier-title">Policy &amp; subsidies</h2>
+                      <span className="dossier-kicker">04 / Statutory Incentives</span>
+                      <h2 className="dossier-title">Policy &amp; Subsidies</h2>
                     </div>
                   </div>
 
@@ -205,7 +270,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
 
                   <div className="subsidies-action-row">
                     <a href="#detailed-enquiry" className="button button-gold">
-                      Ask about eligibility <Arrow diagonal />
+                      Ask About Subsidy Eligibility <Arrow diagonal />
                     </a>
                   </div>
                 </article>
@@ -215,7 +280,8 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               {hasGallery && (
                 <article className="dossier-card" id="gallery">
                   <div className="dossier-card-head">
-                    <h2 className="dossier-title">Project photos</h2>
+                    <span className="dossier-kicker">05 / On-Site Visuals</span>
+                    <h2 className="dossier-title">Project Site Photos</h2>
                   </div>
 
                   <ProjectPhotoGrid title={project.title} images={project.galleryImages} />
@@ -225,9 +291,10 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               {/* 06: Corporate Procurement & Detailed Tender Desk */}
               <article className="dossier-card dossier-enquiry-card" id="detailed-enquiry">
                 <div className="dossier-card-head">
-                  <h2 className="dossier-title">Enquire about this project</h2>
-                  <p className="dossier-lead" style={{ fontSize: "13.5px", marginTop: "6px" }}>
-                    Ask about plot dimensions, power requirements or tender documents.
+                  <span className="dossier-kicker">06 / Allocation &amp; Tender Desk</span>
+                  <h2 className="dossier-title">Enquire About {project.title}</h2>
+                  <p className="dossier-lead" style={{ fontSize: "13.5px", marginTop: "6px", marginBottom: 0 }}>
+                    Ask about plot dimensions, power requirements, pricing schedule, or tender documents.
                   </p>
                 </div>
 
@@ -237,7 +304,7 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
               </article>
             </div>
 
-            {/* Right Sticky Inbound Concierge Sidebar (36%) */}
+            {/* Right Sticky Inbound Concierge Sidebar */}
             <aside className="project-dossier-sidebar">
               <ProjectQuickBooking
                 projectTitle={project.title}
@@ -251,29 +318,37 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
         {/* Cross-linking to Other Projects */}
         {otherProjects.length > 0 && (
           <section className="other-projects-section page-wrap">
-            <div className="section-label">Explore More Developments</div>
-            <h2 className="other-projects-heading">Other Active MAAS Developments</h2>
+            <div className="other-projects-head">
+              <div className="section-label">
+                <span>+</span> / Explore More Developments
+              </div>
+              <h2 className="other-projects-heading">Other Active MAAS Developments</h2>
+            </div>
             <div className="other-projects-grid">
-              {otherProjects.map((op) => (
-                <div key={op.id} className="other-proj-card">
-                  <div className="other-proj-media image-frame">
+              {otherProjects.map((op, opIdx) => (
+                <article key={op.id || opIdx} className="other-proj-card">
+                  <Link href={`/projects/${op.slug}`} className="other-proj-media">
                     <Image
-                      src={op.coverImage || "https://images.unsplash.com/photo-1567789884554-0b844b597180?auto=format&fit=crop&w=800&q=80"}
+                      src={op.coverImage || "/images/industrial-hero.webp"}
                       alt={op.title}
                       fill
                       sizes="(max-width: 768px) 100vw, 50vw"
-                      style={{ objectFit: "cover" }}
+                      className="other-proj-img"
                     />
+                    <div className="project-image-gradient" />
                     <span className="other-proj-badge">{op.addressShort || op.location.split(",")[0]}</span>
-                  </div>
+                  </Link>
                   <div className="other-proj-body">
-                    <h3>{op.title}</h3>
+                    <span className="other-proj-status">{op.status || "Active Plots Available"}</span>
+                    <h3>
+                      <Link href={`/projects/${op.slug}`}>{op.title}</Link>
+                    </h3>
                     <p>{op.plotSizes} · {op.roadWidth}</p>
                     <Link href={`/projects/${op.slug}`} className="text-link">
-                      View Project <Arrow diagonal />
+                      View Project Details <Arrow diagonal />
                     </Link>
                   </div>
-                </div>
+                </article>
               ))}
             </div>
           </section>

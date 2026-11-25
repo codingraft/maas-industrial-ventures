@@ -19,7 +19,7 @@ export default async function Home() {
   const [settings, projects, blogs] = await Promise.all([
     getAllSettings(),
     getProjects(true), // active projects only
-    getPaginatedBlogPosts({ publishedOnly: true, limit: 3 }).then(result => result.items), // published blogs only
+    getPaginatedBlogPosts({ publishedOnly: true, limit: 6 }).then(result => result.items), // published blogs only
   ]);
 
   const { site_info, sections, media, social_links, content, verticals, vision_mission } = settings;

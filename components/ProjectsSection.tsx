@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Arrow } from "@/components/ui/Arrow";
+import { CardSlider } from "@/components/ui/CardSlider";
 import { ProjectItem } from "@/lib/types";
 
 interface ProjectsSectionProps {
@@ -55,7 +56,16 @@ export function ProjectsSection({
           </div>
         </div>
 
-        <div className="projects-list">
+        <CardSlider
+          ariaLabel="Projects Portfolio"
+          desktopCols={1}
+          tabletCols={1}
+          mobileCols={1}
+          gap={24}
+          controlsPosition="top"
+          tabLabels={projects.map((p) => p.title)}
+          className="projects-slider"
+        >
           {projects.map((project, idx) => {
             // Create a clean, punchy 1-sentence executive summary
             const rawDesc = project.shortDescription || project.fullDescription || "";
@@ -73,7 +83,7 @@ export function ProjectsSection({
             return (
               <article
                 key={project.id || idx}
-                className={`project-card ${idx % 2 === 1 ? "project-card-reverse" : ""}`}
+                className="project-card"
                 id={`project-${project.slug}`}
               >
                 {/* Visual Media Column */}
@@ -200,7 +210,7 @@ export function ProjectsSection({
               </article>
             );
           })}
-        </div>
+        </CardSlider>
       </div>
     </section>
   );

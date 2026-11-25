@@ -843,7 +843,7 @@ export function ProjectsManager() {
 
             {/* Publishing Controls Card */}
             <div className="studio-card">
-              <h4 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700, color: "#fff" }}>
+              <h4 style={{ margin: "0 0 14px", fontSize: "14px", fontWeight: 700, color: "var(--admin-text-main)" }}>
                 Publishing &amp; Sort Order
               </h4>
 
@@ -993,7 +993,7 @@ export function ProjectsManager() {
       </AdminToolbar>
 
       {loading ? (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "20px" }}>
           <CardSkeleton />
           <CardSkeleton />
           <CardSkeleton />

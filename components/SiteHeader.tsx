@@ -37,9 +37,15 @@ export function SiteHeader({
     ? "/images/maas-logo-white.svg"
     : (logoSrc || "/images/maas-logo-white.svg");
 
+  const isHomePage = pathname === "/";
+
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   useEffect(() => {
     let ticking = false;
@@ -138,7 +144,9 @@ export function SiteHeader({
 
   return (
     <>
-      <header className={`site-header ${scrolled ? "is-scrolled" : ""} ${menuOpen ? "menu-open" : ""}`}>
+      <header
+        className={`site-header ${scrolled ? "is-scrolled" : ""} ${!isHomePage ? "is-solid-page" : ""} ${menuOpen ? "menu-open" : ""}`}
+      >
         <div className="site-header-inner">
           <Link href="/" className="brand-logo-link" aria-label={`${brandName} Home`}>
             <div className="brand-logo-wrap">
@@ -154,20 +162,7 @@ export function SiteHeader({
             </div>
           </Link>
 
-          {/* Mobile Hamburger Trigger */}
-          <button
-            className="menu-toggle"
-            ref={menuButton}
-            aria-controls="mobile-navigation"
-            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-            aria-expanded={menuOpen}
-            onClick={() => setMenuOpen(!menuOpen)}
-          >
-            <span />
-            <span />
-          </button>
-
-          {/* Desktop Navigation */}
+          {/* Desktop Centered Navigation */}
           <nav className="site-header-nav site-header-nav-desktop" aria-label="Main navigation">
             <div className="site-header-links">
               {visibleNav.map((item) => {
@@ -186,28 +181,57 @@ export function SiteHeader({
                 );
               })}
             </div>
-
-            <div className="site-header-actions">
-              {phone && (
-                <a className="nav-phone" href={`tel:${phone}`} title="Call Advisory Desk">
-                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
-                  </svg>
-                  <span>{phone}</span>
-                </a>
-              )}
-              <button
-                type="button"
-                className="nav-cta"
-                onClick={handleOpenConsultation}
-                data-enquiry-trigger
-                data-enquiry-title="Schedule Consultation & Site Visit"
-              >
-                <span>Schedule Site Visit</span>
-                <Arrow diagonal />
-              </button>
-            </div>
           </nav>
+
+          {/* Desktop Right Actions */}
+          <div className="site-header-actions site-header-actions-desktop">
+            {phone && (
+              <a className="nav-phone" href={`tel:${phone}`} title="Call Advisory Desk">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+                <span>{phone}</span>
+              </a>
+            )}
+            <button
+              type="button"
+              className="nav-cta"
+              onClick={handleOpenConsultation}
+              data-enquiry-trigger
+              data-enquiry-title="Schedule Consultation & Site Visit"
+            >
+              <span>Schedule Site Visit</span>
+              <Arrow diagonal />
+            </button>
+          </div>
+
+          {/* Mobile Controls (Quick Call + Hamburger) */}
+          <div className="mobile-header-controls">
+            {phone && (
+              <a
+                className="mobile-header-call-btn"
+                href={`tel:${phone}`}
+                aria-label={`Call ${phone}`}
+                title="Call Advisory Desk"
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z" />
+                </svg>
+              </a>
+            )}
+
+            <button
+              className="menu-toggle"
+              ref={menuButton}
+              aria-controls="mobile-navigation"
+              aria-label={menuOpen ? "Close navigation" : "Open navigation"}
+              aria-expanded={menuOpen}
+              onClick={() => setMenuOpen(!menuOpen)}
+            >
+              <span />
+              <span />
+            </button>
+          </div>
         </div>
       </header>
 

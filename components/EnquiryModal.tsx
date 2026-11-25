@@ -47,15 +47,18 @@ export function EnquiryModal() {
     }
   }, [modalData]);
 
-  // Lock body scroll when modal is open
+  // Lock background scroll when modal is open
   useEffect(() => {
     if (modalData.isOpen) {
       document.body.style.overflow = "hidden";
+      document.documentElement.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     }
     return () => {
       document.body.style.overflow = "";
+      document.documentElement.style.overflow = "";
     };
   }, [modalData.isOpen]);
 
@@ -377,12 +380,12 @@ export function EnquiryModal() {
                 </div>
 
                 <div className="modal-field modal-field-full">
-                  <label htmlFor="modal-message">Specific Requirements / Message (Optional)</label>
+                  <label htmlFor="modal-message">Specific Requirements / Note (Optional)</label>
                   <textarea
                     id="modal-message"
                     name="message"
-                    rows={2}
-                    placeholder="Specify power requirements (kVA/MVA), ceiling clear height, timeline, or query..."
+                    rows={1}
+                    placeholder="Power (kVA/MVA), dimensions, timeline..."
                   />
                 </div>
               </div>

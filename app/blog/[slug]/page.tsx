@@ -256,7 +256,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
                   <Link href="/projects" className="button button-gold">
                     Explore All Active Projects <Arrow diagonal />
                   </Link>
-                  <Link href="/contact" className="button button-outline">
+                  <Link href="/contact" className="button button-outline-dark">
                     Contact Advisory Desk <Arrow />
                   </Link>
                 </div>

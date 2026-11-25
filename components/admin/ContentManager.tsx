@@ -844,7 +844,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 The 4 operational pillars displayed in the interactive grid on the homepage.
               </p>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "16px" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "16px" }}>
                 {verticals.map((vert, idx) => (
                   <div
                     key={vert.id || idx}
@@ -916,7 +916,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
 
         {/* 4. VISION & MISSION TAB */}
         {activeSubTab === "vision" && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))", gap: "20px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "20px" }}>
             <div
               className="admin-card-inner"
               style={{

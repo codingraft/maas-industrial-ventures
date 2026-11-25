@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Arrow } from "@/components/ui/Arrow";
+import { CardSlider } from "@/components/ui/CardSlider";
 import { DevelopmentVertical, VisionMissionPhilosophy, SectionImage } from "@/lib/types";
 
 interface AboutOverviewProps {
@@ -114,7 +115,14 @@ export function AboutOverview({
             </Link>
           </div>
 
-          <div className="verticals-grid">
+          <CardSlider
+            ariaLabel="Development Verticals"
+            desktopCols={4}
+            tabletCols={2}
+            mobileCols={1}
+            gap={20}
+            className="verticals-slider"
+          >
             {verticals.map((vert, idx) => (
               <div key={vert.id || idx} className="vertical-card">
                 <div className="vertical-card-header">
@@ -136,7 +144,7 @@ export function AboutOverview({
                 </div>
               </div>
             ))}
-          </div>
+          </CardSlider>
         </div>
 
         {/* Philosophy Feature Quote Banner */}

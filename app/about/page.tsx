@@ -5,6 +5,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { FloatingContact } from "@/components/FloatingContact";
 import { Arrow } from "@/components/ui/Arrow";
+import { CardSlider } from "@/components/ui/CardSlider";
 import { getAllSettings } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -148,7 +149,14 @@ export default async function AboutPage() {
             </p>
           </div>
 
-          <div className="verticals-grid">
+          <CardSlider
+            ariaLabel="Development Verticals"
+            desktopCols={4}
+            tabletCols={2}
+            mobileCols={1}
+            gap={20}
+            className="verticals-slider"
+          >
             {verticals.map((vert, idx) => (
               <div key={vert.id || idx} className="vertical-card">
                 <div className="vertical-card-header">
@@ -170,7 +178,7 @@ export default async function AboutPage() {
                 </div>
               </div>
             ))}
-          </div>
+          </CardSlider>
         </section>
 
         {/* Vision, Mission & Philosophy Feature Showcase */}

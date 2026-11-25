@@ -477,7 +477,7 @@ export function SeoManager({ initialSeo, media, onUpdate }: SeoManagerProps) {
 
             {/* Automatic Sitemap & Robots Note */}
             <div className="seo-info-callout">
-              <div style={{ fontWeight: 700, color: "#f8fafc", marginBottom: "4px" }}>
+              <div style={{ fontWeight: 700, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                 ⚡ Auto-Generated XML Sitemap &amp; Robots.txt
               </div>
               <div style={{ fontSize: "12px", color: "var(--admin-text-muted)", lineHeight: 1.6 }}>
