@@ -213,6 +213,21 @@ export function LeadsTable() {
     return digits;
   }
 
+  const hasFilters = Boolean(search || statusFilter !== "all" || projectFilter !== "all");
+  const emptyState = fetchError ? null : (
+    <div className="admin-leads-empty">
+      <strong>{hasFilters ? "No matching enquiries" : "No enquiries yet"}</strong>
+      {hasFilters ? (
+        <button type="button" className="admin-btn admin-btn-outline" onClick={() => {
+          setSearch("");
+          setStatusFilter("all");
+          setProjectFilter("all");
+          setCurrentPage(1);
+        }}>Clear filters</button>
+      ) : <p>New website enquiries will appear here.</p>}
+    </div>
+  );
+
   return (
     <div>
       <ToastContainer toasts={toasts} onDismiss={dismissToast} />
@@ -326,11 +341,7 @@ export function LeadsTable() {
         {loading ? (
           <TableSkeleton rows={pageSize > 10 ? 10 : pageSize} cols={6} />
         ) : leads.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "48px 20px", color: "var(--admin-text-muted)" }}>
-            <div style={{ fontSize: "28px", marginBottom: "8px" }}>📋</div>
-            <div style={{ fontWeight: 600, color: "var(--admin-text-main)" }}>No leads found</div>
-            <div style={{ fontSize: "12px", marginTop: "4px" }}>Try adjusting your search terms or filters</div>
-          </div>
+          emptyState
         ) : (
           <table className="admin-table">
             <thead>
@@ -538,9 +549,7 @@ export function LeadsTable() {
             <CardSkeleton />
           </div>
         ) : leads.length === 0 ? (
-          <div style={{ textAlign: "center", padding: "40px 16px", color: "var(--admin-text-muted)" }}>
-            No leads found matching criteria.
-          </div>
+          emptyState
         ) : (
           leads.map((lead) => {
             const waPhone = cleanPhoneForWhatsApp(lead.phone);

@@ -174,24 +174,24 @@ export function MediaLibrary() {
       {/* 1. Header with Upload Action */}
       <div className="admin-studio-header" style={{ marginBottom: "20px" }}>
         <div>
-          <h2>Digital Asset &amp; Media Library</h2>
+          <h2>Media library</h2>
           <p className="admin-studio-desc">
-            Central repository of all photos, blueprints, and vectors. All standard image formats are accepted and automatically optimized to high-performance WebP.
+            Find project photos and blueprints, see where they are used, or upload new files.
           </p>
         </div>
 
         <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-          <label className="admin-btn admin-btn-primary" style={{ cursor: "pointer", display: "inline-flex" }}>
+          <label className="admin-btn admin-btn-primary media-upload-control">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
               <line x1="12" y1="5" x2="12" y2="19" />
               <line x1="5" y1="12" x2="19" y2="12" />
             </svg>
-            <span>{uploading ? "Optimizing & Uploading…" : "Upload Media Assets"}</span>
+            <span>{uploading ? "Optimizing & Uploading…" : "Upload images"}</span>
             <input
               type="file"
               accept="image/*"
               multiple
-              style={{ display: "none" }}
+              aria-label="Upload images"
               onChange={handleUpload}
               disabled={uploading}
             />
@@ -206,13 +206,13 @@ export function MediaLibrary() {
           <span className="minimal-stat-lbl">Total Media Assets</span>
         </div>
         <div className="minimal-stat-card">
-          <span className="minimal-stat-num" style={{ color: "var(--admin-gold)" }}>
+          <span className="minimal-stat-num">
             {stats.webpCount}
           </span>
           <span className="minimal-stat-lbl">WebP Optimized Assets</span>
         </div>
         <div className="minimal-stat-card">
-          <span className="minimal-stat-num" style={{ color: "#34d399" }}>
+          <span className="minimal-stat-num">
             {formatSize(stats.totalBytes)}
           </span>
           <span className="minimal-stat-lbl">Upload Disk Storage</span>
@@ -234,7 +234,7 @@ export function MediaLibrary() {
             </svg>
             <input
               type="text"
-              className="media-search-input"
+              className="media-search-input" aria-label="Search media library"
               placeholder="Search assets by filename, alt text, or URL..."
               value={search}
               onChange={(e) => {
@@ -247,7 +247,7 @@ export function MediaLibrary() {
             {search && (
               <button
                 type="button"
-                className="media-search-clear"
+                className="media-search-clear" aria-label="Clear media search"
                 onClick={() => {
                   setSearch("");
                   setPage(1);
@@ -258,10 +258,13 @@ export function MediaLibrary() {
             )}
           </div>
 
+          <details className="media-filter-disclosure">
+            <summary>Filters &amp; sorting{(category !== "all" || format !== "all") && " · Active"}</summary>
+            <div className="media-filter-fields">
           {/* Category Filter */}
           <div className="media-filter-group">
-            <label className="media-filter-label">Category</label>
-            <select
+            <label className="media-filter-label" htmlFor="media-Category">Category</label>
+            <select id="media-Category"
               className="admin-select"
               value={category}
               onChange={(e) => {
@@ -281,8 +284,8 @@ export function MediaLibrary() {
 
           {/* Format Filter */}
           <div className="media-filter-group">
-            <label className="media-filter-label">Format</label>
-            <select
+            <label className="media-filter-label" htmlFor="media-Format">Format</label>
+            <select id="media-Format"
               className="admin-select"
               value={format}
               onChange={(e) => {
@@ -300,8 +303,8 @@ export function MediaLibrary() {
 
           {/* Sort Filter */}
           <div className="media-filter-group">
-            <label className="media-filter-label">Sort</label>
-            <select
+            <label className="media-filter-label" htmlFor="media-Sort">Sort</label>
+            <select id="media-Sort"
               className="admin-select"
               value={sort}
               onChange={(e) => {
@@ -318,8 +321,8 @@ export function MediaLibrary() {
 
           {/* Per Page */}
           <div className="media-filter-group">
-            <label className="media-filter-label">Per Page</label>
-            <select
+            <label className="media-filter-label" htmlFor="media-Per-Page">Per Page</label>
+            <select id="media-Per-Page"
               className="admin-select"
               value={pageSize}
               onChange={(e) => {
@@ -332,6 +335,8 @@ export function MediaLibrary() {
               <option value="48">48</option>
             </select>
           </div>
+            </div>
+          </details>
         </div>
       </div>
 
@@ -377,8 +382,19 @@ export function MediaLibrary() {
                   </span>
                 ) : null}
 
-                {/* Hover overlay with action icons */}
-                <div className="media-card-overlay">
+              </div>
+
+              {/* Meta Info */}
+              <div className="media-card-info">
+                <div className="media-card-name" title={item.fileName}>
+                  {item.fileName}
+                </div>
+                <div className="media-card-specs">
+                  <span className="media-source-pill">{item.source}</span>
+                  <span className="media-size-text">{formatSize(item.sizeBytes)}</span>
+                </div>
+              </div>
+              <div className="media-file-actions">
                   <button
                     type="button"
                     className="media-card-action-btn"
@@ -426,18 +442,6 @@ export function MediaLibrary() {
                     </svg>
                   </button>
                 </div>
-              </div>
-
-              {/* Meta Info */}
-              <div className="media-card-info">
-                <div className="media-card-name" title={item.fileName}>
-                  {item.fileName}
-                </div>
-                <div className="media-card-specs">
-                  <span className="media-source-pill">{item.source}</span>
-                  <span className="media-size-text">{formatSize(item.sizeBytes)}</span>
-                </div>
-              </div>
             </div>
           ))}
         </div>

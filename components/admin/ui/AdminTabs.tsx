@@ -23,8 +23,21 @@ export function AdminTabs<T extends string = string>({
   className = "",
 }: AdminTabsProps<T>) {
   return (
-    <div className={`admin-segmented-tabs ${className}`} role="tablist">
-      {tabs.map((tab) => {
+    <>
+    <label className="admin-section-select">
+      <span>Editor section</span>
+      <select aria-label="Editor section" className="admin-select" value={activeTab}
+        onChange={event => {
+          const selected = tabs.find(tab => tab.id === event.target.value);
+          if (selected) onChange(selected.id);
+        }}>
+        {tabs.map(tab => <option key={tab.id} value={tab.id}>
+          {tab.label}{tab.count !== undefined ? ` (${tab.count})` : ""}
+        </option>)}
+      </select>
+    </label>
+    <div className={`admin-segmented-tabs ${className}`} role="tablist" aria-label="Editor section">
+      {tabs.map((tab, index) => {
         const isActive = activeTab === tab.id;
         return (
           <button
@@ -32,6 +45,20 @@ export function AdminTabs<T extends string = string>({
             type="button"
             role="tab"
             aria-selected={isActive}
+            tabIndex={isActive ? 0 : -1}
+            onKeyDown={event => {
+              const destinations: Record<string, number> = {
+                ArrowRight: (index + 1) % tabs.length,
+                ArrowLeft: (index + tabs.length - 1) % tabs.length,
+                Home: 0,
+                End: tabs.length - 1,
+              };
+              const next = destinations[event.key];
+              if (next === undefined) return;
+              event.preventDefault();
+              event.currentTarget.parentElement?.querySelectorAll("button")[next]?.focus();
+              onChange(tabs[next].id);
+            }}
             className={`admin-tab-pill ${isActive ? "is-active" : ""}`}
             onClick={() => onChange(tab.id)}
           >
@@ -46,5 +73,6 @@ export function AdminTabs<T extends string = string>({
         );
       })}
     </div>
+    </>
   );
 }

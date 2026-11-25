@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import "../admin.css";
+
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -43,7 +43,7 @@ export default function AdminLoginPage() {
       <div className="login-card">
         <div className="login-logo">
           <Image
-            src="/images/maas-logo-white.svg"
+            src="/images/maas-logo-dark.svg"
             alt="MAAS Industrial Ventures"
             width={260}
             height={74}
@@ -51,10 +51,10 @@ export default function AdminLoginPage() {
             style={{ width: "auto", height: "48px" }}
           />
         </div>
-        <h1 className="login-title">MAAS Ventures Portal</h1>
-        <p className="login-subtitle">Executive Lead CRM & Site Control System</p>
+        <h1 className="login-title">Admin sign in</h1>
+        <p className="login-subtitle">Manage enquiries and website content.</p>
 
-        {error && <div className="login-error">{error}</div>}
+        {error && <div className="login-error" role="alert">{error}</div>}
 
         <form onSubmit={handleLogin}>
           <div className="form-row">
@@ -90,7 +90,7 @@ export default function AdminLoginPage() {
           </div>
 
           <button type="submit" className="login-btn" disabled={loading}>
-            {loading ? "Authenticating…" : "Sign In to Admin Portal"}
+            {loading ? "Authenticating…" : "Sign in"}
           </button>
         </form>
       </div>

@@ -463,7 +463,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
           </div>
           <div>
             <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--admin-text-main)", margin: 0, letterSpacing: "-0.01em" }}>
-              Visuals, Media &amp; Blueprints Studio
+              Images & blueprints
             </h2>
             <p style={{ fontSize: "12.5px", color: "var(--admin-text-muted)", margin: "3px 0 0 0" }}>
               Configure homepage hero carousel slides, section photos, blueprint schematics, and photo gallery.
@@ -671,7 +671,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 {/* Right: Slide Copy Inputs */}
                 <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                   <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                       Category Eyebrow Pill
                     </label>
                     <input
@@ -684,7 +684,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   </div>
 
                   <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                       Main Slide Headline
                     </label>
                     <input
@@ -697,7 +697,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   </div>
 
                   <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                       Subheading Copy
                     </label>
                     <textarea
@@ -710,7 +710,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   </div>
 
                   <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                       Image Alt Text (SEO &amp; Accessibility)
                     </label>
                     <input
@@ -821,7 +821,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             {/* Inputs */}
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Direct Image URL
                 </label>
                 <input
@@ -834,7 +834,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
               </div>
 
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Image Alt Text (SEO &amp; Accessibility)
                 </label>
                 <input
@@ -956,7 +956,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             {/* Inputs */}
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Direct Image URL
                 </label>
                 <input
@@ -969,7 +969,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
               </div>
 
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Image Alt Text (SEO &amp; Accessibility)
                 </label>
                 <input
@@ -1048,7 +1048,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                         padding: "2px 8px",
                         borderRadius: "999px",
                         background: "rgba(255, 255, 255, 0.08)",
-                        color: "#94a3b8",
+                        color: "var(--admin-text-muted)",
                       }}
                     >
                       {plan.tag}
@@ -1132,7 +1132,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                   <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: "10px" }}>
                     <div>
-                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                         Perspective Title
                       </label>
                       <input
@@ -1144,7 +1144,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                       />
                     </div>
                     <div>
-                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                         Tag Badge
                       </label>
                       <input
@@ -1158,7 +1158,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   </div>
 
                   <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                       Subtitle Summary
                     </label>
                     <input
@@ -1171,7 +1171,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   </div>
 
                   <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                       Technical Description
                     </label>
                     <textarea
@@ -1207,7 +1207,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "14px", marginBottom: "14px" }}>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Perspective Title *
                 </label>
                 <input
@@ -1219,7 +1219,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 />
               </div>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Tag Badge
                 </label>
                 <input
@@ -1233,7 +1233,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </div>
 
             <div style={{ marginBottom: "14px" }}>
-              <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+              <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                 Subtitle
               </label>
               <input
@@ -1246,7 +1246,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             </div>
 
             <div style={{ marginBottom: "18px" }}>
-              <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+              <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                 Technical Description
               </label>
               <textarea
@@ -1409,7 +1409,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             {/* Inputs */}
             <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Direct Map URL
                 </label>
                 <input
@@ -1422,7 +1422,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
               </div>
 
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Image Alt Text (SEO &amp; Accessibility)
                 </label>
                 <input
@@ -1604,12 +1604,12 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
                   <div style={{ padding: "12px", flex: 1, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
                     <div>
-                      <div style={{ fontSize: "12.5px", fontWeight: 600, color: "#fff", marginBottom: "8px" }}>
+                      <div style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "8px" }}>
                         {item.caption}
                       </div>
 
                       <div style={{ marginBottom: "10px" }}>
-                        <label style={{ fontSize: "10.5px", color: "#94a3b8", display: "block", marginBottom: "3px" }}>
+                        <label style={{ fontSize: "10.5px", color: "var(--admin-text-muted)", display: "block", marginBottom: "3px" }}>
                           Sector Category:
                         </label>
                         <select
@@ -1666,7 +1666,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", gap: "12px", marginBottom: "12px" }}>
                 <div>
-                  <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                     Category
                   </label>
                   <select
@@ -1683,7 +1683,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 </div>
 
                 <div>
-                  <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                     Photo Headline / Caption
                   </label>
                   <input
@@ -1697,7 +1697,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
               </div>
 
               <div style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Alt Accessibility Description
                 </label>
                 <input
@@ -1782,7 +1782,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             {/* White SVG */}
             <div
               style={{
-                background: "#080c14",
+                background: "var(--obsidian)",
                 border: "1px solid " + (media.logo === "/images/maas-logo-white.svg" ? "var(--admin-gold)" : "var(--admin-border-subtle)"),
                 borderRadius: "8px",
                 padding: "20px",
@@ -1807,7 +1807,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   ACTIVE
                 </span>
               )}
-              <span style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "12px", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "11px", color: "var(--on-dark)", display: "block", marginBottom: "12px", textTransform: "uppercase" }}>
                 White Transparent SVG
               </span>
               <div style={{ height: "50px", display: "flex", alignItems: "center", justifyContent: "center" }}>
@@ -1837,7 +1837,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
             {/* Gold SVG */}
             <div
               style={{
-                background: "#080c14",
+                background: "var(--obsidian)",
                 border: "1px solid " + (media.logo === "/images/maas-logo-gold.svg" ? "var(--admin-gold)" : "var(--admin-border-subtle)"),
                 borderRadius: "8px",
                 padding: "20px",
@@ -1862,7 +1862,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                   ACTIVE
                 </span>
               )}
-              <span style={{ fontSize: "11px", color: "#94a3b8", display: "block", marginBottom: "12px", textTransform: "uppercase" }}>
+              <span style={{ fontSize: "11px", color: "var(--on-dark)", display: "block", marginBottom: "12px", textTransform: "uppercase" }}>
                 Gold Transparent SVG
               </span>
               <div style={{ height: "50px", display: "flex", alignItems: "center", justifyContent: "center" }}>

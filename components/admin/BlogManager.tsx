@@ -306,6 +306,7 @@ export function BlogManager() {
   // VIEW MODE 1: FULL-PAGE BLOG EDITORIAL STUDIO
   // =========================================================================
   if (editingBlog) {
+    const saveLabel = editingBlog.isPublished ? "Save and publish" : "Save draft";
     const wordCount = (editingBlog.content?.match(/\b\S+\b/g) || []).length;
     const excerptLen = editingBlog.excerpt?.length || 0;
     const isExcerptOptimal = excerptLen >= 120 && excerptLen <= 165;
@@ -361,7 +362,7 @@ export function BlogManager() {
               disabled={saving}
               style={{ minWidth: "160px" }}
             >
-              {saving ? "Saving Changes…" : "✓ Save & Publish"}
+              {saving ? "Saving…" : saveLabel}
             </button>
           </div>
         </div>
@@ -606,7 +607,7 @@ export function BlogManager() {
                     onClick={handleSave}
                     disabled={saving}
                   >
-                    {saving ? "Saving Changes…" : "✓ Save & Publish Article"}
+                    {saving ? "Saving…" : saveLabel}
                   </button>
                 </div>
               </div>
@@ -712,7 +713,7 @@ export function BlogManager() {
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? "Saving…" : "Save Article"}
+            {saving ? "Saving…" : saveLabel}
           </button>
         </div>
 
@@ -741,9 +742,9 @@ export function BlogManager() {
     <div className="admin-blog-studio">
       <div className="admin-studio-header">
         <div>
-          <h2>Insights, News &amp; SEO Blog Manager</h2>
+          <h2>Articles</h2>
           <p className="admin-studio-desc">
-            Publish market insights, UP policy updates, and expressway connectivity reports to boost organic Google SEO traffic.
+            Write, edit and publish articles for the website.
           </p>
         </div>
         <button
@@ -756,7 +757,7 @@ export function BlogManager() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          <span>Write New Article</span>
+          <span>Write article</span>
         </button>
       </div>
 

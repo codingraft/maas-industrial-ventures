@@ -935,9 +935,9 @@ export function ProjectsManager() {
     <div className="admin-projects-studio">
       <div className="admin-studio-header">
         <div>
-          <h2>Projects &amp; Landmark Developments Manager</h2>
+          <h2>Project portfolio</h2>
           <p className="admin-studio-desc">
-            Manage active industrial hubs, plotted developments, specifications, UP MSME Policy subsidies, and brochures.
+            Manage project details, photos, brochures and availability.
           </p>
         </div>
         <button
@@ -950,7 +950,7 @@ export function ProjectsManager() {
             <line x1="12" y1="5" x2="12" y2="19" />
             <line x1="5" y1="12" x2="19" y2="12" />
           </svg>
-          <span>Add New Project</span>
+          <span>Add project</span>
         </button>
       </div>
 

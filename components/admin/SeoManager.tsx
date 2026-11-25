@@ -116,7 +116,7 @@ export function SeoManager({ initialSeo, media, onUpdate }: SeoManagerProps) {
       <div className="admin-card">
         <div className="admin-card-header" style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "14px" }}>
           <div>
-            <h2 className="admin-card-title">SEO, Meta Tags &amp; Social Share Studio</h2>
+            <h2 className="admin-card-title">Search & social previews</h2>
             <p className="admin-card-desc">
               Manage how MAAS Industrial Ventures ranks on Google, displays on search result pages (SERPs), and shares on WhatsApp, LinkedIn, and Facebook.
             </p>
@@ -480,7 +480,7 @@ export function SeoManager({ initialSeo, media, onUpdate }: SeoManagerProps) {
               <div style={{ fontWeight: 700, color: "#f8fafc", marginBottom: "4px" }}>
                 ⚡ Auto-Generated XML Sitemap &amp; Robots.txt
               </div>
-              <div style={{ fontSize: "12px", color: "#94a3b8", lineHeight: 1.6 }}>
+              <div style={{ fontSize: "12px", color: "var(--admin-text-muted)", lineHeight: 1.6 }}>
                 Next.js 15 automatically generates and serves your live XML Sitemap at{" "}
                 <a
                   href="/sitemap.xml"

@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import { isAuthenticated } from "@/lib/auth";
 import { getAllSettings, getLeadMetrics } from "@/lib/db";
 import { AdminDashboardClient } from "./AdminDashboardClient";
-import "./admin.css";
+
 
 export const runtime = "nodejs";
 

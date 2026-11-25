@@ -257,7 +257,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
           </div>
           <div>
             <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--admin-text-main)", margin: 0, letterSpacing: "-0.01em" }}>
-              Website Content &amp; Copy Editor
+              Website content
             </h2>
             <p style={{ fontSize: "12.5px", color: "var(--admin-text-muted)", margin: "3px 0 0 0" }}>
               Update hero copy, company story, 4 verticals, vision, and FAQs with live previews.
@@ -322,7 +322,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
         {activeSubTab === "hero" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {/* Live Interactive Hero Preview Mockup */}
-            <div
+            <div className="admin-dark-preview"
               style={{
                 background: "linear-gradient(180deg, #131c2d 0%, #0c121e 100%)",
                 border: "1px solid rgba(212, 175, 55, 0.35)",
@@ -444,7 +444,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                       border: "1px solid rgba(255, 255, 255, 0.12)",
                       borderRadius: "6px",
                       fontSize: "11.5px",
-                      color: "#e2e8f0",
+                      color: "var(--admin-text-main)",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
@@ -478,7 +478,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
 
               <div className="admin-form-grid" style={{ gap: "16px" }}>
                 <div className="admin-field admin-field-full">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                     Hero Eyebrow Tag (Top Pill Badge)
                   </label>
                   <input
@@ -494,7 +494,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 </div>
 
                 <div className="admin-field admin-field-full">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                     Main Headline (H1 Serif)
                   </label>
                   <input
@@ -507,7 +507,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 </div>
 
                 <div className="admin-field admin-field-full">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                     Hero Subheadline (Gold Accent)
                   </label>
                   <input
@@ -520,7 +520,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 </div>
 
                 <div className="admin-field admin-field-full">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                     Hero Body Description Paragraph
                   </label>
                   <textarea
@@ -554,7 +554,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
 
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: "16px" }}>
                 <div className="admin-field">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                     Primary Button Label (Gold Fill)
                   </label>
                   <input
@@ -567,7 +567,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 </div>
 
                 <div className="admin-field">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px" }}>
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                     Secondary Button Label (Outline)
                   </label>
                   <input
@@ -600,7 +600,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
               </p>
 
               <div className="admin-field admin-field-full" style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px" }}>
+                <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                   Location Pin Tag
                 </label>
                 <input
@@ -612,7 +612,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 />
               </div>
 
-              <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "8px", display: "block" }}>
+              <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "8px", display: "block" }}>
                 Bottom 4 Highlight Pills
               </label>
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "10px" }}>
@@ -702,7 +702,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
               </p>
 
               <div className="admin-field admin-field-full" style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px" }}>
+                <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
                   Overview Section Headline
                 </label>
                 <input
@@ -714,7 +714,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 />
               </div>
 
-              <label style={{ fontSize: "12.5px", fontWeight: 600, color: "#e2e8f0", marginBottom: "8px", display: "block" }}>
+              <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "8px", display: "block" }}>
                 Narrative Paragraphs (Official Corporate Profile)
               </label>
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
@@ -877,7 +877,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                         Vertical Title
                       </label>
                       <input
@@ -893,7 +893,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                     </div>
 
                     <div>
-                      <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                      <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                         Description
                       </label>
                       <textarea
@@ -983,7 +983,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 Core guiding philosophy governing land acquisition and township planning.
               </p>
               <div style={{ marginBottom: "12px" }}>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Philosophy Headline
                 </label>
                 <input
@@ -994,7 +994,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 />
               </div>
               <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                   Philosophy Narrative
                 </label>
                 <textarea
@@ -1057,7 +1057,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                     </div>
                     <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
                       <div>
-                        <label style={{ fontSize: "11.5px", color: "#94a3b8", display: "block", marginBottom: "2px" }}>
+                        <label style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", display: "block", marginBottom: "2px" }}>
                           Label / Specification
                         </label>
                         <input
@@ -1072,7 +1072,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                         />
                       </div>
                       <div>
-                        <label style={{ fontSize: "11.5px", color: "#94a3b8", display: "block", marginBottom: "2px" }}>
+                        <label style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", display: "block", marginBottom: "2px" }}>
                           Value / Magnitude
                         </label>
                         <input
@@ -1152,7 +1152,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
 
                     <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
                       <div>
-                        <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                        <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                           Question Text
                         </label>
                         <input
@@ -1169,7 +1169,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                       </div>
 
                       <div>
-                        <label style={{ fontSize: "12px", fontWeight: 600, color: "#e2e8f0", marginBottom: "4px", display: "block" }}>
+                        <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                           Detailed Answer
                         </label>
                         <textarea

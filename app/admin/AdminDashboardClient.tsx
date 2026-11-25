@@ -1,12 +1,12 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import dynamic from "next/dynamic";
 import { SiteSettings } from "@/lib/types";
 import { LeadsTable } from "@/components/admin/LeadsTable";
-import { SectionToggles } from "@/components/admin/SectionToggles";
+import { SectionToggles, sectionDefinitions } from "@/components/admin/SectionToggles";
 import { ContentManager } from "@/components/admin/ContentManager";
 import { ContactSocialForm } from "@/components/admin/ContactSocialForm";
 import { TrackingConfig } from "@/components/admin/TrackingConfig";
@@ -90,6 +90,26 @@ export function AdminDashboardClient({
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
+  const drawer = useRef<HTMLElement>(null);
+  const openButton = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    if (!sidebarOpen) return;
+    const panel = drawer.current;
+    const trigger = openButton.current;
+    const media = window.matchMedia("(max-width: 900px)");
+    const closeOnDesktop = () => { if (!media.matches) setSidebarOpen(false); };
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    panel?.querySelector<HTMLButtonElement>(".admin-sidebar-close")?.focus();
+    media.addEventListener("change", closeOnDesktop);
+    return () => {
+      media.removeEventListener("change", closeOnDesktop);
+      document.body.style.overflow = previousOverflow;
+      trigger?.focus({ preventScroll: true });
+    };
+  }, [sidebarOpen]);
+
   // Sync active tab with URL query parameter & browser history
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -123,12 +143,16 @@ export function AdminDashboardClient({
 
     if (typeof window !== "undefined") {
       const url = new URL(window.location.href);
+      url.searchParams.delete("edit");
+      url.searchParams.delete("action");
       if (tab === "leads") {
         url.searchParams.delete("tab");
       } else {
         url.searchParams.set("tab", tab);
       }
-      window.history.pushState({}, "", url.toString());
+      if (url.href !== window.location.href) window.history.pushState({}, "", url.toString());
+      document.querySelector(".admin-main-wrap")?.scrollTo(0, 0);
+      window.scrollTo(0, 0);
     }
   }
 
@@ -165,7 +189,7 @@ export function AdminDashboardClient({
     return updateSettings({ [key]: value });
   }
 
-  const activeSectionsCount = Object.values(settings.sections).filter(Boolean).length;
+  const activeSectionsCount = sectionDefinitions.filter(({ key }) => settings.sections[key]).length;
 
   const tabLabels: Record<AdminTab, { title: string; category: string; description: string; icon: string }> = {
     leads: {
@@ -243,14 +267,25 @@ export function AdminDashboardClient({
 
       {/* Left-Side Navigation Sidebar */}
       <aside
+        id="admin-navigation" ref={drawer}
+        aria-label="Admin navigation" role={sidebarOpen ? "dialog" : undefined} aria-modal={sidebarOpen || undefined}
+        onKeyDown={event => {
+          if (!sidebarOpen) return;
+          if (event.key === "Escape") setSidebarOpen(false);
+          if (event.key !== "Tab") return;
+          const controls = Array.from(event.currentTarget.querySelectorAll<HTMLElement>("a[href], button")).filter(el => el.offsetWidth > 0);
+          const first = controls[0], last = controls[controls.length - 1];
+          if (event.shiftKey && document.activeElement === first) { event.preventDefault(); last?.focus(); }
+          if (!event.shiftKey && document.activeElement === last) { event.preventDefault(); first?.focus(); }
+        }}
         className={`admin-sidebar ${sidebarOpen ? "is-open" : ""} ${
-          sidebarCollapsed ? "is-collapsed" : ""
+          sidebarCollapsed && !sidebarOpen ? "is-collapsed" : ""
         }`}
       >
         {/* Brand Header */}
         <div className="admin-sidebar-header">
           <a href="/admin" className="admin-sidebar-logo" title="MAAS Admin Dashboard">
-            {sidebarCollapsed ? (
+            {sidebarCollapsed && !sidebarOpen ? (
               <div className="admin-sidebar-collapsed-monogram" aria-label="MAAS">
                 M
               </div>
@@ -286,6 +321,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "leads" ? "is-active" : ""}`}
+            aria-current={activeTab === "leads" ? "page" : undefined}
             onClick={() => handleTabChange("leads")}
             title="Leads & Inquiries CRM"
           >
@@ -306,6 +342,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "projects" ? "is-active" : ""}`}
+            aria-current={activeTab === "projects" ? "page" : undefined}
             onClick={() => handleTabChange("projects")}
             title="Projects Portfolio"
           >
@@ -325,6 +362,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "blogs" ? "is-active" : ""}`}
+            aria-current={activeTab === "blogs" ? "page" : undefined}
             onClick={() => handleTabChange("blogs")}
             title="Blog & Insights"
           >
@@ -341,6 +379,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "media_library" ? "is-active" : ""}`}
+            aria-current={activeTab === "media_library" ? "page" : undefined}
             onClick={() => handleTabChange("media_library")}
             title="Media Asset Library"
           >
@@ -360,6 +399,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "content" ? "is-active" : ""}`}
+            aria-current={activeTab === "content" ? "page" : undefined}
             onClick={() => handleTabChange("content")}
             title="Page Content & Headings"
           >
@@ -378,6 +418,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "media" ? "is-active" : ""}`}
+            aria-current={activeTab === "media" ? "page" : undefined}
             onClick={() => handleTabChange("media")}
             title="Visuals & Blueprints Studio"
           >
@@ -394,6 +435,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "sections" ? "is-active" : ""}`}
+            aria-current={activeTab === "sections" ? "page" : undefined}
             onClick={() => handleTabChange("sections")}
             title="Section Toggles"
           >
@@ -404,7 +446,7 @@ export function AdminDashboardClient({
               </svg>
             </span>
             <span className="sidebar-item-label">Section Toggles</span>
-            <span className="sidebar-item-count">{activeSectionsCount}/11</span>
+            <span className="sidebar-item-count">{activeSectionsCount}/{sectionDefinitions.length}</span>
           </button>
 
           {/* Group 3: Configuration */}
@@ -413,6 +455,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "contact" ? "is-active" : ""}`}
+            aria-current={activeTab === "contact" ? "page" : undefined}
             onClick={() => handleTabChange("contact")}
             title="Company & Contact"
           >
@@ -427,6 +470,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "seo" ? "is-active" : ""}`}
+            aria-current={activeTab === "seo" ? "page" : undefined}
             onClick={() => handleTabChange("seo")}
             title="SEO & Social Meta"
           >
@@ -442,6 +486,7 @@ export function AdminDashboardClient({
           <button
             type="button"
             className={`sidebar-nav-item ${activeTab === "tracking" ? "is-active" : ""}`}
+            aria-current={activeTab === "tracking" ? "page" : undefined}
             onClick={() => handleTabChange("tracking")}
             title="Analytics & Ad Pixels"
           >
@@ -457,45 +502,6 @@ export function AdminDashboardClient({
 
         {/* Sidebar Footer */}
         <div className="admin-sidebar-footer">
-          {/* Desktop Sidebar Collapse Toggle */}
-          <button
-            type="button"
-            className="sidebar-collapse-toggle desktop-only"
-            onClick={toggleSidebarCollapsed}
-            title={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-            aria-label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-          >
-            {sidebarCollapsed ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="13 17 18 12 13 7" />
-                <polyline points="6 17 11 12 6 7" />
-              </svg>
-            ) : (
-              <>
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="11 17 6 12 11 7" />
-                  <polyline points="18 17 13 12 18 7" />
-                </svg>
-                <span>Collapse Navigation</span>
-              </>
-            )}
-          </button>
-
-          <a
-            href="/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="sidebar-footer-link"
-            title="View Live Website"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M15 3h6v6" />
-              <path d="M10 14 21 3" />
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
-            </svg>
-            <span>View Live Website</span>
-          </a>
-
           <div className="sidebar-user-card">
             <div className="sidebar-user-avatar">AD</div>
             <div className="sidebar-user-info">
@@ -520,7 +526,7 @@ export function AdminDashboardClient({
       </aside>
 
       {/* Main Content Area */}
-      <div className={`admin-main-wrap ${sidebarCollapsed ? "sidebar-is-collapsed" : ""}`}>
+      <div inert={sidebarOpen} className={`admin-main-wrap ${sidebarCollapsed ? "sidebar-is-collapsed" : ""}`}>
         {/* Sleek Executive Topbar */}
         <header className="admin-minimal-topbar">
           <div className="topbar-left">
@@ -529,6 +535,7 @@ export function AdminDashboardClient({
               type="button"
               className="sidebar-toggle-btn mobile-only"
               onClick={() => setSidebarOpen(true)}
+              ref={openButton} aria-expanded={sidebarOpen} aria-controls="admin-navigation"
               aria-label="Open navigation sidebar"
             >
               <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -559,20 +566,12 @@ export function AdminDashboardClient({
               <span className="breadcrumb-category">{tabLabels[activeTab].category}</span>
               <span className="breadcrumb-separator" aria-hidden="true">/</span>
               <div className="breadcrumb-active-chip">
-                <span className="active-chip-icon" aria-hidden="true">{tabLabels[activeTab].icon}</span>
                 <span className="active-chip-title">{tabLabels[activeTab].title}</span>
               </div>
             </nav>
           </div>
 
           <div className="topbar-actions">
-            {/* Live Database Status Indicator */}
-            <div className="live-status-pill" title="Database connected and responsive">
-              <span className="status-dot-pulse" />
-              <span className="status-full">System Live</span>
-              <span className="status-short">Live</span>
-            </div>
-
             {/* Direct Link to Live Site */}
             <a
               href="/"
@@ -610,11 +609,16 @@ export function AdminDashboardClient({
         <main className="admin-main-content">
           {/* KPI Metric Strip - Focused on the Leads & Inquiries Dashboard */}
           {activeTab === "leads" && (
+            <section className="inbox-overview" aria-labelledby="inbox-title">
+              <div className="inbox-masthead">
+                <div>
+                  <h1 id="inbox-title">Enquiry inbox</h1>
+                  <p>Review buyer enquiries and follow up with interested businesses.</p>
+                </div>
+              </div>
             <div className="minimal-stats-strip">
               <div
                 className="minimal-stat-card"
-                style={{ cursor: "pointer" }}
-                onClick={() => handleTabChange("leads")}
                 title="Total Enquiries received across all channels"
               >
                 <span className="minimal-stat-num">{metrics.totalLeads}</span>
@@ -623,11 +627,9 @@ export function AdminDashboardClient({
 
               <div
                 className="minimal-stat-card"
-                style={{ cursor: "pointer" }}
-                onClick={() => handleTabChange("leads")}
                 title="New Uncontacted buyer leads"
               >
-                <span className="minimal-stat-num" style={{ color: "#60a5fa" }}>
+                <span className="minimal-stat-num">
                   {metrics.newLeads}
                 </span>
                 <span className="minimal-stat-lbl">New Uncontacted</span>
@@ -635,28 +637,26 @@ export function AdminDashboardClient({
 
               <div
                 className="minimal-stat-card"
-                style={{ cursor: "pointer" }}
-                onClick={() => handleTabChange("leads")}
                 title="Leads submitted in the past 24 hours"
               >
-                <span className="minimal-stat-num" style={{ color: "#fb923c" }}>
+                <span className="minimal-stat-num">
                   {metrics.todayLeads}
                 </span>
                 <span className="minimal-stat-lbl">Past 24 Hours</span>
               </div>
 
-              <div
-                className="minimal-stat-card"
-                style={{ cursor: "pointer" }}
+              <button type="button"
+                className="minimal-stat-card stats-link"
                 onClick={() => handleTabChange("sections")}
                 title="Click to manage Section Controls"
               >
-                <span className="minimal-stat-num" style={{ color: "var(--admin-gold)" }}>
-                  {activeSectionsCount}/11
+                <span className="minimal-stat-num">
+                  {activeSectionsCount}/{sectionDefinitions.length}
                 </span>
                 <span className="minimal-stat-lbl">Active Sections</span>
-              </div>
+              </button>
             </div>
+            </section>
           )}
 
           {/* Active Tab Panel */}

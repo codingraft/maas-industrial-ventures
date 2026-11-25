@@ -17,6 +17,12 @@ const MDEditor = dynamic(
   }
 );
 
+const modes = [
+  { id: "edit", label: "Edit" },
+  { id: "live", label: "Split view" },
+  { id: "preview", label: "Preview" },
+] as const;
+
 interface RichMarkdownEditorProps {
   value: string;
   onChange: (val: string) => void;
@@ -36,19 +42,14 @@ export default function RichMarkdownEditor({
   const [isMobile, setIsMobile] = useState(false);
 
   useEffect(() => {
-    const checkMobile = () => {
-      const mobile = window.innerWidth < 768;
-      setIsMobile(mobile);
-      if (mobile) {
-        setPreviewMode("edit");
-      } else {
-        setPreviewMode("live");
-      }
-    };
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
+    const query = window.matchMedia("(max-width: 767px)");
+    const sync = () => setIsMobile(query.matches);
+    sync();
+    query.addEventListener("change", sync);
+    return () => query.removeEventListener("change", sync);
   }, []);
+
+  const visibleMode = isMobile && previewMode === "live" ? "edit" : previewMode;
 
   // Compute word count and reading time
   const wordCount = (value.match(/\b\S+\b/g) || []).length;
@@ -57,63 +58,16 @@ export default function RichMarkdownEditor({
   const readTimeString = `${estimatedMin} min read`;
 
   return (
-    <div className="rich-editor-container" data-color-mode="dark">
-      {/* View Mode Switcher for responsive control */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "8px" }}>
-        <span style={{ fontSize: "11.5px", color: "var(--admin-text-dim)" }}>
-          Markdown Formatting Studio
-        </span>
-        <div style={{ display: "inline-flex", background: "var(--admin-bg-card-subtle)", borderRadius: "6px", padding: "2px", border: "1px solid var(--admin-border-subtle)" }}>
-          <button
-            type="button"
-            onClick={() => setPreviewMode("edit")}
-            style={{
-              padding: "3px 10px",
-              fontSize: "11px",
-              fontWeight: previewMode === "edit" ? 700 : 500,
-              background: previewMode === "edit" ? "var(--admin-bg-elevated)" : "transparent",
-              color: previewMode === "edit" ? "#fff" : "var(--admin-text-muted)",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            ✍️ Edit
-          </button>
-          {!isMobile && (
-            <button
-              type="button"
-              onClick={() => setPreviewMode("live")}
-              style={{
-                padding: "3px 10px",
-                fontSize: "11px",
-                fontWeight: previewMode === "live" ? 700 : 500,
-                background: previewMode === "live" ? "var(--admin-bg-elevated)" : "transparent",
-                color: previewMode === "live" ? "#fff" : "var(--admin-text-muted)",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-              }}
-            >
-              ↔ Split Live
+    <div className="rich-editor-container" data-color-mode="light">
+      <div className="article-mode-toolbar">
+        <strong>Article body</strong>
+        <div className="article-mode-group" role="group" aria-label="Editor view">
+          {modes.filter(mode => !isMobile || mode.id !== "live").map(mode => (
+            <button key={mode.id} type="button" aria-pressed={visibleMode === mode.id}
+              onClick={() => setPreviewMode(mode.id)}>
+              {mode.label}
             </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setPreviewMode("preview")}
-            style={{
-              padding: "3px 10px",
-              fontSize: "11px",
-              fontWeight: previewMode === "preview" ? 700 : 500,
-              background: previewMode === "preview" ? "var(--admin-bg-elevated)" : "transparent",
-              color: previewMode === "preview" ? "#fff" : "var(--admin-text-muted)",
-              border: "none",
-              borderRadius: "4px",
-              cursor: "pointer",
-            }}
-          >
-            👁 Preview
-          </button>
+          ))}
         </div>
       </div>
 
@@ -122,9 +76,11 @@ export default function RichMarkdownEditor({
           value={value}
           onChange={(val) => onChange(val || "")}
           height={height}
-          preview={previewMode}
+          preview={visibleMode}
+          commandsFilter={(command, extra) => !extra || command.name === "fullscreen" ? command : false}
           textareaProps={{
             placeholder,
+            "aria-label": "Article Markdown",
           }}
         />
       </div>
