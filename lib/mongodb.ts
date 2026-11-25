@@ -13,6 +13,7 @@ export function isMongoConfigured(): boolean {
   return Boolean(process.env.MONGODB_URI && process.env.MONGODB_URI.trim().length > 0);
 }
 
+let indexInitialization: Promise<void> | undefined;
 let clientPromise: Promise<MongoClient> | null = null;
 
 export async function getMongoClient(): Promise<MongoClient> {
@@ -23,7 +24,7 @@ export async function getMongoClient(): Promise<MongoClient> {
 
   // If MongoDB previously failed within the last 60 seconds, fail immediately to prevent 30s freezes
   if (global._mongoOfflineUntil && Date.now() < global._mongoOfflineUntil) {
-    throw new Error("MongoDB is temporarily unreachable; using SQLite fallback.");
+    throw new Error("MongoDB is temporarily unreachable.");
   }
 
   const createClientPromise = () => {
@@ -98,7 +99,7 @@ export async function getMongoDb(): Promise<Db> {
 
   // Trigger index creation asynchronously without blocking request
   if (!global._mongoIndexesEnsured) {
-    ensureIndexes(db).catch(() => {});
+    indexInitialization ??= ensureIndexes(db).finally(() => { indexInitialization = undefined; });
   }
 
   return db;

@@ -6,15 +6,13 @@ import { SiteSettings } from "@/lib/types";
 interface ContactSocialFormProps {
   initialSiteInfo: SiteSettings["site_info"];
   initialSocialLinks: SiteSettings["social_links"];
-  onUpdateSiteInfo: (updated: SiteSettings["site_info"]) => Promise<void>;
-  onUpdateSocialLinks: (updated: SiteSettings["social_links"]) => Promise<void>;
+  onUpdate: (patch: Pick<SiteSettings, "site_info" | "social_links">) => Promise<void>;
 }
 
 export function ContactSocialForm({
   initialSiteInfo,
   initialSocialLinks,
-  onUpdateSiteInfo,
-  onUpdateSocialLinks,
+  onUpdate,
 }: ContactSocialFormProps) {
   const [siteInfo, setSiteInfo] = useState(initialSiteInfo);
   const [socialLinks, setSocialLinks] = useState(initialSocialLinks);
@@ -27,10 +25,7 @@ export function ContactSocialForm({
     setStatusMessage("");
 
     try {
-      await Promise.all([
-        onUpdateSiteInfo(siteInfo),
-        onUpdateSocialLinks(socialLinks),
-      ]);
+      await onUpdate({ site_info: siteInfo, social_links: socialLinks });
       setStatusMessage("Contact info and social links saved successfully!");
       setTimeout(() => setStatusMessage(""), 4000);
     } catch {

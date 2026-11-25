@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Image from "next/image";
 import Link from "next/link";
@@ -24,6 +24,8 @@ export function SiteHeader({
   const [menuOpen, setMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
+  const menuButton = useRef<HTMLButtonElement>(null);
+  const drawer = useRef<HTMLDivElement>(null);
 
   // Only override if it was the legacy mock factory photo from old seed data
   const isLegacyPhoto =
@@ -73,9 +75,24 @@ export function SiteHeader({
   }, [menuOpen]);
 
   useEffect(() => {
+    if (!menuOpen) return;
+    const panel = drawer.current;
+    const trigger = menuButton.current;
+    panel?.querySelector<HTMLButtonElement>("button")?.focus();
     function onKeyDown(e: KeyboardEvent) {
-      if (e.key === "Escape" && menuOpen) {
+      if (e.key === "Escape") {
         setMenuOpen(false);
+      }
+      if (e.key !== "Tab" || !panel) return;
+      const controls = panel.querySelectorAll<HTMLElement>("a[href], button:not(:disabled)");
+      const first = controls[0];
+      const last = controls[controls.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last?.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first?.focus();
       }
     }
     function onResize() {
@@ -88,6 +105,7 @@ export function SiteHeader({
     return () => {
       window.removeEventListener("keydown", onKeyDown);
       window.removeEventListener("resize", onResize);
+      if (document.activeElement === document.body || panel?.contains(document.activeElement)) trigger?.focus();
     };
   }, [menuOpen]);
 
@@ -139,6 +157,8 @@ export function SiteHeader({
           {/* Mobile Hamburger Trigger */}
           <button
             className="menu-toggle"
+            ref={menuButton}
+            aria-controls="mobile-navigation"
             aria-label={menuOpen ? "Close navigation" : "Open navigation"}
             aria-expanded={menuOpen}
             onClick={() => setMenuOpen(!menuOpen)}
@@ -195,9 +215,12 @@ export function SiteHeader({
       {mounted &&
         createPortal(
           <div
+            id="mobile-navigation"
+            ref={drawer}
+            inert={!menuOpen}
             className={`mobile-nav-portal ${menuOpen ? "is-open" : ""}`}
             role="dialog"
-            aria-modal="true"
+            aria-modal={menuOpen || undefined}
             aria-label="Mobile Navigation Drawer"
           >
             <div className="mobile-nav-header">

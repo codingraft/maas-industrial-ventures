@@ -6,7 +6,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { FloatingContact } from "@/components/FloatingContact";
 import { Arrow } from "@/components/ui/Arrow";
 import { BlogPaginationControls } from "@/components/blog/BlogPaginationControls";
-import { getAllSettings, getBlogPosts, getPaginatedBlogPosts } from "@/lib/db";
+import { getAllSettings, getPublishedCategoryCounts, getPaginatedBlogPosts } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "MAAS Industrial Ventures blog",
   ],
   alternates: {
-    canonical: "https://maasventures.com/blog",
+    canonical: "/blog",
   },
 };
 
@@ -51,9 +51,9 @@ export default async function BlogIndexPage({ searchParams }: BlogIndexPageProps
   const currentSearch = resolvedParams.search?.trim() || "";
   const pageSize = 6;
 
-  const [settings, allPublishedPosts, paginatedResult] = await Promise.all([
+  const [settings, categoryCounts, paginatedResult] = await Promise.all([
     getAllSettings(),
-    getBlogPosts(true), // To obtain complete category list & total count
+    getPublishedCategoryCounts(), // To obtain complete category list & total count
     getPaginatedBlogPosts({
       publishedOnly: true,
       page: currentPage,
@@ -67,7 +67,7 @@ export default async function BlogIndexPage({ searchParams }: BlogIndexPageProps
   const { site_info, sections, media, social_links } = settings;
   const posts = paginatedResult.items;
 
-  const categories = Array.from(new Set(allPublishedPosts.map((p) => p.category))).filter(Boolean);
+  const publishedCount = categoryCounts.reduce((total, group) => total + group.count, 0);
 
   return (
     <>
@@ -89,16 +89,15 @@ export default async function BlogIndexPage({ searchParams }: BlogIndexPageProps
           <p className="blog-catalog-lead">{site_info.blogDescription}</p>
 
           {/* Category Chips with Interactive Links */}
-          {categories.length > 0 && (
+          {categoryCounts.length > 0 && (
             <div className="blog-categories-bar" aria-label="Article categories">
               <Link
                 href="/blog"
                 className={`cat-chip ${currentCategory === "all" ? "is-active" : ""}`}
               >
-                All Insights ({allPublishedPosts.length})
+                All Insights ({publishedCount})
               </Link>
-              {categories.map((cat) => {
-                const count = allPublishedPosts.filter((p) => p.category === cat).length;
+              {categoryCounts.filter(group => group.category).map(({ category: cat, count }) => {
                 return (
                   <Link
                     key={cat}

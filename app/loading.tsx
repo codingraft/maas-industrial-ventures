@@ -2,12 +2,12 @@ export default function Loading() {
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#05070c",
+      background: "var(--obsidian)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
       justifyContent: "center",
-      color: "#94a3b8",
+      color: "var(--on-dark-muted)",
       fontFamily: "system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
     }}>
       <div style={{
@@ -20,8 +20,8 @@ export default function Loading() {
           width: "100%",
           height: "100%",
           borderRadius: "50%",
-          border: "2px solid rgba(212, 175, 55, 0.15)",
-          borderTopColor: "#d4af37",
+          border: "2px solid color-mix(in srgb, var(--gold) 15%, transparent)",
+          borderTopColor: "var(--gold)",
           animation: "spin 0.8s linear infinite",
         }} />
       </div>
@@ -30,7 +30,7 @@ export default function Loading() {
         fontSize: "12px",
         letterSpacing: "0.14em",
         textTransform: "uppercase",
-        color: "#d4af37",
+        color: "var(--gold)",
         fontWeight: "600",
       }}>
         MAAS INDUSTRIAL VENTURES

@@ -120,13 +120,13 @@ export default async function RootLayout({
                   streetAddress: siteInfo.address,
                   addressCountry: "IN",
                 },
-              }),
+              }).replace(/</g, "\\u003c"),
             }}
           />
         )}
 
         {/* Google Tag Manager */}
-        {tracking.gtmId && (
+        {/^GTM-[A-Z0-9]+$/.test(tracking.gtmId) && (
           <Script id="gtm-script" strategy="afterInteractive">
             {`
               (function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -139,7 +139,7 @@ export default async function RootLayout({
         )}
 
         {/* Google Ads / GA4 - Loaded during idle time to prevent hydration blocking */}
-        {tracking.googleAdsId && (
+        {/^AW-[0-9]+$/.test(tracking.googleAdsId) && (
           <>
             <Script
               src={`https://www.googletagmanager.com/gtag/js?id=${tracking.googleAdsId}`}
@@ -157,7 +157,7 @@ export default async function RootLayout({
         )}
 
         {/* Meta Pixel - Loaded during idle time to maintain 100fps rendering */}
-        {tracking.metaPixelId && (
+        {/^[0-9]+$/.test(tracking.metaPixelId) && (
           <Script id="meta-pixel-script" strategy="lazyOnload">
             {`
               !function(f,b,e,v,n,t,s)
@@ -175,7 +175,7 @@ export default async function RootLayout({
         )}
       </head>
       <body>
-        {tracking.gtmId && (
+        {/^GTM-[A-Z0-9]+$/.test(tracking.gtmId) && (
           <noscript>
             <iframe
               src={`https://www.googletagmanager.com/ns.html?id=${tracking.gtmId}`}

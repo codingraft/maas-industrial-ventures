@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback } from "react";
 import Image from "next/image";
+import styles from "./HeroSlider.module.css";
 import { Arrow } from "@/components/ui/Arrow";
 import { HeroSlide } from "@/lib/types";
 
@@ -48,16 +49,6 @@ export function HeroSlider({
     setCurrentIndex((prev) => (prev - 1 + total) % total);
   }, [total]);
 
-  // Keyboard navigation
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") nextSlide();
-      if (e.key === "ArrowLeft") prevSlide();
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [nextSlide, prevSlide]);
-
   if (!slides || slides.length === 0) return null;
 
   const activeSlide = slides[currentIndex];
@@ -82,25 +73,17 @@ export function HeroSlider({
       ? heroDescription || "We are land and real estate developers focused on creating thoughtfully planned industrial hubs, industrial plots and residential developments. Transforming land into destinations for enterprise growth."
       : undefined;
 
+  const [firstSentence, ...rest] = displayTitle.split(/(?<=\.)\s+/);
+  const seededPhoto = "https://images.unsplash.com/photo-1758304481470-e575d1d44efa?auto=format&fit=crop&w=2400&q=85";
+
   return (
     <section className="hero hero-slider" aria-label="MAAS Industrial Ventures Hero Banner">
       {/* Background Slides */}
-      {slides.map((slide, idx) => (
-        <div
-          key={slide.id || idx}
-          className={`hero-slide-layer ${idx === currentIndex ? "is-active" : ""}`}
-          aria-hidden={idx !== currentIndex}
-        >
-          <Image
-            className="hero-image"
-            src={slide.src}
-            alt={slide.alt || "MAAS Industrial Infrastructure"}
-            fill
-            priority={idx === 0}
-            sizes="100vw"
-          />
-        </div>
-      ))}
+      <div className="hero-slide-layer is-active">
+        <Image className="hero-image"
+          src={activeSlide.src === seededPhoto ? "/images/industrial-hero.webp" : activeSlide.src}
+          alt={activeSlide.alt || "Industrial infrastructure"} fill priority={currentIndex === 0} sizes="100vw" />
+      </div>
 
       {/* Cinematic Architectural Scrim */}
       <div className="hero-shade" />
@@ -115,15 +98,7 @@ export function HeroSlider({
             </div>
 
             <h1 id="hero-title" key={`title-${currentIndex}`} className="hero-slider-heading">
-              {displayTitle.split(".").map((part, i, arr) => {
-                const trimmed = part.trim();
-                if (!trimmed) return null;
-                return (
-                  <span key={i} className="heading-line">
-                    {i === 1 ? <span className="hero-gold-accent">{trimmed}.</span> : `${trimmed}. `}
-                  </span>
-                );
-              })}
+              {firstSentence} {rest.length > 0 && <span className="hero-gold-accent">{rest.join(" ")}</span>}
             </h1>
 
             <p key={`subtitle-${currentIndex}`} className="hero-subheadline">
@@ -186,7 +161,13 @@ export function HeroSlider({
           </div>
 
           {total > 1 && (
-            <div className="hero-dock-controls" role="tablist" aria-label="Slide Selection">
+            <div className="hero-dock-controls" role="group" aria-label="Slide selection"
+              onKeyDown={event => {
+                if (event.key !== "ArrowRight" && event.key !== "ArrowLeft") return;
+                event.preventDefault();
+                if (event.key === "ArrowRight") nextSlide();
+                else prevSlide();
+              }}>
               <button
                 type="button"
                 className="dock-arrow-btn"
@@ -201,10 +182,9 @@ export function HeroSlider({
                   <button
                     key={idx}
                     type="button"
-                    role="tab"
                     className={`dock-dot ${idx === currentIndex ? "is-active" : ""}`}
                     onClick={() => setCurrentIndex(idx)}
-                    aria-selected={idx === currentIndex}
+                    aria-pressed={idx === currentIndex}
                     aria-label={`Slide ${idx + 1}`}
                   >
                     <span className="dock-dot-fill" />
@@ -221,7 +201,7 @@ export function HeroSlider({
                 ›
               </button>
 
-              <span className="dock-counter">
+              <span className="dock-counter" aria-live="polite">
                 0{currentIndex + 1} <span style={{ opacity: 0.35 }}>/</span> 0{total}
               </span>
             </div>

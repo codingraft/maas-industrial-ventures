@@ -150,18 +150,19 @@ export function AdminDashboardClient({
     }
   }
 
-  async function updateSettingPart<K extends keyof SiteSettings>(
-    key: K,
-    value: SiteSettings[K]
-  ) {
+  async function updateSettings(patch: Partial<SiteSettings>) {
     const res = await fetch("/api/admin/settings", {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ [key]: value }),
+      body: JSON.stringify(patch),
     });
     if (!res.ok) throw new Error("Failed to update setting");
     const data = await res.json();
     setSettings(data.settings);
+  }
+
+  function updateSettingPart<K extends keyof SiteSettings>(key: K, value: SiteSettings[K]) {
+    return updateSettings({ [key]: value });
   }
 
   const activeSectionsCount = Object.values(settings.sections).filter(Boolean).length;
@@ -678,17 +679,7 @@ export function AdminDashboardClient({
             {activeTab === "content" && (
               <ContentManager
                 settings={settings}
-                onUpdate={(next) => updateSettingPart("content", next)}
-                onUpdateFull={async (patch) => {
-                  const res = await fetch("/api/admin/settings", {
-                    method: "PATCH",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify(patch),
-                  });
-                  if (!res.ok) throw new Error("Failed to update settings");
-                  const data = await res.json();
-                  setSettings(data.settings);
-                }}
+                onUpdate={updateSettings}
               />
             )}
 
@@ -703,8 +694,7 @@ export function AdminDashboardClient({
               <ContactSocialForm
                 initialSiteInfo={settings.site_info}
                 initialSocialLinks={settings.social_links}
-                onUpdateSiteInfo={(next) => updateSettingPart("site_info", next)}
-                onUpdateSocialLinks={(next) => updateSettingPart("social_links", next)}
+                onUpdate={updateSettings}
               />
             )}
 

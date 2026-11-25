@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Arrow } from "@/components/ui/Arrow";
-import { BlogPost, defaultBlogs } from "@/lib/types";
+import { BlogPost } from "@/lib/types";
 
 interface BlogPreviewSectionProps {
   posts?: BlogPost[];
@@ -16,7 +16,7 @@ export function BlogPreviewSection({
   headline = "Industrial Land Insights & Real Estate Updates.",
   description = "Stay informed with our latest news, Uttar Pradesh MSME policy analysis, and corridor infrastructure updates designed to guide manufacturers and investors.",
 }: BlogPreviewSectionProps) {
-  const displayPosts = (posts && posts.length > 0 ? posts : defaultBlogs).slice(0, 3);
+  const displayPosts = (posts ?? []).slice(0, 3);
 
   return (
     <section className="blog-section section-pad" id="blog">

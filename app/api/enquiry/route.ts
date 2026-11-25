@@ -47,6 +47,7 @@ export async function POST(request: Request) {
   let body: EnquiryPayload;
   try {
     body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new TypeError("Expected object");
   } catch {
     return NextResponse.json({ message: "Invalid request data. Please check the form." }, { status: 400 });
   }
@@ -106,7 +107,7 @@ export async function POST(request: Request) {
     // Optional webhook forwarding (non-blocking secondary notification)
     const webhookUrl = process.env.ENQUIRY_WEBHOOK_URL;
     if (webhookUrl) {
-      fetch(webhookUrl, {
+      await fetch(webhookUrl, {
         method: "POST",
         headers: {
           "content-type": "application/json",
@@ -116,6 +117,7 @@ export async function POST(request: Request) {
         },
         body: JSON.stringify({
           leadId: result.id,
+          project,
           name,
           phone,
           email,
@@ -132,6 +134,8 @@ export async function POST(request: Request) {
           submittedAt: new Date().toISOString(),
         }),
         signal: AbortSignal.timeout(5000),
+      }).then(response => {
+        if (!response.ok) console.error("Enquiry webhook rejected", response.status);
       }).catch((err) => {
         console.error("Secondary webhook forward failed:", err);
       });
@@ -146,7 +150,7 @@ export async function POST(request: Request) {
     console.error("Failed to store lead:", error);
     return NextResponse.json(
       { message: "Could not save your enquiry right now. Please try calling directly." },
-      { status: 500 }
+      { status: 503 }
     );
   }
 }

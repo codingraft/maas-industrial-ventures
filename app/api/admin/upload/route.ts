@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
 import { isCloudinaryConfigured, uploadToCloudinary } from "@/lib/cloudinary";
+import sharp from "sharp";
 import path from "node:path";
 import fs from "node:fs/promises";
 
@@ -46,14 +47,13 @@ export async function POST(request: Request) {
     const formData = await request.formData();
     const file = formData.get("file") as File | null;
 
-    if (!file) {
+    if (!(file instanceof File)) {
       return NextResponse.json({ message: "No file provided" }, { status: 400 });
     }
 
     const fileExt = (path.extname(file.name) || "").toLowerCase();
     const isAllowedImage =
-      file.type.startsWith("image/") ||
-      ALLOWED_MIME_TYPES.has(file.type) ||
+      ALLOWED_MIME_TYPES.has(file.type) &&
       ALLOWED_EXTENSIONS.has(fileExt);
 
     if (!isAllowedImage) {
@@ -70,11 +70,18 @@ export async function POST(request: Request) {
       );
     }
 
-    const bytes = await file.arrayBuffer();
+    let buffer: Buffer;
+    try {
+      buffer = await sharp(Buffer.from(await file.arrayBuffer()), {
+        animated: true,
+        limitInputPixels: 40_000_000,
+      }).rotate().webp({ quality: 85 }).toBuffer();
+    } catch {
+      return NextResponse.json({ message: "This image could not be decoded safely." }, { status: 400 });
+    }
 
     // 1. Cloudinary upload if configured (production CDN)
     if (isCloudinaryConfigured()) {
-      const buffer = Buffer.from(bytes);
       const rawExt = path.extname(file.name) || ".jpg";
       const sanitizedBase = path
         .basename(file.name, rawExt)
@@ -96,17 +103,8 @@ export async function POST(request: Request) {
 
     const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
 
-    // 2. Fallback on Vercel serverless when Cloudinary is not yet configured:
-    // Return base64 data URL so uploads still work without external setup
     if (isVercel) {
-      const mime = file.type || "image/jpeg";
-      const base64 = Buffer.from(bytes).toString("base64");
-      const dataUrl = `data:${mime};base64,${base64}`;
-      return NextResponse.json({
-        ok: true,
-        url: dataUrl,
-        fileName: file.name,
-      });
+      return NextResponse.json({ message: "Configure Cloudinary for hosted uploads." }, { status: 503 });
     }
 
     const uploadsDir = path.join(process.cwd(), "public", "uploads");
@@ -117,10 +115,10 @@ export async function POST(request: Request) {
       .basename(file.name, rawExt)
       .replace(/[^a-zA-Z0-9_-]/g, "_")
       .slice(0, 30);
-    const fileName = `${sanitizedBase}_${Date.now()}${rawExt.toLowerCase()}`;
+    const fileName = `${sanitizedBase}_${Date.now()}.webp`;
     const destinationPath = path.join(uploadsDir, fileName);
 
-    await fs.writeFile(destinationPath, Buffer.from(bytes));
+    await fs.writeFile(destinationPath, buffer);
 
     const publicUrl = `/uploads/${fileName}`;
 

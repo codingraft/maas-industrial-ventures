@@ -7,7 +7,8 @@ export function formatMarkdown(text: string): string {
   if (!text) return "";
 
   // Split into paragraphs / blocks
-  const blocks = text.split(/\n\s*\n/);
+  const escaped = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  const blocks = escaped.split(/\n\s*\n/);
 
   const htmlBlocks = blocks.map((block) => {
     const trimmed = block.trim();
@@ -45,10 +46,10 @@ export function formatMarkdown(text: string): string {
     }
 
     // Blockquote
-    if (trimmed.startsWith("> ")) {
+    if (trimmed.startsWith("&gt; ")) {
       const quote = trimmed
         .split("\n")
-        .map((l) => l.replace(/^>\s*/, ""))
+        .map((l) => l.replace(/^&gt;\s*/, ""))
         .join("<br />");
       return `<blockquote>${inlineFormat(quote)}</blockquote>`;
     }
@@ -69,5 +70,8 @@ function inlineFormat(str: string): string {
     // Inline code: `text`
     .replace(/`(.*?)`/g, "<code>$1</code>")
     // Links: [text](url)
-    .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+    .replace(/\[(.*?)\]\((.*?)\)/g, (_, label: string, url: string) => {
+      if (!/^(https?:\/\/|mailto:|\/(?!\/)|#)/i.test(url) || /[<>\s]/.test(url)) return label;
+      return `<a href="${url}" target="_blank" rel="noopener noreferrer">${label}</a>`;
+    });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { GalleryItem, GalleryCategory } from "@/lib/types";
 import { Pagination } from "@/components/ui/Pagination";
 
@@ -31,17 +31,35 @@ export function ProjectGallery({
   const fallbackImage =
     "https://images.unsplash.com/photo-1567789884554-0b844b597180?auto=format&fit=crop&w=1400&q=82";
 
-  // Lock body scroll when lightbox is open
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const open = lightboxIndex !== null;
   useEffect(() => {
-    if (lightboxIndex !== null) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+    const dialog = dialogRef.current;
+    if (!open || !dialog) return;
+    const trigger = document.activeElement;
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    dialog.querySelector<HTMLButtonElement>("button")?.focus();
+    function keepFocus(event: KeyboardEvent) {
+      if (event.key !== "Tab" || !dialog) return;
+      const buttons = dialog.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
+      const first = buttons[0];
+      const last = buttons[buttons.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last?.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first?.focus();
+      }
     }
+    dialog.addEventListener("keydown", keepFocus);
     return () => {
-      document.body.style.overflow = "";
+      document.body.style.overflow = overflow;
+      dialog.removeEventListener("keydown", keepFocus);
+      if (trigger instanceof HTMLElement) trigger.focus();
     };
-  }, [lightboxIndex]);
+  }, [open]);
 
   function handleTouchStart(e: React.TouchEvent) {
     setTouchStartX(e.changedTouches[0].screenX);
@@ -207,7 +225,7 @@ export function ProjectGallery({
         {/* Paginated Gallery Grid */}
         <div className="gallery-grid page-wrap">
           {paginatedImages.length === 0 ? (
-            <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 20px", color: "#64748b" }}>
+            <div style={{ gridColumn: "1/-1", textAlign: "center", padding: "60px 20px", color: "var(--muted)" }}>
               No visual references found for this filter.
             </div>
           ) : (
@@ -288,6 +306,7 @@ export function ProjectGallery({
         <div
           className="lightbox-overlay"
           onClick={() => setLightboxIndex(null)}
+          ref={dialogRef}
           role="dialog"
           aria-modal="true"
           aria-label="Image viewer"

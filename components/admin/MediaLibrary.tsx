@@ -371,7 +371,7 @@ export function MediaLibrary() {
                   {item.format.toUpperCase()}
                 </span>
 
-                {item.usageCount && item.usageCount > 0 ? (
+                {item.usageCount && (item.usageCount ?? 0) > 0 ? (
                   <span className="media-usage-badge" title="Active references on site">
                     {item.usageCount} in use
                   </span>
@@ -412,7 +412,8 @@ export function MediaLibrary() {
                   <button
                     type="button"
                     className="media-card-action-btn btn-danger-action"
-                    title="Delete Asset"
+                    disabled={item.source !== "uploads" || (item.usageCount ?? 0) > 0}
+                    title={item.usageCount ? "Remove references before deleting" : "Delete local upload"}
                     onClick={(e) => {
                       e.stopPropagation();
                       promptDelete(item);

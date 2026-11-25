@@ -21,7 +21,7 @@ export const metadata: Metadata = {
     "real estate development company",
   ],
   alternates: {
-    canonical: "https://maasventures.com/about",
+    canonical: "/about",
   },
 };
 

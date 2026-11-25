@@ -11,7 +11,7 @@ import { ProjectsSection } from "@/components/ProjectsSection";
 import { BlogPreviewSection } from "@/components/BlogPreviewSection";
 import { FaqSection } from "@/components/FaqSection";
 import { Arrow } from "@/components/ui/Arrow";
-import { getAllSettings, getProjects, getBlogPosts, defaultContent } from "@/lib/db";
+import { getAllSettings, getProjects, getPaginatedBlogPosts, defaultContent } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
 
@@ -19,7 +19,7 @@ export default async function Home() {
   const [settings, projects, blogs] = await Promise.all([
     getAllSettings(),
     getProjects(true), // active projects only
-    getBlogPosts(true), // published blogs only
+    getPaginatedBlogPosts({ publishedOnly: true, limit: 3 }).then(result => result.items), // published blogs only
   ]);
 
   const { site_info, sections, media, social_links, content, verticals, vision_mission } = settings;

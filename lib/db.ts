@@ -23,6 +23,7 @@ export * from "./types";
 
 // Type definitions for DatabaseSync if not directly exported by node:sqlite
 interface SqliteStatement {
+  iterate(...params: unknown[]): Iterable<unknown>;
   run(...params: unknown[]): { changes: number | bigint; lastInsertRowid: number | bigint };
   all(...params: unknown[]): unknown[];
   get(...params: unknown[]): unknown;
@@ -40,7 +41,8 @@ export function getDb(): SqliteDatabase {
   if (dbInstance) return dbInstance;
 
   const isVercel = Boolean(process.env.VERCEL || process.env.AWS_LAMBDA_FUNCTION_NAME);
-  const dataDir = isVercel ? "/tmp" : path.join(process.cwd(), "data");
+  if (isVercel) throw new Error("Hosted deployments require MongoDB");
+  const dataDir = process.env.SQLITE_DATA_DIR || path.join(process.cwd(), "data");
   const dbPath = path.join(dataDir, "maas.db");
 
   if (!fs.existsSync(dataDir)) {
@@ -48,18 +50,6 @@ export function getDb(): SqliteDatabase {
       fs.mkdirSync(dataDir, { recursive: true });
     } catch {
       // In case directory exists or is system-managed
-    }
-  }
-
-  // If on Vercel and a seed DB exists in the project repository, copy it into writable /tmp
-  if (isVercel && !fs.existsSync(dbPath)) {
-    const seedPath = path.join(process.cwd(), "data", "maas.db");
-    if (fs.existsSync(seedPath)) {
-      try {
-        fs.copyFileSync(seedPath, dbPath);
-      } catch {
-        // Fallback to auto-initializing default settings
-      }
     }
   }
 
@@ -448,9 +438,8 @@ export async function getAllSettings(): Promise<SiteSettings> {
         }
         result = normalizeSettings(parsed);
       }
-    } catch (err) {
-      console.error("MongoDB settings read failed, falling back to local SQLite:", err);
-      result = getAllSettingsSync();
+    } catch {
+      throw new Error("MongoDB settings read failed");
     }
   } else {
     result = getAllSettingsSync();
@@ -481,9 +470,10 @@ export async function updateSettings(updates: Partial<SiteSettings>): Promise<vo
         },
       }));
       await db.collection("settings").bulkWrite(ops);
+      cacheInvalidate(CACHE_KEYS.SETTINGS);
       return;
-    } catch (err) {
-      console.error("MongoDB settings bulk update failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB settings bulk update failed");
     }
   }
 
@@ -498,6 +488,7 @@ export async function updateSettings(updates: Partial<SiteSettings>): Promise<vo
       stmt.run(key, JSON.stringify(value));
     }
     db.exec("COMMIT");
+    cacheInvalidate(CACHE_KEYS.SETTINGS);
   } catch (err) {
     db.exec("ROLLBACK");
     throw err;
@@ -522,9 +513,6 @@ function getProjectsFromSqlite(activeOnly: boolean): ProjectItem[] {
     : 'SELECT data FROM projects ORDER BY "order" ASC';
   const stmt = db.prepare(query);
   const rows = stmt.all() as Array<{ data: string }>;
-  if (rows.length === 0) {
-    return defaultProjects.filter((p) => !activeOnly || p.isActive);
-  }
   return rows.map((r) => JSON.parse(r.data) as ProjectItem);
 }
 
@@ -542,21 +530,7 @@ export async function getProjects(activeOnly: boolean = false): Promise<ProjectI
       const filter = activeOnly ? { isActive: true } : {};
       const docs = await coll.find(filter).sort({ order: 1, _id: 1 }).toArray();
 
-      if (docs.length === 0 && !activeOnly) {
-        // Seed default projects to Mongo in 1 bulk write
-        const ops = defaultProjects.map((p) => ({
-          updateOne: {
-            filter: { id: p.id },
-            update: { $set: p },
-            upsert: true,
-          },
-        }));
-        await coll.bulkWrite(ops);
-        projects = defaultProjects;
-      } else if (docs.length === 0) {
-        projects = defaultProjects.filter((p) => p.isActive);
-      } else {
-        projects = docs.map((d: any) => ({
+      projects = docs.map((d: any) => ({
           id: d.id || d._id.toString(),
           title: d.title || "",
           slug: d.slug || "",
@@ -577,10 +551,8 @@ export async function getProjects(activeOnly: boolean = false): Promise<ProjectI
           order: Number(d.order) || 0,
           isActive: d.isActive !== false,
         }));
-      }
-    } catch (err) {
-      console.error("MongoDB getProjects failed, falling back to SQLite:", err);
-      projects = getProjectsFromSqlite(activeOnly);
+    } catch {
+      throw new Error("MongoDB getProjects failed");
     }
   } else {
     projects = getProjectsFromSqlite(activeOnly);
@@ -673,28 +645,28 @@ export async function getPaginatedProjects(
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
       };
-    } catch (err) {
-      console.error("MongoDB getPaginatedProjects failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB getPaginatedProjects failed");
     }
   }
 
-  // Fallback: fetch all from SQLite and slice
-  let all = getProjectsFromSqlite(Boolean(options.activeOnly));
+  const db = getDb();
+  const conditions: string[] = [];
+  const args: string[] = [];
+  if (options.activeOnly) conditions.push("is_active = 1");
   if (status && status !== "all") {
-    all = all.filter((p) => p.status === status);
+    conditions.push("json_extract(data, '$.status') = ? COLLATE NOCASE");
+    args.push(status);
   }
   if (search) {
-    const q = search.toLowerCase();
-    all = all.filter(
-      (p) =>
-        p.title.toLowerCase().includes(q) ||
-        p.location.toLowerCase().includes(q) ||
-        p.shortDescription.toLowerCase().includes(q)
-    );
+    conditions.push("(instr(lower(json_extract(data, '$.title')), lower(?)) > 0 OR instr(lower(json_extract(data, '$.location')), lower(?)) > 0 OR instr(lower(json_extract(data, '$.shortDescription')), lower(?)) > 0)");
+    args.push(search, search, search);
   }
-  const total = all.length;
+  const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
+  const { total } = db.prepare(`SELECT count(*) AS total FROM projects${where}`).get(...args) as { total: number };
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  const items = all.slice(skip, skip + limit);
+  const rows = db.prepare(`SELECT data AS data FROM projects${where} ORDER BY "order" ASC, id ASC LIMIT ? OFFSET ?`).all(...args, limit, skip) as { data: string }[];
+  const items = rows.map(row => JSON.parse(row.data) as ProjectItem);
 
   return {
     items,
@@ -710,8 +682,16 @@ export async function getPaginatedProjects(
 /**
  * Targeted O(1) single project lookup by slug or ID without loading the entire collection.
  */
-export async function getProjectBySlug(slug: string): Promise<ProjectItem | null> {
+export async function getProjectBySlug(slug: string, activeOnly = false): Promise<ProjectItem | null> {
   if (!slug) return null;
+
+  if (activeOnly) {
+    if (isMongoConfigured()) {
+      return (await getMongoDb()).collection<ProjectItem>("projects").findOne({ slug, isActive: true }, { projection: { _id: 0 } });
+    }
+    const row = getDb().prepare("SELECT data FROM projects WHERE slug = ? AND is_active = 1").get(slug) as { data: string } | undefined;
+    return row ? JSON.parse(row.data) as ProjectItem : null;
+  }
 
   // 1. Try cache if full project list is already memory-resident
   const cachedList = cacheGet<ProjectItem[]>(CACHE_KEYS.PROJECTS_ALL) || cacheGet<ProjectItem[]>(CACHE_KEYS.PROJECTS_ACTIVE);
@@ -750,8 +730,9 @@ export async function getProjectBySlug(slug: string): Promise<ProjectItem | null
           isActive: d.isActive !== false,
         };
       }
-    } catch (err) {
-      console.error("MongoDB getProjectBySlug failed, falling back to SQLite:", err);
+      return null;
+    } catch {
+      throw new Error("MongoDB getProjectBySlug failed");
     }
   }
 
@@ -767,12 +748,10 @@ export async function getProjectBySlug(slug: string): Promise<ProjectItem | null
     // Fall back to default projects list
   }
 
-  return defaultProjects.find((p) => p.slug === slug || p.id === slug) || null;
+  return null;
 }
 
 export async function saveProject(project: ProjectItem): Promise<ProjectItem> {
-  cacheInvalidate("projects:");
-
   const id = project.id || `proj-${Date.now()}`;
   const slug =
     project.slug ||
@@ -795,9 +774,10 @@ export async function saveProject(project: ProjectItem): Promise<ProjectItem> {
       await db
         .collection("projects")
         .updateOne({ id }, { $set: { ...fullProject, updated_at: new Date() } }, { upsert: true });
+      cacheInvalidate("projects:");
       return fullProject;
-    } catch (err) {
-      console.error("MongoDB saveProject failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB saveProject failed");
     }
   }
 
@@ -821,30 +801,18 @@ export async function saveProject(project: ProjectItem): Promise<ProjectItem> {
     fullProject.order,
     fullProject.isActive ? 1 : 0
   );
+  cacheInvalidate("projects:");
   return fullProject;
 }
 
 export async function deleteProject(id: string): Promise<boolean> {
-  cacheInvalidate("projects:");
-
-  let deletedFromMongo = false;
   if (isMongoConfigured()) {
-    try {
-      const db = await getMongoDb();
-      await db.collection("projects").deleteOne({ id });
-      deletedFromMongo = true;
-    } catch (err) {
-      console.error("MongoDB deleteProject failed, falling back to SQLite:", err);
-    }
+    const db = await getMongoDb();
+    await db.collection("projects").deleteOne({ id });
+  } else {
+    getDb().prepare("DELETE FROM projects WHERE id = ?").run(id);
   }
-
-  try {
-    const db = getDb();
-    const stmt = db.prepare("DELETE FROM projects WHERE id = ?");
-    stmt.run(id);
-  } catch (err) {
-    if (!deletedFromMongo) throw err;
-  }
+  cacheInvalidate("projects:");
   return true;
 }
 
@@ -859,9 +827,6 @@ function getBlogPostsFromSqlite(publishedOnly: boolean): BlogPost[] {
     : "SELECT data FROM blogs ORDER BY published_at DESC";
   const stmt = db.prepare(query);
   const rows = stmt.all() as Array<{ data: string }>;
-  if (rows.length === 0) {
-    return defaultBlogs.filter((b) => !publishedOnly || b.isPublished);
-  }
   return rows.map((r) => JSON.parse(r.data) as BlogPost);
 }
 
@@ -888,26 +853,7 @@ export async function getBlogPosts(
         .sort({ publishedAt: -1, _id: -1 })
         .toArray();
 
-      if (docs.length === 0 && !publishedOnly) {
-        // Seed default blogs to Mongo in 1 bulk write
-        const ops = defaultBlogs.map((b) => ({
-          updateOne: {
-            filter: { id: b.id },
-            update: { $set: b },
-            upsert: true,
-          },
-        }));
-        await coll.bulkWrite(ops);
-        blogs = includeContent
-          ? defaultBlogs
-          : defaultBlogs.map((b) => ({ ...b, content: "" }));
-      } else if (docs.length === 0) {
-        const published = defaultBlogs.filter((b) => b.isPublished);
-        blogs = includeContent
-          ? published
-          : published.map((b) => ({ ...b, content: "" }));
-      } else {
-        blogs = docs.map((d: any) => ({
+      blogs = docs.map((d: any) => ({
           id: d.id || d._id.toString(),
           title: d.title || "",
           slug: d.slug || "",
@@ -925,13 +871,8 @@ export async function getBlogPosts(
           metaDescription: d.metaDescription || d.excerpt,
           keywords: Array.isArray(d.keywords) ? d.keywords : [],
         }));
-      }
-    } catch (err) {
-      console.error("MongoDB getBlogPosts failed, falling back to SQLite:", err);
-      blogs = getBlogPostsFromSqlite(publishedOnly);
-      if (!includeContent) {
-        blogs = blogs.map((b) => ({ ...b, content: "" }));
-      }
+    } catch {
+      throw new Error("MongoDB getBlogPosts failed");
     }
   } else {
     blogs = getBlogPostsFromSqlite(publishedOnly);
@@ -1027,31 +968,28 @@ export async function getPaginatedBlogPosts(
         hasNextPage: page < totalPages,
         hasPrevPage: page > 1,
       };
-    } catch (err) {
-      console.error("MongoDB getPaginatedBlogPosts failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB getPaginatedBlogPosts failed");
     }
   }
 
-  // Fallback: fetch all from SQLite and slice
-  let all = getBlogPostsFromSqlite(Boolean(options.publishedOnly));
+  const db = getDb();
+  const conditions: string[] = [];
+  const args: string[] = [];
+  if (options.publishedOnly) conditions.push("is_published = 1");
   if (category && category !== "all") {
-    all = all.filter((b) => b.category.toLowerCase() === category.toLowerCase());
+    conditions.push("json_extract(data, '$.category') = ? COLLATE NOCASE");
+    args.push(category);
   }
   if (search) {
-    const q = search.toLowerCase();
-    all = all.filter(
-      (b) =>
-        b.title.toLowerCase().includes(q) ||
-        b.excerpt.toLowerCase().includes(q) ||
-        b.category.toLowerCase().includes(q)
-    );
+    conditions.push("(instr(lower(json_extract(data, '$.title')), lower(?)) > 0 OR instr(lower(json_extract(data, '$.excerpt')), lower(?)) > 0 OR instr(lower(json_extract(data, '$.category')), lower(?)) > 0)");
+    args.push(search, search, search);
   }
-  const total = all.length;
+  const where = conditions.length ? " WHERE " + conditions.join(" AND ") : "";
+  const { total } = db.prepare(`SELECT count(*) AS total FROM blogs${where}`).get(...args) as { total: number };
   const totalPages = Math.max(1, Math.ceil(total / limit));
-  const rawItems = all.slice(skip, skip + limit);
-  const items = options.includeContent
-    ? rawItems
-    : rawItems.map((b) => ({ ...b, content: "" }));
+  const rows = db.prepare(`SELECT ${options.includeContent ? "data" : "json_remove(data, '$.content')"} AS data FROM blogs${where} ORDER BY published_at DESC, id DESC LIMIT ? OFFSET ?`).all(...args, limit, skip) as { data: string }[];
+  const items = rows.map(row => ({ content: "", ...JSON.parse(row.data) }) as BlogPost);
 
   return {
     items,
@@ -1067,8 +1005,16 @@ export async function getPaginatedBlogPosts(
 /**
  * Targeted O(1) single blog post lookup by slug or ID without loading the entire collection.
  */
-export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> {
+export async function getBlogPostBySlug(slug: string, publishedOnly = false): Promise<BlogPost | null> {
   if (!slug) return null;
+
+  if (publishedOnly) {
+    if (isMongoConfigured()) {
+      return (await getMongoDb()).collection<BlogPost>("blogs").findOne({ slug, isPublished: true }, { projection: { _id: 0 } });
+    }
+    const row = getDb().prepare("SELECT data FROM blogs WHERE slug = ? AND is_published = 1").get(slug) as { data: string } | undefined;
+    return row ? JSON.parse(row.data) as BlogPost : null;
+  }
 
   // 1. Try single post cache
   const cachedSingle = cacheGet<BlogPost>(`blogs:single:${slug}`);
@@ -1110,8 +1056,9 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
         cacheSet(`blogs:single:${slug}`, post, 60000);
         return post;
       }
-    } catch (err) {
-      console.error("MongoDB getBlogPostBySlug failed, falling back to SQLite:", err);
+      return null;
+    } catch {
+      throw new Error("MongoDB getBlogPostBySlug failed");
     }
   }
 
@@ -1129,13 +1076,10 @@ export async function getBlogPostBySlug(slug: string): Promise<BlogPost | null> 
     // Fall back to default blogs list
   }
 
-  const fallback = defaultBlogs.find((b) => b.slug === slug || b.id === slug) || null;
-  return fallback;
+  return null;
 }
 
 export async function saveBlogPost(post: BlogPost): Promise<BlogPost> {
-  cacheInvalidate("blogs:");
-
   const id = post.id || `blog-${Date.now()}`;
   const slug =
     post.slug ||
@@ -1158,9 +1102,10 @@ export async function saveBlogPost(post: BlogPost): Promise<BlogPost> {
       await db
         .collection("blogs")
         .updateOne({ id }, { $set: { ...fullPost, updated_at: new Date() } }, { upsert: true });
+      cacheInvalidate("blogs:");
       return fullPost;
-    } catch (err) {
-      console.error("MongoDB saveBlogPost failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB saveBlogPost failed");
     }
   }
 
@@ -1184,30 +1129,18 @@ export async function saveBlogPost(post: BlogPost): Promise<BlogPost> {
     fullPost.isPublished ? 1 : 0,
     fullPost.publishedAt
   );
+  cacheInvalidate("blogs:");
   return fullPost;
 }
 
 export async function deleteBlogPost(id: string): Promise<boolean> {
-  cacheInvalidate("blogs:");
-
-  let deletedFromMongo = false;
   if (isMongoConfigured()) {
-    try {
-      const db = await getMongoDb();
-      await db.collection("blogs").deleteOne({ id });
-      deletedFromMongo = true;
-    } catch (err) {
-      console.error("MongoDB deleteBlogPost failed, falling back to SQLite:", err);
-    }
+    const db = await getMongoDb();
+    await db.collection("blogs").deleteOne({ id });
+  } else {
+    getDb().prepare("DELETE FROM blogs WHERE id = ?").run(id);
   }
-
-  try {
-    const db = getDb();
-    const stmt = db.prepare("DELETE FROM blogs WHERE id = ?");
-    stmt.run(id);
-  } catch (err) {
-    if (!deletedFromMongo) throw err;
-  }
+  cacheInvalidate("blogs:");
   return true;
 }
 
@@ -1242,18 +1175,21 @@ export async function insertLead(data: LeadInsertData): Promise<{ id: number | s
   if (isMongoConfigured()) {
     try {
       const db = await getMongoDb();
-      // Fast index-backed lookup for highest existing lead_id
-      const highest = await db
-        .collection("leads")
-        .find({}, { projection: { lead_id: 1 } })
-        .sort({ lead_id: -1 })
-        .limit(1)
-        .toArray();
-
-      const leadId =
-        highest.length > 0 && typeof highest[0].lead_id === "number"
-          ? highest[0].lead_id + 1
-          : 1;
+      const counters = db.collection<{ _id: string; value: number }>("counters");
+      let sequence = await counters.findOneAndUpdate(
+        { _id: "lead" }, { $inc: { value: 1 } }, { returnDocument: "after" }
+      );
+      if (!sequence) {
+        const highest = await db.collection("leads").findOne(
+          { lead_id: { $type: "number" } }, { sort: { lead_id: -1 }, projection: { lead_id: 1 } }
+        );
+        await counters.updateOne({ _id: "lead" }, { $setOnInsert: { value: highest?.lead_id ?? 0 } }, { upsert: true });
+        sequence = await counters.findOneAndUpdate(
+          { _id: "lead" }, { $inc: { value: 1 } }, { returnDocument: "after" }
+        );
+      }
+      if (!sequence) throw new Error("Lead number allocation failed");
+      const leadId = sequence.value;
 
       await db.collection("leads").insertOne({
         lead_id: leadId,
@@ -1277,8 +1213,8 @@ export async function insertLead(data: LeadInsertData): Promise<{ id: number | s
       });
 
       return { id: leadId };
-    } catch (err) {
-      console.error("MongoDB lead insert failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB lead insert failed");
     }
   }
 
@@ -1318,7 +1254,7 @@ export type GetLeadsOptions = {
   project?: string;
   page?: number;
   limit?: number;
-  exportCsv?: boolean;
+
 };
 
 /**
@@ -1340,37 +1276,12 @@ export async function getLeads(options: GetLeadsOptions): Promise<{
   if (isMongoConfigured()) {
     try {
       const db = await getMongoDb();
-      const filter: Record<string, unknown> = {};
-
-      if (status && status !== "all") {
-        filter.status = status;
-      }
-
-      if (project && project !== "all") {
-        filter.project = project;
-      }
-
-      if (search) {
-        const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        const regex = { $regex: escaped, $options: "i" };
-        filter.$or = [
-          { name: regex },
-          { phone: regex },
-          { email: regex },
-          { project: regex },
-          { industry: regex },
-          { requirement: regex },
-        ];
-      }
-
+      const filter = leadFilter(search, status, project);
       const total = await db.collection("leads").countDocuments(filter);
       const totalPages = Math.max(1, Math.ceil(total / limit));
       const offset = (page - 1) * limit;
 
-      let cursor = db.collection("leads").find(filter).sort({ lead_id: -1, _id: -1 });
-      if (!options.exportCsv) {
-        cursor = cursor.skip(offset).limit(limit);
-      }
+      const cursor = db.collection("leads").find(filter).sort({ lead_id: -1, _id: -1 }).skip(offset).limit(limit);
       const docs = await cursor.toArray();
 
       const leads: Lead[] = docs.map((d: any) => ({
@@ -1395,43 +1306,14 @@ export async function getLeads(options: GetLeadsOptions): Promise<{
       }));
 
       return { leads, total, page, limit, totalPages };
-    } catch (err) {
-      console.error("MongoDB getLeads failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB getLeads failed");
     }
   }
 
   // SQLite implementation
   const db = getDb();
-  const conditions: string[] = [];
-  const params: unknown[] = [];
-
-  if (status && status !== "all") {
-    conditions.push("status = ?");
-    params.push(status);
-  }
-
-  if (project && project !== "all") {
-    conditions.push("project = ?");
-    params.push(project);
-  }
-
-  if (search) {
-    conditions.push(
-      "(LOWER(name) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(email) LIKE ? OR LOWER(project) LIKE ? OR LOWER(industry) LIKE ? OR LOWER(requirement) LIKE ?)"
-    );
-    const wild = `%${search}%`;
-    params.push(wild, wild, wild, wild, wild, wild);
-  }
-
-  const whereClause = conditions.length > 0 ? " WHERE " + conditions.join(" AND ") : "";
-
-  if (options.exportCsv) {
-    const query = `SELECT * FROM leads${whereClause} ORDER BY id DESC`;
-    const stmt = db.prepare(query);
-    const leads = stmt.all(...params) as Lead[];
-    return { leads, total: leads.length, page: 1, limit: leads.length, totalPages: 1 };
-  }
-
+  const { whereClause, params } = sqliteLeadFilter(search, status, project);
   const countQuery = `SELECT COUNT(*) as total FROM leads${whereClause}`;
   const countStmt = db.prepare(countQuery);
   const total = (countStmt.get(...params) as { total: number }).total;
@@ -1480,8 +1362,8 @@ export async function getLeadMetrics(): Promise<{
       const todayLeads = metrics?.todayCount?.[0]?.count || 0;
 
       return { totalLeads, newLeads, todayLeads };
-    } catch (err) {
-      console.error("MongoDB getLeadMetrics failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB getLeadMetrics failed");
     }
   }
 
@@ -1525,8 +1407,8 @@ export async function updateLead(
         await db.collection("leads").updateOne(filter, { $set: setFields });
       }
       return;
-    } catch (err) {
-      console.error("MongoDB updateLead failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB updateLead failed");
     }
   }
 
@@ -1555,12 +1437,95 @@ export async function deleteLead(id: number | string): Promise<void> {
 
       await db.collection("leads").deleteOne(filter);
       return;
-    } catch (err) {
-      console.error("MongoDB deleteLead failed, falling back to SQLite:", err);
+    } catch {
+      throw new Error("MongoDB deleteLead failed");
     }
   }
 
   const db = getDb();
   const stmt = db.prepare("DELETE FROM leads WHERE id = ?");
   stmt.run(id);
+}
+
+export async function getPublishedCategoryCounts(): Promise<{ category: string; count: number }[]> {
+  if (isMongoConfigured()) {
+    return (await getMongoDb()).collection("blogs").aggregate<{ category: string; count: number }>([
+      { $match: { isPublished: true } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+      { $project: { _id: 0, category: "$_id", count: 1 } },
+    ]).toArray();
+  }
+  return getDb().prepare("SELECT json_extract(data, '$.category') AS category, COUNT(*) AS count FROM blogs WHERE is_published = 1 GROUP BY category ORDER BY category").all() as { category: string; count: number }[];
+}
+
+function leadFilter(search: string, status: string, project: string) {
+  const filter: Record<string, unknown> = {};
+
+  if (status && status !== "all") {
+    filter.status = status;
+  }
+
+  if (project && project !== "all") {
+    filter.project = project;
+  }
+
+  if (search) {
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const regex = { $regex: escaped, $options: "i" };
+    filter.$or = [
+      { name: regex },
+      { phone: regex },
+      { email: regex },
+      { project: regex },
+      { industry: regex },
+      { requirement: regex },
+    ];
+  }
+
+  return filter;
+}
+
+function sqliteLeadFilter(search: string, status: string, project: string) {
+  const conditions: string[] = [];
+  const params: unknown[] = [];
+
+  if (status && status !== "all") {
+    conditions.push("status = ?");
+    params.push(status);
+  }
+
+  if (project && project !== "all") {
+    conditions.push("project = ?");
+    params.push(project);
+  }
+
+  if (search) {
+    conditions.push(
+      "(LOWER(name) LIKE ? OR LOWER(phone) LIKE ? OR LOWER(email) LIKE ? OR LOWER(project) LIKE ? OR LOWER(industry) LIKE ? OR LOWER(requirement) LIKE ?)"
+    );
+    const wild = `%${search}%`;
+    params.push(wild, wild, wild, wild, wild, wild);
+  }
+
+  const whereClause = conditions.length > 0 ? " WHERE " + conditions.join(" AND ") : "";
+
+  return { whereClause, params };
+}
+
+export async function* exportLeads(search: string, status: string, project: string) {
+  if (isMongoConfigured()) {
+    const db = await getMongoDb();
+    const cursor = db.collection<Omit<Lead, "id"> & { lead_id?: number }>("leads").find(leadFilter(search, status, project))
+      .sort({ lead_id: -1, _id: -1 }).batchSize(100);
+    try {
+      for await (const row of cursor) yield { ...row, id: row.lead_id ?? String(row._id) };
+    } finally {
+      await cursor.close();
+    }
+    return;
+  }
+  const { whereClause, params } = sqliteLeadFilter(search, status, project);
+  const statement = getDb().prepare("SELECT * FROM leads" + whereClause + " ORDER BY id DESC");
+  for (const row of statement.iterate(...params)) yield row as Lead;
 }

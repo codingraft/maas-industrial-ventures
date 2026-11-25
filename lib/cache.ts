@@ -26,6 +26,10 @@ export function cacheGet<T>(key: string): T | null {
 }
 
 export function cacheSet<T>(key: string, value: T, ttlMs: number = DEFAULT_TTL_MS): void {
+  if (!cacheStore.has(key) && cacheStore.size >= 512) {
+    const oldest = cacheStore.keys().next();
+    if (!oldest.done) cacheStore.delete(oldest.value);
+  }
   cacheStore.set(key, {
     value,
     expiresAt: Date.now() + ttlMs,

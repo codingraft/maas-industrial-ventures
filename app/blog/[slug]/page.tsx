@@ -20,12 +20,12 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
   const { slug } = await params;
   const [settings, post] = await Promise.all([
     getAllSettings(),
-    getBlogPostBySlug(slug),
+    getBlogPostBySlug(slug, true),
   ]);
 
   const brand = settings.site_info.brandName || "MAAS Industrial Ventures";
 
-  if (!post) {
+  if (!post?.isPublished) {
     return {
       title: `Article Not Found | ${brand}`,
     };
@@ -39,7 +39,7 @@ export async function generateMetadata({ params }: BlogPostPageProps): Promise<M
     description,
     keywords: post.keywords?.length ? post.keywords : [post.category, brand, "industrial plots"],
     alternates: {
-      canonical: `https://maasventures.com/blog/${post.slug}`,
+      canonical: `/blog/${post.slug}`,
     },
     openGraph: {
       title,
@@ -85,12 +85,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   const [settings, post, allPosts, projects] = await Promise.all([
     getAllSettings(),
-    getBlogPostBySlug(slug),
+    getBlogPostBySlug(slug, true),
     getBlogPosts(true),
     getProjects(true),
   ]);
 
-  if (!post) {
+  if (!post?.isPublished) {
     notFound();
   }
 
@@ -135,7 +135,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       {/* Schema.org Structured Data */}
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
       />
 
       <SiteHeader

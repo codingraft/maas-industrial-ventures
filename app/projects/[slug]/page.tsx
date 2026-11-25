@@ -18,9 +18,9 @@ interface ProjectPageProps {
 
 export async function generateMetadata({ params }: ProjectPageProps): Promise<Metadata> {
   const { slug } = await params;
-  const project = await getProjectBySlug(slug);
+  const project = await getProjectBySlug(slug, true);
 
-  if (!project) {
+  if (!project?.isActive) {
     return {
       title: "Project Not Found | MAAS Industrial Ventures",
     };
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: ProjectPageProps): Promise<Me
       images: project.coverImage ? [{ url: project.coverImage }] : undefined,
     },
     alternates: {
-      canonical: `https://maasventures.com/projects/${project.slug}`,
+      canonical: `/projects/${project.slug}`,
     },
   };
 }
@@ -52,11 +52,11 @@ export default async function ProjectDetailPage({ params }: ProjectPageProps) {
   const { slug } = await params;
   const [settings, project, allProjects] = await Promise.all([
     getAllSettings(),
-    getProjectBySlug(slug),
+    getProjectBySlug(slug, true),
     getProjects(true),
   ]);
 
-  if (!project) {
+  if (!project?.isActive) {
     notFound();
   }
 

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { getLeads, updateLead, deleteLead } from "@/lib/db";
+import { getLeads, exportLeads, updateLead, deleteLead } from "@/lib/db";
 
 export const runtime = "nodejs";
 
@@ -17,19 +17,12 @@ export async function GET(request: Request) {
   const page = Math.max(1, parseInt(searchParams.get("page") || "1", 10));
   const limit = Math.max(1, Math.min(100, parseInt(searchParams.get("limit") || "10", 10)));
 
-  const result = await getLeads({
-    search,
-    status,
-    project,
-    page,
-    limit,
-    exportCsv: isExport,
-  });
+
 
   // If CSV export is requested, return all filtered records
   if (isExport) {
-    const csvRows: string[] = [
-      [
+    async function* csv() {
+      yield [
         "ID",
         "Date",
         "Name",
@@ -50,12 +43,10 @@ export async function GET(request: Request) {
         "Meta Click ID (FBCLID)",
       ]
         .map((h) => `"${h}"`)
-        .join(","),
-    ];
+        .join(",") + "\r\n";
 
-    for (const lead of result.leads) {
-      csvRows.push(
-        [
+    for await (const lead of exportLeads(search, status, project)) {
+        yield [
           lead.id,
           lead.created_at,
           lead.name,
@@ -64,9 +55,9 @@ export async function GET(request: Request) {
           lead.project || "",
           lead.industry,
           lead.requirement,
-          lead.message ? lead.message.replace(/"/g, '""') : "",
+          lead.message,
           lead.status,
-          lead.notes ? lead.notes.replace(/"/g, '""') : "",
+          lead.notes,
           lead.utm_source,
           lead.utm_medium,
           lead.utm_campaign,
@@ -75,12 +66,25 @@ export async function GET(request: Request) {
           lead.gclid,
           lead.fbclid,
         ]
-          .map((v) => `"${String(v ?? "").replace(/\n/g, " ")}"`)
-          .join(",")
-      );
+          .map((v) => {
+            const value = String(v ?? "").replace(/"/g, '""');
+            const prefix = /^\s*[=+@-]|^[\t\r\n]/.test(value) ? "'" : "";
+            return `"${prefix}${value}"`;
+          })
+          .join(",") + "\r\n";
     }
 
-    const csvContent = csvRows.join("\n");
+    }
+    const rows = csv();
+    const encoder = new TextEncoder();
+    const csvContent = new ReadableStream<Uint8Array>({
+      async pull(controller) {
+        const row = await rows.next();
+        if (row.done) controller.close();
+        else controller.enqueue(encoder.encode(row.value));
+      },
+      async cancel() { await rows.return(undefined); },
+    });
     const filename = `maas-leads-${new Date().toISOString().slice(0, 10)}.csv`;
 
     return new NextResponse(csvContent, {
@@ -92,6 +96,7 @@ export async function GET(request: Request) {
     });
   }
 
+  const result = await getLeads({ search, status, project, page, limit });
   return NextResponse.json({
     leads: result.leads,
     pagination: {

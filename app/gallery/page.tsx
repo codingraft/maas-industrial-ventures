@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "MAAS Industrial Ventures gallery",
   ],
   alternates: {
-    canonical: "https://maasventures.com/gallery",
+    canonical: "/gallery",
   },
 };
 

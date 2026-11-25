@@ -19,7 +19,7 @@ export const metadata: Metadata = {
     "MAAS phone number email",
   ],
   alternates: {
-    canonical: "https://maasventures.com/contact",
+    canonical: "/contact",
   },
 };
 

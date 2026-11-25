@@ -1,6 +1,21 @@
 import { NextResponse } from "next/server";
 import { isAuthenticated } from "@/lib/auth";
-import { getAllSettings, updateSettings, SiteSettings } from "@/lib/db";
+import { getAllSettings, updateSettings, defaultSiteSettings, SiteSettings } from "@/lib/db";
+
+// Existing optional fields may be absent. Validate every supplied known field before saving.
+function matchesSetting(value: unknown, model: unknown): boolean {
+  if (Array.isArray(model)) {
+    return Array.isArray(value) && value.every(item => model.length === 0 || matchesSetting(item, model[0]));
+  }
+  if (model && typeof model === "object") {
+    if (!value || typeof value !== "object" || Array.isArray(value)) return false;
+    return Object.entries(value).every(([key, item]) =>
+      !["__proto__", "prototype", "constructor"].includes(key) &&
+      (!(key in model) || matchesSetting(item, (model as Record<string, unknown>)[key]))
+    );
+  }
+  return typeof value === typeof model;
+}
 
 export const runtime = "nodejs";
 
@@ -26,6 +41,7 @@ export async function PATCH(request: Request) {
   let body: Partial<SiteSettings>;
   try {
     body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new TypeError("Expected object");
   } catch {
     return NextResponse.json({ message: "Invalid payload" }, { status: 400 });
   }
@@ -46,7 +62,10 @@ export async function PATCH(request: Request) {
     const updates: Partial<SiteSettings> = {};
     for (const key of validKeys) {
       if (key in body && body[key] !== undefined) {
-        updates[key] = body[key] as any;
+        if (!matchesSetting(body[key], defaultSiteSettings[key])) {
+          return NextResponse.json({ message: "Invalid " + key + " settings" }, { status: 400 });
+        }
+        Object.assign(updates, { [key]: body[key] });
       }
     }
 

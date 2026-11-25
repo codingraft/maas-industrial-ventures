@@ -90,11 +90,10 @@ const copySections: CopySectionDef[] = [
 
 interface ContentManagerProps {
   settings: SiteSettings;
-  onUpdate: (updatedContent: SiteSettings["content"]) => Promise<void>;
-  onUpdateFull?: (patch: Partial<SiteSettings>) => Promise<void>;
+  onUpdate: (patch: Partial<SiteSettings>) => Promise<void>;
 }
 
-export function ContentManager({ settings, onUpdate, onUpdateFull }: ContentManagerProps) {
+export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
   const [activeSubTab, setActiveSubTab] = useState<
     "hero" | "overview" | "verticals" | "vision" | "facts" | "highlights" | "faqs" | "public-copy"
   >("hero");
@@ -191,41 +190,12 @@ export function ContentManager({ settings, onUpdate, onUpdateFull }: ContentMana
   async function handleSaveAll() {
     setSaving(true);
     try {
-      // 1. Update Content
       await onUpdate({
-        facts,
-        highlights,
-        timeline,
-        faqs,
+        content: { facts, highlights, timeline, faqs },
+        site_info: { ...siteInfo, bottomHighlights, overviewParagraphs },
+        verticals,
+        vision_mission: visionMission,
       });
-
-      // 2. Update site_info, verticals, vision_mission if callback provided
-      if (onUpdateFull) {
-        await onUpdateFull({
-          site_info: {
-            ...siteInfo,
-            bottomHighlights,
-            overviewParagraphs,
-          },
-          verticals,
-          vision_mission: visionMission,
-        });
-      } else {
-        // Fallback: direct PATCH to /api/admin/settings
-        await fetch("/api/admin/settings", {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            site_info: {
-              ...siteInfo,
-              bottomHighlights,
-              overviewParagraphs,
-            },
-            verticals,
-            vision_mission: visionMission,
-          }),
-        });
-      }
 
       addToast("success", "Changes Saved Successfully", "All text, verticals, vision, and FAQs are updated live.");
     } catch (err) {

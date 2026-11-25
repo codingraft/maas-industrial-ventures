@@ -350,6 +350,9 @@ export async function DELETE(request: Request) {
     // Only allow deleting local uploaded files in /uploads/
     if (url.startsWith("/uploads/")) {
       const fileName = path.basename(url);
+      if (url !== "/uploads/" + fileName) return NextResponse.json({ message: "Invalid upload path" }, { status: 400 });
+      const references = await Promise.all([getAllSettings(), getProjects(), getBlogPosts(false, true)]);
+      if (JSON.stringify(references).includes(url)) return NextResponse.json({ message: "Asset is in use" }, { status: 409 });
       const filePath = path.join(process.cwd(), "public", "uploads", fileName);
 
       try {
@@ -365,9 +368,8 @@ export async function DELETE(request: Request) {
     }
 
     return NextResponse.json({
-      ok: true,
-      message: "External or static asset unlinked from view",
-    });
+      message: "Only local uploads can be removed here",
+    }, { status: 400 });
   } catch (error) {
     console.error("DELETE /api/admin/media error:", error);
     return NextResponse.json({ message: "Failed to delete asset" }, { status: 500 });

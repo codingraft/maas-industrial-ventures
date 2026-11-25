@@ -18,8 +18,8 @@ export default function ErrorBoundary({
   return (
     <div style={{
       minHeight: "100vh",
-      background: "#05070c",
-      color: "#f1f5f9",
+      background: "var(--obsidian)",
+      color: "var(--surface-subtle)",
       display: "flex",
       flexDirection: "column",
       alignItems: "center",
@@ -42,11 +42,11 @@ export default function ErrorBoundary({
 
       <div style={{
         maxWidth: "520px",
-        background: "rgba(17, 22, 37, 0.8)",
-        border: "1px solid rgba(255, 255, 255, 0.08)",
+        background: "color-mix(in srgb, var(--obsidian-card) 80%, transparent)",
+        border: "1px solid color-mix(in srgb, var(--white) 8%, transparent)",
         borderRadius: "16px",
         padding: "40px 32px",
-        boxShadow: "0 24px 60px rgba(0, 0, 0, 0.6)",
+        boxShadow: "0 24px 60px color-mix(in srgb, var(--shadow) 60%, transparent)",
         backdropFilter: "blur(12px)",
       }}>
         <div style={{
@@ -54,12 +54,12 @@ export default function ErrorBoundary({
           height: "56px",
           margin: "0 auto 20px",
           borderRadius: "50%",
-          background: "rgba(239, 68, 68, 0.12)",
-          border: "1px solid rgba(239, 68, 68, 0.25)",
+          background: "color-mix(in srgb, var(--danger) 12%, transparent)",
+          border: "1px solid color-mix(in srgb, var(--danger) 25%, transparent)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#ef4444",
+          color: "var(--danger)",
         }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"/>
@@ -68,20 +68,20 @@ export default function ErrorBoundary({
           </svg>
         </div>
 
-        <h1 style={{ fontSize: "22px", fontWeight: "700", margin: "0 0 10px", color: "#f8fafc" }}>
+        <h1 style={{ fontSize: "22px", fontWeight: "700", margin: "0 0 10px", color: "var(--paper)" }}>
           Temporary Service Notice
         </h1>
-        <p style={{ fontSize: "14px", color: "#94a3b8", lineHeight: "1.6", margin: "0 0 24px" }}>
+        <p style={{ fontSize: "14px", color: "var(--on-dark-muted)", lineHeight: "1.6", margin: "0 0 24px" }}>
           We encountered an unexpected condition while rendering this page. Our systems remain secure and our team has been notified.
         </p>
 
         {error.digest && (
           <div style={{
-            background: "#090c15",
+            background: "var(--obsidian)",
             padding: "8px 12px",
             borderRadius: "6px",
             fontSize: "12px",
-            color: "#64748b",
+            color: "var(--muted)",
             fontFamily: "monospace",
             marginBottom: "24px",
             wordBreak: "break-all",
@@ -95,8 +95,8 @@ export default function ErrorBoundary({
             type="button"
             onClick={() => reset()}
             style={{
-              background: "#d4af37",
-              color: "#0c101c",
+              background: "var(--gold)",
+              color: "var(--ink)",
               border: "none",
               padding: "12px 24px",
               borderRadius: "6px",
@@ -111,9 +111,9 @@ export default function ErrorBoundary({
           <Link
             href="/"
             style={{
-              background: "rgba(255, 255, 255, 0.06)",
-              color: "#f1f5f9",
-              border: "1px solid rgba(255, 255, 255, 0.12)",
+              background: "color-mix(in srgb, var(--white) 6%, transparent)",
+              color: "var(--surface-subtle)",
+              border: "1px solid color-mix(in srgb, var(--white) 12%, transparent)",
               padding: "12px 24px",
               borderRadius: "6px",
               fontSize: "13.5px",

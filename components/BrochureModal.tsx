@@ -81,10 +81,10 @@ export function BrochureModal({ onClose, brochureUrl }: BrochureModalProps) {
         {status === "success" ? (
           <div style={{ textAlign: "center", padding: "20px 0" }}>
             <span style={{ fontSize: "40px" }}>✓</span>
-            <h3 style={{ fontSize: "20px", color: "#d4af37", margin: "12px 0 6px" }}>
+            <h3 style={{ fontSize: "20px", color: "var(--gold)", margin: "12px 0 6px" }}>
               Brochure Unlocked!
             </h3>
-            <p style={{ fontSize: "13px", color: "#cbd5e1", marginBottom: "20px" }}>
+            <p style={{ fontSize: "13px", color: "var(--on-dark)", marginBottom: "20px" }}>
               Thank you for your interest. Our executive team has also received your details.
             </p>
             {brochureUrl ? (
@@ -100,11 +100,11 @@ export function BrochureModal({ onClose, brochureUrl }: BrochureModalProps) {
             ) : (
               <div
                 style={{
-                  background: "#1e2636",
+                  background: "var(--obsidian-card)",
                   padding: "12px",
                   borderRadius: "6px",
                   fontSize: "12px",
-                  color: "#94a3b8",
+                  color: "var(--on-dark-muted)",
                 }}
               >
                 Project specifications will be transmitted to your email and WhatsApp shortly.
@@ -118,17 +118,17 @@ export function BrochureModal({ onClose, brochureUrl }: BrochureModalProps) {
                 style={{
                   fontSize: "10px",
                   letterSpacing: "0.15em",
-                  color: "#d4af37",
+                  color: "var(--gold)",
                   textTransform: "uppercase",
                   fontWeight: 700,
                 }}
               >
                 MAAS Industrial Ventures
               </span>
-              <h3 style={{ margin: "6px 0 4px", fontSize: "20px", color: "#fff" }}>
+              <h3 style={{ margin: "6px 0 4px", fontSize: "20px", color: "var(--white)" }}>
                 Request Verified Master Plan &amp; Brochure
               </h3>
-              <p style={{ margin: 0, fontSize: "12px", color: "#94a3b8" }}>
+              <p style={{ margin: 0, fontSize: "12px", color: "var(--on-dark-muted)" }}>
                 Receive zoning layouts, power/water capacities, and commercial pricing schedules.
               </p>
             </div>
@@ -136,8 +136,8 @@ export function BrochureModal({ onClose, brochureUrl }: BrochureModalProps) {
             {errorMessage && (
               <div
                 style={{
-                  background: "#450a0a",
-                  color: "#fca5a5",
+                  background: "var(--danger-dark)",
+                  color: "var(--danger-light)",
                   padding: "8px 12px",
                   borderRadius: "4px",
                   fontSize: "11px",
@@ -153,7 +153,7 @@ export function BrochureModal({ onClose, brochureUrl }: BrochureModalProps) {
                 <div>
                   <label
                     htmlFor="bm-name"
-                    style={{ display: "block", fontSize: "11px", color: "#cbd5e1", marginBottom: "4px" }}
+                    style={{ display: "block", fontSize: "11px", color: "var(--on-dark)", marginBottom: "4px" }}
                   >
                     Full Name *
                   </label>
@@ -171,7 +171,7 @@ export function BrochureModal({ onClose, brochureUrl }: BrochureModalProps) {
                 <div>
                   <label
                     htmlFor="bm-phone"
-                    style={{ display: "block", fontSize: "11px", color: "#cbd5e1", marginBottom: "4px" }}
+                    style={{ display: "block", fontSize: "11px", color: "var(--on-dark)", marginBottom: "4px" }}
                   >
                     Phone / WhatsApp Number *
                   </label>
@@ -189,7 +189,7 @@ export function BrochureModal({ onClose, brochureUrl }: BrochureModalProps) {
                 <div>
                   <label
                     htmlFor="bm-email"
-                    style={{ display: "block", fontSize: "11px", color: "#cbd5e1", marginBottom: "4px" }}
+                    style={{ display: "block", fontSize: "11px", color: "var(--on-dark)", marginBottom: "4px" }}
                   >
                     Corporate Email *
                   </label>
@@ -207,7 +207,7 @@ export function BrochureModal({ onClose, brochureUrl }: BrochureModalProps) {
                 <div>
                   <label
                     htmlFor="bm-req"
-                    style={{ display: "block", fontSize: "11px", color: "#cbd5e1", marginBottom: "4px" }}
+                    style={{ display: "block", fontSize: "11px", color: "var(--on-dark)", marginBottom: "4px" }}
                   >
                     Required Plot Size or Industry
                   </label>

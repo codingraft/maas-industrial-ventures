@@ -23,6 +23,7 @@ export async function POST(request: Request) {
   let body: { username?: string; password?: string };
   try {
     body = await request.json();
+    if (!body || typeof body !== "object" || Array.isArray(body)) throw new TypeError("Expected object");
   } catch {
     return NextResponse.json({ message: "Invalid request payload." }, { status: 400 });
   }
