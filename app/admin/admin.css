@@ -5167,3 +5167,16 @@ input:checked+.slider:before {
 
 
 
+
+.project-gallery-editor {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 175px), 1fr));
+  gap: 12px;
+}
+.project-gallery-entry {
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: 6px;
+}
+.project-gallery-entry img { display: block; width: 100%; height: 110px; object-fit: cover; }
+.project-gallery-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 4px; padding: 6px; }

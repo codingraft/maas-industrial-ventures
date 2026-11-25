@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { SeoSettings } from "@/lib/types";
+import { SeoSettings, SiteSettings } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
 import { AdminTabs } from "@/components/admin/ui/AdminTabs";
 import { uploadImage } from "@/lib/imageOptimizer";
@@ -10,10 +10,11 @@ import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
 interface SeoManagerProps {
   initialSeo: SeoSettings;
+  media: SiteSettings["media"];
   onUpdate: (updated: SeoSettings) => Promise<void>;
 }
 
-export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
+export function SeoManager({ initialSeo, media, onUpdate }: SeoManagerProps) {
   const [seo, setSeo] = useState<SeoSettings>(initialSeo);
   const [activeSubTab, setActiveSubTab] = useState<"general" | "social" | "indexing" | "schema">("general");
   const [saving, setSaving] = useState(false);
@@ -353,27 +354,15 @@ export function SeoManager({ initialSeo, onUpdate }: SeoManagerProps) {
               {/* Quick Image Presets */}
               <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", alignItems: "center" }}>
                 <span style={{ fontSize: "11px", color: "var(--admin-text-dim)" }}>Quick Presets:</span>
-                <button
-                  type="button"
-                  className="btn-minimal"
-                  onClick={() => setSeo({ ...seo, ogImage: "/images/hero-1.jpg" })}
-                >
-                  Hero Slide 1
-                </button>
-                <button
-                  type="button"
-                  className="btn-minimal"
-                  onClick={() => setSeo({ ...seo, ogImage: "/images/hero-2.jpg" })}
-                >
-                  Hero Slide 2
-                </button>
-                <button
-                  type="button"
-                  className="btn-minimal"
-                  onClick={() => setSeo({ ...seo, ogImage: "/images/masterplan.jpg" })}
-                >
-                  Master Plan Blueprint
-                </button>
+                {[
+                  ...media.heroSlides.slice(0, 2).map((slide, index) => ({ label: "Hero Slide " + (index + 1), src: slide.src })),
+                  { label: "Master Plan Blueprint", src: media.masterplanPlans[0]?.src },
+                ].filter(preset => preset.src).map(preset => (
+                  <button key={preset.label} type="button" className="btn-minimal"
+                    onClick={() => setSeo({ ...seo, ogImage: preset.src })}>
+                    {preset.label}
+                  </button>
+                ))}
               </div>
               <div className="form-help">
                 Recommended dimension: 1200 x 630 pixels (Aspect Ratio: 1.91:1) in PNG, JPG, or WebP.

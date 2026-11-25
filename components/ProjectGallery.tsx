@@ -1,9 +1,11 @@
 "use client";
 
 import Image from "next/image";
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { GalleryItem, GalleryCategory } from "@/lib/types";
 import { Pagination } from "@/components/ui/Pagination";
+
+import { GalleryLightbox, galleryFallback } from "./GalleryLightbox";
 
 interface ProjectGalleryProps {
   images?: GalleryItem[];
@@ -25,59 +27,7 @@ export function ProjectGallery({
   const [activeCategory, setActiveCategory] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [lightboxIndex, setLightboxIndex] = useState<number | null>(null);
-  const [touchStartX, setTouchStartX] = useState<number | null>(null);
   const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
-
-  const fallbackImage =
-    "https://images.unsplash.com/photo-1567789884554-0b844b597180?auto=format&fit=crop&w=1400&q=82";
-
-  const dialogRef = useRef<HTMLDivElement>(null);
-  const open = lightboxIndex !== null;
-  useEffect(() => {
-    const dialog = dialogRef.current;
-    if (!open || !dialog) return;
-    const trigger = document.activeElement;
-    const overflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    dialog.querySelector<HTMLButtonElement>("button")?.focus();
-    function keepFocus(event: KeyboardEvent) {
-      if (event.key !== "Tab" || !dialog) return;
-      const buttons = dialog.querySelectorAll<HTMLButtonElement>("button:not(:disabled)");
-      const first = buttons[0];
-      const last = buttons[buttons.length - 1];
-      if (event.shiftKey && document.activeElement === first) {
-        event.preventDefault();
-        last?.focus();
-      } else if (!event.shiftKey && document.activeElement === last) {
-        event.preventDefault();
-        first?.focus();
-      }
-    }
-    dialog.addEventListener("keydown", keepFocus);
-    return () => {
-      document.body.style.overflow = overflow;
-      dialog.removeEventListener("keydown", keepFocus);
-      if (trigger instanceof HTMLElement) trigger.focus();
-    };
-  }, [open]);
-
-  function handleTouchStart(e: React.TouchEvent) {
-    setTouchStartX(e.changedTouches[0].screenX);
-  }
-
-  function handleTouchEnd(e: React.TouchEvent) {
-    if (touchStartX === null) return;
-    const diff = e.changedTouches[0].screenX - touchStartX;
-    if (diff > 50) {
-      // swipe right -> previous image
-      setLightboxIndex((prev) => (prev! - 1 + filteredImages.length) % filteredImages.length);
-    } else if (diff < -50) {
-      // swipe left -> next image
-      setLightboxIndex((prev) => (prev! + 1) % filteredImages.length);
-    }
-    setTouchStartX(null);
-  }
-
 
   // Filter out any categories that have ZERO matching images
   const visibleCategories = useMemo(() => {
@@ -150,20 +100,6 @@ export function ProjectGallery({
     setCurrentPage(1);
     setLightboxIndex(null);
   }
-
-  // Keyboard navigation for lightbox
-  useEffect(() => {
-    if (lightboxIndex === null) return;
-    const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setLightboxIndex(null);
-      if (event.key === "ArrowRight")
-        setLightboxIndex((prev) => (prev! + 1) % filteredImages.length);
-      if (event.key === "ArrowLeft")
-        setLightboxIndex((prev) => (prev! - 1 + filteredImages.length) % filteredImages.length);
-    };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [lightboxIndex, filteredImages.length]);
 
   return (
     <>
@@ -240,7 +176,7 @@ export function ProjectGallery({
                   aria-label={`Open photo: ${image.caption}`}
                 >
                   <Image
-                    src={failedImages[image.src] ? fallbackImage : image.src}
+                    src={failedImages[image.src] ? galleryFallback : image.src}
                     alt={image.alt || image.caption}
                     fill
                     sizes="(max-width: 600px) 100vw, (max-width: 1024px) 50vw, 33vw"
@@ -301,91 +237,8 @@ export function ProjectGallery({
         )}
       </section>
 
-      {/* Lightbox Modal */}
       {lightboxIndex !== null && filteredImages[lightboxIndex] && (
-        <div
-          className="lightbox-overlay"
-          onClick={() => setLightboxIndex(null)}
-          ref={dialogRef}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Image viewer"
-        >
-          <div
-            className="lightbox-content"
-            onClick={(e) => e.stopPropagation()}
-            onTouchStart={handleTouchStart}
-            onTouchEnd={handleTouchEnd}
-          >
-            <div className="lightbox-image-wrap">
-              <Image
-                src={failedImages[filteredImages[lightboxIndex].src]
-                  ? fallbackImage
-                  : filteredImages[lightboxIndex].src}
-                alt={filteredImages[lightboxIndex].alt || filteredImages[lightboxIndex].caption}
-                fill
-                sizes="95vw"
-                style={{ objectFit: "contain" }}
-                onError={() => {
-                  const source = filteredImages[lightboxIndex].src;
-                  if (!failedImages[source]) {
-                    setFailedImages((previous) => ({ ...previous, [source]: true }));
-                  }
-                }}
-              />
-            </div>
-
-            <div className="lightbox-caption-bar">
-              <div>
-                <span className="lightbox-tag">
-                  {filteredImages[lightboxIndex].category.toUpperCase()}
-                </span>
-                <p className="lightbox-title">
-                  {filteredImages[lightboxIndex].caption}
-                </p>
-              </div>
-              <span className="lightbox-counter">
-                {lightboxIndex + 1} / {filteredImages.length}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              className="lightbox-close"
-              onClick={() => setLightboxIndex(null)}
-              aria-label="Close image viewer"
-            >
-              ✕
-            </button>
-
-            {filteredImages.length > 1 && (
-              <>
-                <button
-                  type="button"
-                  className="lightbox-arrow lightbox-prev"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIndex((prev) => (prev! - 1 + filteredImages.length) % filteredImages.length);
-                  }}
-                  aria-label="Previous photo"
-                >
-                  ‹
-                </button>
-                <button
-                  type="button"
-                  className="lightbox-arrow lightbox-next"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setLightboxIndex((prev) => (prev! + 1) % filteredImages.length);
-                  }}
-                  aria-label="Next photo"
-                >
-                  ›
-                </button>
-              </>
-            )}
-          </div>
-        </div>
+        <GalleryLightbox photos={filteredImages} initialIndex={lightboxIndex} onClose={() => setLightboxIndex(null)} />
       )}
     </>
   );

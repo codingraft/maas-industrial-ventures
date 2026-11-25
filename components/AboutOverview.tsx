@@ -50,54 +50,36 @@ export function AboutOverview({
   visionMission,
   overviewImage,
   overviewEyebrow = "About MAAS Industrial Ventures Pvt. Limited",
-  overviewCtaText = "Learn More About MAAS",
+  overviewCtaText = "Explore Active Projects",
   verticalsEyebrow = "Our Focus Areas",
   verticalsHeadline = "Our Development Verticals",
   verticalsDescription = "From strategic industrial manufacturing estates to planned plotted communities, our developments are engineered for long-term value.",
 }: AboutOverviewProps) {
+  const headlineLines = overviewHeadline.trim().split(/(?<=[.!?])\s+(?=[A-Z])/);
+
   return (
     <section className="overview section-pad" id="overview">
       <div className="page-wrap">
-        <div className="section-label">
-          <span>01</span> / About MAAS
-        </div>
-
-        {/* Main Narrative Split */}
+        <p className="overview-kicker">{overviewEyebrow}</p>
         <div className="overview-grid">
           <div className="overview-heading">
-            <p className="eyebrow">{overviewEyebrow}</p>
             <h2>
-              {overviewHeadline.split(".").map((part, i, arr) => {
-                const trimmed = part.trim();
-                if (!trimmed) return null;
-                return (
-                  <span key={i} className="headline-part">
-                    {i === arr.length - 2 ? <em>{trimmed}.</em> : `${trimmed}.`}
-                  </span>
-                );
-              })}
+              {headlineLines.map((line, index) => (
+                <span key={index} className="headline-part">
+                  {index > 0 && " "}
+                  {index > 0 && index === headlineLines.length - 1 ? <em>{line}</em> : line}
+                </span>
+              ))}
             </h2>
-            <div className="overview-cta-wrap">
-              <Link className="button button-gold" href="/about">
-                {overviewCtaText} <Arrow diagonal />
-              </Link>
-              <Link className="button button-outline-dark" href="/projects">
-                Explore Projects <Arrow />
-              </Link>
-            </div>
           </div>
-
           <div className="overview-copy">
-            {overviewParagraphs.slice(0, 2).map((para, idx) => (
-              <p key={idx} className={idx === 0 ? "lead" : ""}>
-                {para}
-              </p>
+            {overviewParagraphs.slice(0, 2).map((paragraph, index) => (
+              <p key={index} className={index === 0 ? "lead" : undefined}>{paragraph}</p>
             ))}
-            <div className="overview-actions-row">
-              <Link href="/about" className="text-link">
-                Read our full company pedigree &amp; development philosophy <Arrow diagonal />
-              </Link>
-            </div>
+          </div>
+          <div className="overview-cta-wrap">
+            <Link className="button button-gold" href="/projects">{overviewCtaText} <Arrow /></Link>
+            <Link className="text-link" href="/about">About MAAS <Arrow diagonal /></Link>
           </div>
         </div>
 

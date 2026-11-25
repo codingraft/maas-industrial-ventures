@@ -10,6 +10,7 @@ import { AdminBadge } from "@/components/admin/ui/AdminBadge";
 import { AdminToolbar, AdminSearchInput } from "@/components/admin/ui/AdminToolbar";
 import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
 import { uploadImage } from "@/lib/imageOptimizer";
+import { ProjectGalleryField } from "./ProjectGalleryField";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
 
 type ProjectStudioTab = "general" | "specs" | "media";
@@ -685,45 +686,10 @@ export function ProjectsManager() {
                       />
                     </div>
 
-                    <div className="admin-field admin-field-full">
-                      <label>
-                        <span>Site Progress Gallery Images</span>
-                        <span className="label-hint">One image URL per line · Rendered in public site photo records</span>
-                      </label>
-                      <textarea
-                        className="admin-textarea"
-                        rows={3}
-                        value={(editingProject.galleryImages || []).join("\n")}
-                        onChange={(e) =>
-                          setEditingProject({
-                            ...editingProject,
-                            galleryImages: e.target.value
-                              .split("\n")
-                              .map((line) => line.trim())
-                              .filter(Boolean),
-                          })
-                        }
-                        placeholder={`https://images.unsplash.com/photo-1567789884554-0b844b597180\nhttps://images.unsplash.com/photo-1504307651254-35680f356dfd`}
-                      />
-                      <small style={{ fontSize: "11px", color: "var(--admin-text-muted)", marginTop: "4px", display: "block" }}>
-                        {(editingProject.galleryImages || []).length} gallery images configured
-                      </small>
-
-                      {editingProject.galleryImages && editingProject.galleryImages.length > 0 && (
-                        <div style={{ display: "flex", gap: "8px", flexWrap: "wrap", marginTop: "10px" }}>
-                          {editingProject.galleryImages.slice(0, 6).map((img, iIdx) => (
-                            <Image
-                              key={iIdx}
-                              src={img}
-                              alt={`Gallery ${iIdx + 1}`}
-                              width={80}
-                              height={55}
-                              style={{ objectFit: "cover", borderRadius: "4px", border: "1px solid var(--admin-border)" }}
-                            />
-                          ))}
-                        </div>
-                      )}
-                    </div>
+                    <ProjectGalleryField
+                      images={editingProject.galleryImages || []}
+                      onChange={galleryImages => setEditingProject(project => project && ({ ...project, galleryImages }))}
+                    />
                   </div>
                 </div>
               )}

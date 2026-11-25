@@ -708,6 +708,7 @@ export function AdminDashboardClient({
             {activeTab === "seo" && (
               <SeoManager
                 initialSeo={settings.seo}
+                media={settings.media}
                 onUpdate={(next) => updateSettingPart("seo", next)}
               />
             )}
