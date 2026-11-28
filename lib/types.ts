@@ -5,6 +5,7 @@ export type HeroSlide = {
   eyebrow?: string;
   title: string;
   subtitle: string;
+  description?: string;
 };
 
 export type MasterPlanItem = {
@@ -15,6 +16,7 @@ export type MasterPlanItem = {
   src: string;
   alt: string;
   tag?: string;
+  specs?: Array<{ label: string; value: string }>;
 };
 
 export type GalleryCategory = {
@@ -200,6 +202,12 @@ export type SiteSettings = {
     galleryEyebrow?: string;
     galleryHeadline?: string;
     galleryDescription?: string;
+    masterplanEyebrow?: string;
+    masterplanHeadline?: string;
+    masterplanDescription?: string;
+    faqEyebrow?: string;
+    faqHeadline?: string;
+    faqDescription?: string;
     blogSectionEyebrow?: string;
     blogSectionHeadline?: string;
     blogSectionDescription?: string;

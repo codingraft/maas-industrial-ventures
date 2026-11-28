@@ -7,15 +7,36 @@ import { MasterPlanItem } from "@/lib/types";
 
 interface MasterPlanViewerProps {
   plans: MasterPlanItem[];
+  eyebrow?: string;
+  headline?: string;
+  description?: string;
 }
 
-export function MasterPlanViewer({ plans }: MasterPlanViewerProps) {
+const DEFAULT_PLAN_SPECS = [
+  { label: "Land Parcel Area", value: "150+ Acres Master Planned" },
+  { label: "Permissible FAR / FSI", value: "Up to 2.0 (High-Cube Ready)" },
+  { label: "Internal Road Spines", value: "45m Arterial / 30m Secondary" },
+  { label: "Power Grid Feed", value: "Dedicated 33/11 kV Substation" },
+  { label: "Eco Perimeter Setback", value: "15% Green Buffer Zone" },
+  { label: "Zoning Compliance", value: "Pre-Approved Industrial Clearances" },
+];
+
+export function MasterPlanViewer({
+  plans,
+  eyebrow,
+  headline,
+  description,
+}: MasterPlanViewerProps) {
   const [activeIndex, setActiveIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
   if (!plans || plans.length === 0) return null;
 
   const activePlan = plans[activeIndex] || plans[0];
+  const displaySpecs =
+    activePlan.specs && activePlan.specs.length > 0
+      ? activePlan.specs
+      : DEFAULT_PLAN_SPECS;
 
   return (
     <section className="masterplan section-pad" id="master-plan">
@@ -27,14 +48,19 @@ export function MasterPlanViewer({ plans }: MasterPlanViewerProps) {
           </div>
           <div className="masterplan-intro-content">
             <p className="eyebrow eyebrow-light">
-              <span></span> A CLEARER PICTURE STARTS HERE
+              <span></span> {eyebrow || "A CLEARER PICTURE STARTS HERE"}
             </p>
             <h2 className="masterplan-title">
-              See the plan.<br />
-              <em>Understand the place.</em>
+              {headline || (
+                <>
+                  See the plan.<br />
+                  <em>Understand the place.</em>
+                </>
+              )}
             </h2>
             <p className="masterplan-lead">
-              Comprehensive master layout blueprints detailing plot zoning, utility corridors, green buffers, and dedicated freight access points are shared with prospective enterprise partners.
+              {description ||
+                "Comprehensive master layout blueprints detailing plot zoning, utility corridors, green buffers, and dedicated freight access points are shared with prospective enterprise partners."}
             </p>
           </div>
         </div>
@@ -136,30 +162,12 @@ export function MasterPlanViewer({ plans }: MasterPlanViewerProps) {
 
             {/* Technical Zoning Metrics */}
             <div className="blueprint-specs-grid">
-              <div className="blueprint-spec-item">
-                <span className="spec-lbl">Land Parcel Area</span>
-                <strong className="spec-val" style={{ color: "var(--white)" }}>150+ Acres Master Planned</strong>
-              </div>
-              <div className="blueprint-spec-item">
-                <span className="spec-lbl">Permissible FAR / FSI</span>
-                <strong className="spec-val" style={{ color: "var(--white)" }}>Up to 2.0 (High-Cube Ready)</strong>
-              </div>
-              <div className="blueprint-spec-item">
-                <span className="spec-lbl">Internal Road Spines</span>
-                <strong className="spec-val" style={{ color: "var(--white)" }}>45m Arterial / 30m Secondary</strong>
-              </div>
-              <div className="blueprint-spec-item">
-                <span className="spec-lbl">Power Grid Feed</span>
-                <strong className="spec-val" style={{ color: "var(--white)" }}>Dedicated 33/11 kV Substation</strong>
-              </div>
-              <div className="blueprint-spec-item">
-                <span className="spec-lbl">Eco Perimeter Setback</span>
-                <strong className="spec-val" style={{ color: "var(--white)" }}>15% Green Buffer Zone</strong>
-              </div>
-              <div className="blueprint-spec-item">
-                <span className="spec-lbl">Zoning Compliance</span>
-                <strong className="spec-val" style={{ color: "var(--white)" }}>Pre-Approved Industrial Clearances</strong>
-              </div>
+              {displaySpecs.map((spec, sIdx) => (
+                <div className="blueprint-spec-item" key={`${spec.label}-${sIdx}`}>
+                  <span className="spec-lbl">{spec.label}</span>
+                  <strong className="spec-val" style={{ color: "var(--white)" }}>{spec.value}</strong>
+                </div>
+              ))}
             </div>
 
             {/* Action Bar */}

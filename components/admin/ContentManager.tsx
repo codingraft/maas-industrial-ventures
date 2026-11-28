@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { AdminTabs, TabOption } from "@/components/admin/ui/AdminTabs";
+import Image from "next/image";
+import { AdminTabs } from "@/components/admin/ui/AdminTabs";
 import {
   SiteSettings,
+  HeroSlide,
   FactItem,
   HighlightItem,
   TimelineMilestone,
@@ -11,10 +13,13 @@ import {
   DevelopmentVertical,
   VisionMissionPhilosophy,
   defaultContent,
+  defaultMedia,
   defaultVerticals,
   defaultVisionMission,
 } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
+import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
+import { uploadImage } from "@/lib/imageOptimizer";
 
 interface CopyFieldDef {
   key: keyof SiteSettings["site_info"];
@@ -31,25 +36,8 @@ interface CopySectionDef {
 
 const copySections: CopySectionDef[] = [
   {
-    title: "Company Story & Overview Headings",
-    desc: "Controls the eyebrow tag and call-to-action button text above the company story paragraphs.",
-    fields: [
-      { key: "overviewEyebrow", label: "Overview Eyebrow Tag", placeholder: "OUR EXPERTISE & DEVELOPMENT VISION" },
-      { key: "overviewCtaText", label: "Overview CTA Button Label", placeholder: "Explore Industrial Verticals" },
-    ],
-  },
-  {
-    title: "Development Verticals Section",
-    desc: "Controls the headline banner introducing the 4 core verticals on the homepage.",
-    fields: [
-      { key: "verticalsEyebrow", label: "Verticals Eyebrow", placeholder: "CORE CAPABILITIES" },
-      { key: "verticalsHeadline", label: "Verticals Section Headline", placeholder: "Strategic Development Verticals" },
-      { key: "verticalsDescription", label: "Verticals Summary Description", placeholder: "Delivering end-to-end industrial infrastructure and plotted township developments.", isLong: true },
-    ],
-  },
-  {
-    title: "Projects & Portfolio Section",
-    desc: "Controls the header introducing Gayatri Industrial Park and Shri Balaji Industrial Park.",
+    title: "Projects & Portfolio Section (Homepage + /projects)",
+    desc: "Controls the eyebrow, headline, and summary introducing featured developments on Homepage and /projects.",
     fields: [
       { key: "projectsEyebrow", label: "Projects Eyebrow", placeholder: "LANDMARK DEVELOPMENTS" },
       { key: "projectsHeadline", label: "Projects Section Headline", placeholder: "Featured Industrial Parks & Townships" },
@@ -57,8 +45,17 @@ const copySections: CopySectionDef[] = [
     ],
   },
   {
-    title: "Gallery & Visuals Section",
-    desc: "Controls the eyebrow and headline introducing the photo & infrastructure gallery.",
+    title: "Master Plan Blueprints Section (Homepage)",
+    desc: "Controls the section header above the interactive Master Plan viewer on the Homepage.",
+    fields: [
+      { key: "masterplanEyebrow", label: "Master Plan Eyebrow", placeholder: "A CLEARER PICTURE STARTS HERE" },
+      { key: "masterplanHeadline", label: "Master Plan Headline", placeholder: "See the plan. Understand the place." },
+      { key: "masterplanDescription", label: "Master Plan Description", placeholder: "Comprehensive master layout blueprints detailing plot zoning, utility corridors, and freight access points.", isLong: true },
+    ],
+  },
+  {
+    title: "Gallery & Visuals Section (Homepage + /gallery)",
+    desc: "Controls the eyebrow, headline, and subtitle introducing the site progress photo gallery.",
     fields: [
       { key: "galleryEyebrow", label: "Gallery Eyebrow", placeholder: "PROJECT GALLERY" },
       { key: "galleryHeadline", label: "Gallery Section Headline", placeholder: "On-Site Infrastructure & Progress" },
@@ -66,20 +63,29 @@ const copySections: CopySectionDef[] = [
     ],
   },
   {
-    title: "Blog & Editorial Previews",
-    desc: "Controls the homepage blog strip and the dedicated /blog index page headlines.",
+    title: "Blog & Insights Section (Homepage + /blog Hero)",
+    desc: "Controls the homepage blog strip and the dedicated /blog index page hero headlines.",
     fields: [
       { key: "blogSectionEyebrow", label: "Homepage Blog Eyebrow", placeholder: "INSIGHTS & MARKET INTELLIGENCE" },
       { key: "blogSectionHeadline", label: "Homepage Blog Headline", placeholder: "Latest News & Investment Analysis" },
-      { key: "blogSectionDescription", label: "Homepage Blog Description", placeholder: "Expert perspectives on Gujarat industrial land, connectivity corridors, and policies.", isLong: true },
-      { key: "blogEyebrow", label: "Blog Page Eyebrow", placeholder: "EDITORIAL STUDIO" },
-      { key: "blogHeadline", label: "Blog Page Headline", placeholder: "MAAS Ventures Intelligence" },
-      { key: "blogDescription", label: "Blog Page Subtitle", placeholder: "Stay informed on land acquisition, GST incentives, and industrial hub expansions.", isLong: true },
+      { key: "blogSectionDescription", label: "Homepage Blog Description", placeholder: "Expert perspectives on industrial land, connectivity corridors, and policies.", isLong: true },
+      { key: "blogEyebrow", label: "/blog Page Eyebrow", placeholder: "EDITORIAL STUDIO" },
+      { key: "blogHeadline", label: "/blog Page Headline", placeholder: "MAAS Ventures Intelligence" },
+      { key: "blogDescription", label: "/blog Page Subtitle", placeholder: "Stay informed on land acquisition, GST incentives, and industrial hub expansions.", isLong: true },
     ],
   },
   {
-    title: "Contact & Enquiry Section",
-    desc: "Controls the lead capture banner at the bottom of the homepage.",
+    title: "Customer FAQs Section (Homepage + /contact)",
+    desc: "Controls the section header above the accordion FAQs on Homepage and /contact.",
+    fields: [
+      { key: "faqEyebrow", label: "FAQ Eyebrow", placeholder: "COMMON INQUIRIES" },
+      { key: "faqHeadline", label: "FAQ Headline", placeholder: "Statutory & Plot Allocation FAQs" },
+      { key: "faqDescription", label: "FAQ Description", placeholder: "Clear answers to plot allocation, road specifications, and state subsidy guidelines.", isLong: true },
+    ],
+  },
+  {
+    title: "Contact & Enquiry Section (Homepage + /contact Hero)",
+    desc: "Controls the lead capture banner at the bottom of the Homepage and /contact page header.",
     fields: [
       { key: "contactEyebrow", label: "Contact Eyebrow", placeholder: "DIRECT DEVELOPER ADVISORY" },
       { key: "contactHeadline", label: "Contact Section Headline", placeholder: "Schedule a Site Visit or Request Investor Kit" },
@@ -100,6 +106,32 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
 
   // Hero & Overview local state
   const [siteInfo, setSiteInfo] = useState({ ...settings.site_info });
+
+  // Unified Hero Banner Slides local state (Single Source of Truth)
+  const [heroSlides, setHeroSlides] = useState<HeroSlide[]>(() => {
+    const existingSlides = settings.media?.heroSlides;
+    if (existingSlides && existingSlides.length > 0) {
+      return existingSlides.map((slide, idx) => ({
+        ...slide,
+        description:
+          slide.description !== undefined
+            ? slide.description
+            : idx === 0
+              ? settings.site_info.heroDescription || ""
+              : "",
+      }));
+    }
+    return defaultMedia.heroSlides.map((slide, idx) => ({
+      ...slide,
+      eyebrow: idx === 0 ? settings.site_info.heroEyebrow || slide.eyebrow : slide.eyebrow,
+      title: idx === 0 ? settings.site_info.heroHeadline || slide.title : slide.title,
+      subtitle: idx === 0 ? settings.site_info.heroSubheadline || slide.subtitle : slide.subtitle,
+      description: idx === 0 ? settings.site_info.heroDescription || "" : "",
+    }));
+  });
+  const [previewSlideIdx, setPreviewSlideIdx] = useState(0);
+  const [heroPicker, setHeroPicker] = useState<{ open: boolean; slideIndex?: number }>({ open: false });
+  const [uploadingSlideIdx, setUploadingSlideIdx] = useState<number | "new" | null>(null);
 
   // 4 Bottom highlights
   const [bottomHighlights, setBottomHighlights] = useState<string[]>(
@@ -187,17 +219,99 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }
 
+  async function handleHeroSlideUpload(slideIndex: number | "new", e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingSlideIdx(slideIndex);
+    try {
+      const url = await uploadImage(file, { maxDimension: 2200, quality: 0.85 });
+      if (slideIndex === "new") {
+        const nextSlide: HeroSlide = {
+          id: `slide-${Date.now()}`,
+          src: url,
+          alt: "MAAS Industrial Ventures Aerial Perspective",
+          eyebrow: `${siteInfo.shortName || "MAAS"} · LAND & REAL ESTATE DEVELOPERS`,
+          title: "Developing Land. Building Opportunities.",
+          subtitle: "Purpose-built industrial hubs and planned residential corridors.",
+          description: "",
+        };
+        const nextSlides = [...heroSlides, nextSlide];
+        setHeroSlides(nextSlides);
+        setPreviewSlideIdx(nextSlides.length - 1);
+        addToast("info", "New slide uploaded", "Click 'Save All Changes' to publish.");
+      } else {
+        const nextSlides = [...heroSlides];
+        nextSlides[slideIndex] = { ...nextSlides[slideIndex], src: url };
+        setHeroSlides(nextSlides);
+        addToast("info", "Slide image updated", "Click 'Save All Changes' to publish.");
+      }
+    } catch (err) {
+      addToast("error", "Upload failed", err instanceof Error ? err.message : "Could not upload image");
+    } finally {
+      setUploadingSlideIdx(null);
+    }
+  }
+
+  function handleMoveHeroSlide(fromIndex: number, direction: "up" | "down") {
+    const toIndex = direction === "up" ? fromIndex - 1 : fromIndex + 1;
+    if (toIndex < 0 || toIndex >= heroSlides.length) return;
+    const nextSlides = [...heroSlides];
+    const [moved] = nextSlides.splice(fromIndex, 1);
+    nextSlides.splice(toIndex, 0, moved);
+    setHeroSlides(nextSlides);
+    setPreviewSlideIdx(toIndex);
+  }
+
+  function handleDeleteHeroSlide(slideIndex: number) {
+    if (heroSlides.length <= 1) {
+      addToast("error", "Cannot delete", "At least one hero slide is required on the homepage.");
+      return;
+    }
+    setConfirmDialog({
+      isOpen: true,
+      title: "Remove Hero Slide",
+      message: `Remove Slide 0${slideIndex + 1} from the homepage carousel?`,
+      action: () => {
+        const nextSlides = heroSlides.filter((_, idx) => idx !== slideIndex);
+        setHeroSlides(nextSlides);
+        setPreviewSlideIdx((prev) => Math.min(prev, Math.max(nextSlides.length - 1, 0)));
+      },
+    });
+  }
+
   async function handleSaveAll() {
     setSaving(true);
     try {
+      const firstSlide = heroSlides[0];
+      const nextSiteInfo = {
+        ...siteInfo,
+        ...(firstSlide
+          ? {
+              heroEyebrow: firstSlide.eyebrow ?? siteInfo.heroEyebrow,
+              heroHeadline: firstSlide.title ?? siteInfo.heroHeadline,
+              heroSubheadline: firstSlide.subtitle ?? siteInfo.heroSubheadline,
+              heroDescription: firstSlide.description ?? siteInfo.heroDescription,
+            }
+          : {}),
+        bottomHighlights,
+        overviewParagraphs,
+      };
+      const nextMedia = {
+        ...settings.media,
+        heroSlides,
+        hero: firstSlide?.src || settings.media?.hero || "/images/maas/gate-view.jpg",
+      };
+
       await onUpdate({
         content: { facts, highlights, timeline, faqs },
-        site_info: { ...siteInfo, bottomHighlights, overviewParagraphs },
+        site_info: nextSiteInfo,
         verticals,
         vision_mission: visionMission,
+        media: nextMedia,
       });
 
-      addToast("success", "Changes Saved Successfully", "All text, verticals, vision, and FAQs are updated live.");
+      setSiteInfo(nextSiteInfo);
+      addToast("success", "Changes Saved Successfully", "All hero slides, copy, verticals, and FAQs are updated live.");
     } catch (err) {
       addToast("error", "Failed to save", err instanceof Error ? err.message : "Error saving");
     } finally {
@@ -217,6 +331,44 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
           setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         }}
         onCancel={() => setConfirmDialog((prev) => ({ ...prev, isOpen: false }))}
+      />
+
+      <MediaPickerModal
+        isOpen={heroPicker.open}
+        onClose={() => setHeroPicker({ open: false })}
+        currentUrl={
+          heroPicker.slideIndex !== undefined && heroSlides[heroPicker.slideIndex]
+            ? heroSlides[heroPicker.slideIndex].src
+            : undefined
+        }
+        title={heroPicker.slideIndex === undefined ? "Select Image for New Hero Slide" : `Choose Image for Hero Slide #${heroPicker.slideIndex + 1}`}
+        onSelect={(url, alt) => {
+          if (heroPicker.slideIndex === undefined) {
+            const nextSlide: HeroSlide = {
+              id: `slide-${Date.now()}`,
+              src: url,
+              alt: alt || "MAAS Industrial Ventures Aerial Perspective",
+              eyebrow: `${siteInfo.shortName || "MAAS"} · LAND & REAL ESTATE DEVELOPERS`,
+              title: "Developing Land. Building Opportunities.",
+              subtitle: "Purpose-built industrial hubs and planned residential corridors.",
+              description: "",
+            };
+            const nextSlides = [...heroSlides, nextSlide];
+            setHeroSlides(nextSlides);
+            setPreviewSlideIdx(nextSlides.length - 1);
+            addToast("info", "New slide added", "Click 'Save All Changes' to publish.");
+          } else {
+            const nextSlides = [...heroSlides];
+            nextSlides[heroPicker.slideIndex] = {
+              ...nextSlides[heroPicker.slideIndex],
+              src: url,
+              ...(alt && !nextSlides[heroPicker.slideIndex].alt ? { alt } : {}),
+            };
+            setHeroSlides(nextSlides);
+            addToast("info", "Slide photo updated", "Click 'Save All Changes' to publish.");
+          }
+          setHeroPicker({ open: false });
+        }}
       />
 
       {/* Sleek Content Studio Action Header */}
@@ -304,7 +456,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
       <div>
         <AdminTabs
           tabs={[
-            { id: "hero", label: "🌟 Hero & Highlights", count: bottomHighlights.length },
+            { id: "hero", label: "🌟 Hero Banner & Slides", count: heroSlides.length },
             { id: "overview", label: "🏢 Company Story" },
             { id: "verticals", label: "🏗️ 4 Verticals", count: verticals.length },
             { id: "vision", label: "🧭 Vision & Philosophy" },
@@ -318,13 +470,18 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
       </div>
 
       <div style={{ marginTop: "24px" }}>
-        {/* 1. HERO TAB WITH LIVE INTERACTIVE PREVIEW */}
-        {activeSubTab === "hero" && (
+        {/* 1. UNIFIED HERO BANNER & SLIDES STUDIO */}
+        {activeSubTab === "hero" && (() => {
+          const safePreviewIdx = Math.min(previewSlideIdx, Math.max(heroSlides.length - 1, 0));
+          const previewSlide = heroSlides[safePreviewIdx] || heroSlides[0];
+          return (
           <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
             {/* Live Interactive Hero Preview Mockup */}
             <div className="admin-dark-preview"
               style={{
-                background: "linear-gradient(180deg, #131c2d 0%, #0c121e 100%)",
+                background: previewSlide?.src
+                  ? `linear-gradient(100deg, rgba(12, 18, 30, 0.92) 0%, rgba(12, 18, 30, 0.72) 55%, rgba(12, 18, 30, 0.55) 100%), url("${previewSlide.src}") center / cover no-repeat`
+                  : "linear-gradient(180deg, #131c2d 0%, #0c121e 100%)",
                 border: "1px solid rgba(212, 175, 55, 0.35)",
                 borderRadius: "12px",
                 padding: "24px",
@@ -338,16 +495,51 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                   display: "flex",
                   justifyContent: "space-between",
                   alignItems: "center",
+                  flexWrap: "wrap",
+                  gap: "10px",
                   marginBottom: "16px",
                   paddingBottom: "10px",
-                  borderBottom: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderBottom: "1px solid rgba(255, 255, 255, 0.12)",
                 }}
               >
                 <div style={{ display: "flex", alignItems: "center", gap: "8px", fontSize: "11.5px", fontWeight: 700, color: "var(--admin-gold)", letterSpacing: "0.08em", textTransform: "uppercase" }}>
                   <span style={{ width: "8px", height: "8px", borderRadius: "50%", background: "var(--admin-gold)", display: "inline-block", boxShadow: "0 0 8px var(--admin-gold)" }} />
-                  Live Hero Preview (Homepage View)
+                  Live Hero Preview (Homepage Slide 0{safePreviewIdx + 1} / 0{heroSlides.length})
                 </div>
-                <span style={{ fontSize: "11px", color: "var(--admin-text-dim)" }}>Updates in real-time as you type</span>
+                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewSlideIdx((safePreviewIdx - 1 + heroSlides.length) % heroSlides.length)}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      color: "#fff",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                    }}
+                    title="Previous Slide"
+                  >
+                    ‹ Prev
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPreviewSlideIdx((safePreviewIdx + 1) % heroSlides.length)}
+                    style={{
+                      padding: "4px 10px",
+                      borderRadius: "6px",
+                      background: "rgba(255, 255, 255, 0.1)",
+                      border: "1px solid rgba(255, 255, 255, 0.2)",
+                      color: "#fff",
+                      cursor: "pointer",
+                      fontSize: "12px",
+                    }}
+                    title="Next Slide"
+                  >
+                    Next ›
+                  </button>
+                </div>
               </div>
 
               {/* Eyebrow Pill */}
@@ -358,9 +550,9 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                   gap: "6px",
                   padding: "4px 12px",
                   borderRadius: "999px",
-                  background: "rgba(212, 175, 55, 0.12)",
-                  border: "1px solid rgba(212, 175, 55, 0.3)",
-                  color: "var(--admin-gold)",
+                  background: "rgba(212, 175, 55, 0.16)",
+                  border: "1px solid rgba(212, 175, 55, 0.4)",
+                  color: "#f0cc66",
                   fontSize: "11px",
                   fontWeight: 700,
                   letterSpacing: "0.06em",
@@ -368,7 +560,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 }}
               >
                 <span style={{ fontSize: "8px" }}>●</span>
-                <span>{siteInfo.heroEyebrow || "MAAS INDUSTRIAL VENTURES PVT. LIMITED"}</span>
+                <span>{previewSlide?.eyebrow || "MAAS INDUSTRIAL VENTURES PVT. LIMITED"}</span>
               </div>
 
               {/* Headline H1 */}
@@ -383,21 +575,23 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                   letterSpacing: "-0.01em",
                 }}
               >
-                {siteInfo.heroHeadline || "Developing Land. Building Opportunities."}
+                {previewSlide?.title || "Developing Land. Building Opportunities."}
               </h3>
 
               {/* Subheadline */}
-              <p style={{ fontSize: "15px", fontWeight: 600, color: "var(--admin-gold)", lineHeight: 1.35, margin: "0 0 10px 0" }}>
-                {siteInfo.heroSubheadline || "Creating Industrial Hubs & Residential Developments for a Better Tomorrow."}
+              <p style={{ fontSize: "15px", fontWeight: 600, color: "#e5c158", lineHeight: 1.35, margin: "0 0 10px 0" }}>
+                {previewSlide?.subtitle || "Creating Industrial Hubs & Residential Developments for a Better Tomorrow."}
               </p>
 
               {/* Body Description */}
-              <p style={{ fontSize: "13px", color: "#cbd5e1", lineHeight: 1.55, margin: "0 0 18px 0", maxWidth: "750px" }}>
-                {siteInfo.heroDescription || "We are land and real estate developers focused on creating thoughtfully planned industrial hubs..."}
-              </p>
+              {previewSlide?.description && (
+                <p style={{ fontSize: "13px", color: "#e2e8f0", lineHeight: 1.55, margin: "0 0 18px 0", maxWidth: "750px" }}>
+                  {previewSlide.description}
+                </p>
+              )}
 
               {/* CTA Buttons */}
-              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "18px" }}>
+              <div style={{ display: "flex", gap: "10px", flexWrap: "wrap", marginBottom: "18px", marginTop: "8px" }}>
                 <span
                   style={{
                     padding: "8px 18px",
@@ -414,8 +608,8 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                   style={{
                     padding: "8px 18px",
                     borderRadius: "6px",
-                    background: "rgba(255, 255, 255, 0.08)",
-                    border: "1px solid rgba(255, 255, 255, 0.2)",
+                    background: "rgba(255, 255, 255, 0.12)",
+                    border: "1px solid rgba(255, 255, 255, 0.24)",
                     color: "#fff",
                     fontWeight: 600,
                     fontSize: "12.5px",
@@ -432,7 +626,7 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                   gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
                   gap: "8px",
                   paddingTop: "14px",
-                  borderTop: "1px solid rgba(255, 255, 255, 0.08)",
+                  borderTop: "1px solid rgba(255, 255, 255, 0.12)",
                 }}
               >
                 {bottomHighlights.map((hl, i) => (
@@ -440,25 +634,24 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                     key={i}
                     style={{
                       padding: "6px 12px",
-                      background: "rgba(0, 0, 0, 0.35)",
-                      border: "1px solid rgba(255, 255, 255, 0.12)",
+                      background: "rgba(0, 0, 0, 0.45)",
+                      border: "1px solid rgba(255, 255, 255, 0.15)",
                       borderRadius: "6px",
                       fontSize: "11.5px",
-                      color: "var(--admin-text-main)",
+                      color: "#f8fafc",
                       display: "flex",
                       alignItems: "center",
                       gap: "6px",
                     }}
                   >
-                    <span style={{ color: "var(--admin-gold)", fontWeight: 700 }}>0{i + 1}</span>
+                    <span style={{ color: "#e5c158", fontWeight: 700 }}>0{i + 1}</span>
                     <span style={{ whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>{hl}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Structured Form Cards */}
-            {/* Card 1: Headline & Narrative Copy */}
+            {/* Unified Card 1: Hero Carousel Slides (Photo + Text Per Slide) */}
             <div
               className="admin-card-inner"
               style={{
@@ -468,69 +661,230 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 border: "1px solid var(--admin-border-subtle)",
               }}
             >
-              <h3 style={{ fontSize: "14.5px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
-                <span>✍️</span>
-                <span>Headline &amp; Hero Story</span>
-              </h3>
-              <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: "0 0 16px 0" }}>
-                Primary typography appearing above the fold on the homepage.
-              </p>
-
-              <div className="admin-form-grid" style={{ gap: "16px" }}>
-                <div className="admin-field admin-field-full">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
-                    Hero Eyebrow Tag (Top Pill Badge)
-                  </label>
-                  <input
-                    type="text"
-                    className="admin-input"
-                    value={siteInfo.heroEyebrow || ""}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, heroEyebrow: e.target.value })}
-                    placeholder="e.g. MAAS INDUSTRIAL VENTURES PVT. LIMITED"
-                  />
-                  <span style={{ fontSize: "11px", color: "var(--admin-text-dim)", marginTop: "3px" }}>
-                    Shown inside the gold pill badge at the very top of the hero banner.
-                  </span>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "12px", marginBottom: "18px" }}>
+                <div>
+                  <h3 style={{ fontSize: "14.5px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+                    <span>🎞️</span>
+                    <span>Hero Carousel Slides (Homepage Banner)</span>
+                  </h3>
+                  <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
+                    Single source of truth for every hero slide: image, eyebrow pill, headline, subtitle, and description render 1:1 on the live website.
+                  </p>
                 </div>
-
-                <div className="admin-field admin-field-full">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
-                    Main Headline (H1 Serif)
+                <div style={{ display: "flex", gap: "8px", flexWrap: "wrap" }}>
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ fontSize: "12.5px", padding: "7px 13px" }}
+                    onClick={() => setHeroPicker({ open: true, slideIndex: undefined })}
+                  >
+                    + Add Slide from Library
+                  </button>
+                  <label className="btn-gold" style={{ cursor: "pointer", fontSize: "12.5px", padding: "7px 14px", borderRadius: "6px", fontWeight: 700, display: "inline-flex", alignItems: "center", gap: "6px" }}>
+                    {uploadingSlideIdx === "new" ? "Uploading..." : "+ Upload New Slide"}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      style={{ display: "none" }}
+                      disabled={uploadingSlideIdx === "new"}
+                      onChange={(e) => handleHeroSlideUpload("new", e)}
+                    />
                   </label>
-                  <input
-                    type="text"
-                    className="admin-input"
-                    value={siteInfo.heroHeadline || ""}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, heroHeadline: e.target.value })}
-                    placeholder="e.g. Developing Land. Building Opportunities."
-                  />
                 </div>
+              </div>
 
-                <div className="admin-field admin-field-full">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
-                    Hero Subheadline (Gold Accent)
-                  </label>
-                  <input
-                    type="text"
-                    className="admin-input"
-                    value={siteInfo.heroSubheadline || ""}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, heroSubheadline: e.target.value })}
-                    placeholder="e.g. Creating Industrial Hubs & Residential Developments for a Better Tomorrow."
-                  />
-                </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "16px" }}>
+                {heroSlides.map((slide, idx) => (
+                  <div
+                    key={slide.id || idx}
+                    style={{
+                      padding: "16px",
+                      background: "var(--surface)",
+                      border: safePreviewIdx === idx ? "1.5px solid var(--admin-gold)" : "1px solid var(--admin-border-subtle)",
+                      borderRadius: "10px",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "10px", marginBottom: "14px", paddingBottom: "10px", borderBottom: "1px solid var(--admin-border-subtle)" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: "10px", flexWrap: "wrap" }}>
+                        <span style={{ fontSize: "11px", fontWeight: 700, color: "var(--admin-gold)", background: "rgba(181, 134, 48, 0.14)", padding: "3px 9px", borderRadius: "4px", letterSpacing: "0.05em" }}>
+                          SLIDE 0{idx + 1} OF 0{heroSlides.length}
+                        </span>
+                        <strong style={{ fontSize: "13.5px", color: "var(--admin-text-main)" }}>
+                          {slide.title || "Untitled Hero Slide"}
+                        </strong>
+                        {safePreviewIdx !== idx && (
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            style={{ fontSize: "11px", padding: "2px 8px" }}
+                            onClick={() => setPreviewSlideIdx(idx)}
+                          >
+                            Preview Slide
+                          </button>
+                        )}
+                      </div>
+                      <div style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          style={{ padding: "4px 9px", fontSize: "11.5px" }}
+                          disabled={idx === 0}
+                          onClick={() => handleMoveHeroSlide(idx, "up")}
+                          title="Move Up"
+                        >
+                          ▲ Up
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-secondary"
+                          style={{ padding: "4px 9px", fontSize: "11.5px" }}
+                          disabled={idx === heroSlides.length - 1}
+                          onClick={() => handleMoveHeroSlide(idx, "down")}
+                          title="Move Down"
+                        >
+                          ▼ Down
+                        </button>
+                        {heroSlides.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn-danger"
+                            style={{ padding: "4px 10px", fontSize: "11.5px" }}
+                            onClick={() => handleDeleteHeroSlide(idx)}
+                          >
+                            Delete Slide
+                          </button>
+                        )}
+                      </div>
+                    </div>
 
-                <div className="admin-field admin-field-full">
-                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
-                    Hero Body Description Paragraph
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="admin-textarea"
-                    value={siteInfo.heroDescription || ""}
-                    onChange={(e) => setSiteInfo({ ...siteInfo, heroDescription: e.target.value })}
-                    placeholder="Comprehensive introductory paragraph explaining your company mission..."
-                  />
-                </div>
+                    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "18px", alignItems: "start" }}>
+                      <div>
+                        <div style={{ position: "relative", width: "100%", aspectRatio: "16 / 9", borderRadius: "8px", overflow: "hidden", border: "1px solid var(--admin-border-subtle)", background: "#0c121e" }}>
+                          {slide.src && (
+                            <Image
+                              src={slide.src}
+                              alt={slide.alt || slide.title}
+                              fill
+                              style={{ objectFit: "cover" }}
+                              unoptimized={slide.src.endsWith(".svg") || slide.src.startsWith("data:")}
+                            />
+                          )}
+                        </div>
+                        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "10px" }}>
+                          <button
+                            type="button"
+                            className="btn-secondary"
+                            style={{ fontSize: "12px", padding: "7px 10px" }}
+                            onClick={() => setHeroPicker({ open: true, slideIndex: idx })}
+                          >
+                            🖼️ Library
+                          </button>
+                          <label className="btn-secondary" style={{ fontSize: "12px", padding: "7px 10px", textAlign: "center", cursor: "pointer" }}>
+                            {uploadingSlideIdx === idx ? "Uploading..." : "📁 Upload New"}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: "none" }}
+                              disabled={uploadingSlideIdx === idx}
+                              onChange={(e) => handleHeroSlideUpload(idx, e)}
+                            />
+                          </label>
+                        </div>
+                      </div>
+
+                      <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
+                        <div>
+                          <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
+                            Category Eyebrow Pill
+                          </label>
+                          <input
+                            type="text"
+                            className="admin-input"
+                            value={slide.eyebrow || ""}
+                            onChange={(e) => {
+                              const next = [...heroSlides];
+                              next[idx] = { ...next[idx], eyebrow: e.target.value };
+                              setHeroSlides(next);
+                              setPreviewSlideIdx(idx);
+                            }}
+                            placeholder="e.g. MAAS INDUSTRIAL VENTURES PVT. LIMITED"
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
+                            Main Slide Headline (H1 Serif)
+                          </label>
+                          <input
+                            type="text"
+                            className="admin-input"
+                            value={slide.title}
+                            onChange={(e) => {
+                              const next = [...heroSlides];
+                              next[idx] = { ...next[idx], title: e.target.value };
+                              setHeroSlides(next);
+                              setPreviewSlideIdx(idx);
+                            }}
+                            placeholder="e.g. Developing Land. Building Opportunities."
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
+                            Subheading Copy (Gold Accent)
+                          </label>
+                          <input
+                            type="text"
+                            className="admin-input"
+                            value={slide.subtitle}
+                            onChange={(e) => {
+                              const next = [...heroSlides];
+                              next[idx] = { ...next[idx], subtitle: e.target.value };
+                              setHeroSlides(next);
+                              setPreviewSlideIdx(idx);
+                            }}
+                            placeholder="e.g. Creating Industrial Hubs & Residential Developments for a Better Tomorrow."
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
+                            Slide Description Paragraph (Optional)
+                          </label>
+                          <textarea
+                            rows={2}
+                            className="admin-textarea"
+                            value={slide.description || ""}
+                            onChange={(e) => {
+                              const next = [...heroSlides];
+                              next[idx] = { ...next[idx], description: e.target.value };
+                              setHeroSlides(next);
+                              setPreviewSlideIdx(idx);
+                            }}
+                            placeholder="Supporting narrative paragraph below the subheading..."
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
+                            Image Alt Text (SEO &amp; Accessibility)
+                          </label>
+                          <input
+                            type="text"
+                            className="admin-input"
+                            value={slide.alt}
+                            onChange={(e) => {
+                              const next = [...heroSlides];
+                              next[idx] = { ...next[idx], alt: e.target.value };
+                              setHeroSlides(next);
+                            }}
+                            placeholder="Describe the hero photograph for search engines"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
 
@@ -666,22 +1020,25 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
                 ))}
               </div>
 
-              {bottomHighlights.length < 6 && (
-                <button
-                  type="button"
-                  className="btn-secondary"
-                  style={{ marginTop: "12px", display: "inline-flex", alignItems: "center", gap: "6px" }}
-                  onClick={() => setBottomHighlights([...bottomHighlights, "New Development Highlight"])}
-                >
-                  <span>+</span>
-                  <span>Add Highlight Pill</span>
-                </button>
-              )}
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", flexWrap: "wrap", gap: "8px", marginTop: "12px" }}>
+                {bottomHighlights.length < 6 ? (
+                  <button
+                    type="button"
+                    className="btn-secondary"
+                    style={{ display: "inline-flex", alignItems: "center", gap: "6px" }}
+                    onClick={() => setBottomHighlights([...bottomHighlights, "New Development Highlight"])}
+                  >
+                    <span>+</span>
+                    <span>Add Highlight Pill</span>
+                  </button>
+                ) : <span />}
+              </div>
             </div>
           </div>
-        )}
+          );
+        })()}
 
-        {/* 2. OVERVIEW TAB */}
+        {/* 2. OVERVIEW / COMPANY STORY TAB */}
         {activeSubTab === "overview" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
             <div
@@ -695,28 +1052,72 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
             >
               <h3 style={{ fontSize: "14.5px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
                 <span>📖</span>
-                <span>Company Story Headline &amp; Narrative</span>
+                <span>Company Story Headline &amp; Narrative (Homepage + /about)</span>
               </h3>
               <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: "0 0 16px 0" }}>
-                The core company proposition narrative explaining MAAS Industrial Ventures&apos; track record and mission.
+                Unified editor for the Homepage Company Overview band and the dedicated /about page.
               </p>
 
-              <div className="admin-field admin-field-full" style={{ marginBottom: "16px" }}>
-                <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
-                  Overview Section Headline
-                </label>
-                <input
-                  type="text"
-                  className="admin-input"
-                  value={siteInfo.overviewHeadline || "We Develop Land. We Build Destinations. We Create Opportunities."}
-                  onChange={(e) => setSiteInfo({ ...siteInfo, overviewHeadline: e.target.value })}
-                  placeholder="e.g. We Develop Land. We Build Destinations. We Create Opportunities."
-                />
+              <div className="admin-form-grid" style={{ gap: "16px", marginBottom: "18px" }}>
+                <div className="admin-field">
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
+                    Overview Eyebrow Tag (Homepage + /about)
+                  </label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={siteInfo.overviewEyebrow || ""}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, overviewEyebrow: e.target.value })}
+                    placeholder="e.g. OUR EXPERTISE & DEVELOPMENT VISION"
+                  />
+                </div>
+
+                <div className="admin-field">
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
+                    Overview CTA Button Label (Homepage)
+                  </label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={siteInfo.overviewCtaText || ""}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, overviewCtaText: e.target.value })}
+                    placeholder="e.g. Read Our Company Story"
+                  />
+                </div>
+
+                <div className="admin-field admin-field-full">
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
+                    Company Story Main Headline (Homepage + /about H1)
+                  </label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={siteInfo.overviewHeadline || "We Develop Land. We Build Destinations. We Create Opportunities."}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, overviewHeadline: e.target.value })}
+                    placeholder="e.g. We Develop Land. We Build Destinations. We Create Opportunities."
+                  />
+                </div>
+
+                <div className="admin-field admin-field-full">
+                  <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
+                    Executive Introduction Lead (/about Hero Lead)
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="admin-textarea"
+                    value={siteInfo.introduction || ""}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, introduction: e.target.value })}
+                    placeholder="A considered land development enterprise engineering institutional manufacturing estates..."
+                  />
+                </div>
               </div>
 
-              <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "8px", display: "block" }}>
+              <label style={{ fontSize: "12.5px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
                 Narrative Paragraphs (Official Corporate Profile)
               </label>
+              <p style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", margin: "0 0 10px 0" }}>
+                Paragraphs 01 &amp; 02 show on the Homepage Overview section; all paragraphs appear in full on /about.
+              </p>
               <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
                 {overviewParagraphs.map((para, idx) => (
                   <div
@@ -827,6 +1228,62 @@ export function ContentManager({ settings, onUpdate }: ContentManagerProps) {
         {/* 3. VERTICALS TAB */}
         {activeSubTab === "verticals" && (
           <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
+            <div
+              className="admin-card-inner"
+              style={{
+                padding: "22px",
+                background: "var(--admin-bg-card-subtle)",
+                borderRadius: "10px",
+                border: "1px solid var(--admin-border-subtle)",
+              }}
+            >
+              <h3 style={{ fontSize: "14.5px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
+                <span>🏷️</span>
+                <span>Verticals Section Heading (Homepage + /about)</span>
+              </h3>
+              <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: "0 0 16px 0" }}>
+                Controls the heading and summary introducing the 4 verticals section.
+              </p>
+              <div className="admin-form-grid" style={{ gap: "14px" }}>
+                <div className="admin-field">
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
+                    Verticals Eyebrow
+                  </label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={siteInfo.verticalsEyebrow || ""}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, verticalsEyebrow: e.target.value })}
+                    placeholder="e.g. CORE CAPABILITIES"
+                  />
+                </div>
+                <div className="admin-field">
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
+                    Verticals Headline
+                  </label>
+                  <input
+                    type="text"
+                    className="admin-input"
+                    value={siteInfo.verticalsHeadline || ""}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, verticalsHeadline: e.target.value })}
+                    placeholder="e.g. Four Pillars of Strategic Development"
+                  />
+                </div>
+                <div className="admin-field admin-field-full">
+                  <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px" }}>
+                    Verticals Summary Description
+                  </label>
+                  <textarea
+                    rows={2}
+                    className="admin-textarea"
+                    value={siteInfo.verticalsDescription || ""}
+                    onChange={(e) => setSiteInfo({ ...siteInfo, verticalsDescription: e.target.value })}
+                    placeholder="Delivering end-to-end industrial infrastructure and plotted township developments."
+                  />
+                </div>
+              </div>
+            </div>
+
             <div
               className="admin-card-inner"
               style={{

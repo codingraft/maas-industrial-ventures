@@ -117,13 +117,13 @@ export function ContactSocialForm({
         </div>
 
         <div className="form-row">
-          <label className="form-label" htmlFor="introduction">Executive Introduction Copy</label>
-          <textarea id="introduction"
+          <label className="form-label" htmlFor="tagline">Company Footer Tagline</label>
+          <textarea id="tagline"
             className="form-control"
-            rows={3}
-            value={siteInfo.introduction}
-            onChange={(e) => setSiteInfo({ ...siteInfo, introduction: e.target.value })}
-            placeholder="A considered industrial address starts with..."
+            rows={2}
+            value={siteInfo.tagline || ""}
+            onChange={(e) => setSiteInfo({ ...siteInfo, tagline: e.target.value })}
+            placeholder="Developing Land. Building Opportunities. Creating thoughtfully planned industrial hubs..."
           />
         </div>
       </div>

@@ -78,9 +78,13 @@ export default async function AboutPage() {
           </div>
           <p className="eyebrow">{site_info.overviewEyebrow || "About MAAS Industrial Ventures Pvt. Limited"}</p>
           <h1 className="about-hero-heading">
-            We Develop Land.<br />
-            <em>We Build Destinations.</em><br />
-            We Create Opportunities.
+            {site_info.overviewHeadline || (
+              <>
+                We Develop Land.<br />
+                <em>We Build Destinations.</em><br />
+                We Create Opportunities.
+              </>
+            )}
           </h1>
           <p className="about-hero-lead">
             {site_info.introduction || "A considered land development enterprise engineering institutional manufacturing estates, demarcated industrial plots, and planned communities."}
@@ -291,6 +295,7 @@ export default async function AboutPage() {
       <SiteFooter
         brandName={site_info.brandName}
         logoSrc={media.logo}
+        tagline={site_info.tagline}
         address={site_info.address}
         phone={site_info.phone}
         email={site_info.email}

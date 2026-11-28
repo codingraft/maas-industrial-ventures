@@ -2,11 +2,20 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { SiteSettings, HeroSlide, GalleryItem, SectionImage, MasterPlanItem, GalleryCategory } from "@/lib/types";
+import { SiteSettings, GalleryItem, SectionImage, MasterPlanItem, GalleryCategory } from "@/lib/types";
 import { ToastContainer, ConfirmModal, ToastMessage } from "@/components/admin/AdminDialogs";
 import { AdminTabs } from "@/components/admin/ui/AdminTabs";
 import { uploadImage } from "@/lib/imageOptimizer";
 import { MediaPickerModal } from "@/components/admin/MediaPickerModal";
+
+const DEFAULT_PLAN_SPEC_ROWS = [
+  { label: "Land Parcel Area", value: "150+ Acres Master Planned" },
+  { label: "Permissible FAR / FSI", value: "Up to 2.0 (High-Cube Ready)" },
+  { label: "Internal Road Spines", value: "45m Arterial / 30m Secondary" },
+  { label: "Power Grid Feed", value: "Dedicated 33/11 kV Substation" },
+  { label: "Eco Perimeter Setback", value: "15% Green Buffer Zone" },
+  { label: "Zoning Compliance", value: "Pre-Approved Industrial Clearances" },
+];
 
 interface SectionImageManagerProps {
   initialMedia: SiteSettings["media"];
@@ -16,8 +25,8 @@ interface SectionImageManagerProps {
 export function SectionImageManager({ initialMedia, onUpdate }: SectionImageManagerProps) {
   const [media, setMedia] = useState(initialMedia);
   const [activeSection, setActiveSection] = useState<
-    "hero" | "overview" | "infra" | "masterplan" | "location" | "gallery" | "logo"
-  >("hero");
+    "overview" | "masterplan" | "gallery" | "logo"
+  >("overview");
 
   const [uploadingField, setUploadingField] = useState<string | null>(null);
   const [pickerModal, setPickerModal] = useState<{
@@ -78,63 +87,9 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
     return await uploadImage(file);
   }
 
-  /* --- 1. HERO SLIDER HANDLERS --- */
-  async function handleHeroSlideImageUpload(slideIndex: number, e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingField(`hero-${slideIndex}`);
-    try {
-      const url = await uploadFile(file);
-      const nextSlides = [...media.heroSlides];
-      nextSlides[slideIndex] = { ...nextSlides[slideIndex], src: url };
-      const nextMedia = { ...media, heroSlides: nextSlides, hero: nextSlides[0].src };
-      setMedia(nextMedia);
-      await onUpdate(nextMedia);
-      notify(`Hero Slide #${slideIndex + 1} image updated!`);
-    } catch (err: unknown) {
-      addToast("error", "Upload error", err instanceof Error ? err.message : "Upload error");
-    } finally {
-      setUploadingField(null);
-    }
-  }
-
-  async function handleHeroSlideFieldChange(
-    slideIndex: number,
-    field: keyof HeroSlide,
-    value: string
-  ) {
-    const nextSlides = [...media.heroSlides];
-    nextSlides[slideIndex] = { ...nextSlides[slideIndex], [field]: value };
-    const nextMedia = { ...media, heroSlides: nextSlides };
-    setMedia(nextMedia);
-    await onUpdate(nextMedia);
-  }
-
-  function handleAddNewHeroSlide() {
-    setPickerModal({
-      isOpen: true,
-      title: "Select or Upload Image for New Hero Slide",
-      onSelect: async (url, alt) => {
-        const newSlide: HeroSlide = {
-          id: `slide-${Date.now()}`,
-          src: url,
-          alt: alt || "MAAS Industrial infrastructure perspective",
-          eyebrow: "NEW DEVELOPMENT PERSPECTIVE",
-          title: "Developing Land. Building Opportunities.",
-          subtitle: "High-capacity industrial infrastructure engineered for modern manufacturing and enterprise growth.",
-        };
-        const nextSlides = [...media.heroSlides, newSlide];
-        const nextMedia = { ...media, heroSlides: nextSlides };
-        setMedia(nextMedia);
-        await onUpdate(nextMedia);
-        notify("New Hero Slide added with your selected image!");
-      },
-    });
-  }
-
+  /* --- 1. SINGLE SECTION IMAGE HANDLERS --- */
   async function handleDirectSectionUrlChange(
-    field: "overviewImage" | "infraImage" | "locationImage",
+    field: "overviewImage",
     url: string,
     alt?: string
   ) {
@@ -145,47 +100,15 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
         src: url,
         ...(alt ? { alt } : {}),
       },
+      ...(field === "overviewImage" ? { overview: url } : {}),
     };
     setMedia(nextMedia);
     await onUpdate(nextMedia);
     notify("Visual updated successfully from Media Library!");
   }
 
-  async function handleDeleteHeroSlide(slideIndex: number) {
-    if (media.heroSlides.length <= 1) {
-      addToast("error", "Cannot remove slide", "At least one slide must remain in the Hero Carousel.");
-      return;
-    }
-    setConfirmDialog({
-      isOpen: true,
-      title: "Remove Hero Slide",
-      message: `Are you sure you want to remove Hero Slide #${slideIndex + 1}?`,
-      action: async () => {
-        const nextSlides = media.heroSlides.filter((_, idx) => idx !== slideIndex);
-        const nextMedia = { ...media, heroSlides: nextSlides, hero: nextSlides[0].src };
-        setMedia(nextMedia);
-        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
-        await onUpdate(nextMedia);
-        notify("Slide removed from carousel.");
-      },
-    });
-  }
-
-  async function handleMoveHeroSlide(fromIndex: number, direction: "up" | "down") {
-    const toIndex = direction === "up" ? fromIndex - 1 : fromIndex + 1;
-    if (toIndex < 0 || toIndex >= media.heroSlides.length) return;
-    const nextSlides = [...media.heroSlides];
-    const [moved] = nextSlides.splice(fromIndex, 1);
-    nextSlides.splice(toIndex, 0, moved);
-    const nextMedia = { ...media, heroSlides: nextSlides, hero: nextSlides[0].src };
-    setMedia(nextMedia);
-    await onUpdate(nextMedia);
-    notify(`Slide moved ${direction}!`);
-  }
-
-  /* --- 2. SINGLE SECTION IMAGE HANDLERS --- */
   async function handleSectionImageUpload(
-    field: "overviewImage" | "infraImage" | "locationImage",
+    field: "overviewImage",
     e: React.ChangeEvent<HTMLInputElement>
   ) {
     const file = e.target.files?.[0];
@@ -306,6 +229,14 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
     } finally {
       setUploadingField(null);
     }
+  }
+
+  async function handlePlanSpecsChange(planIndex: number, specs: Array<{ label: string; value: string }>) {
+    const nextPlans = [...(media.masterplanPlans || [])];
+    nextPlans[planIndex] = { ...nextPlans[planIndex], specs };
+    const nextMedia = { ...media, masterplanPlans: nextPlans };
+    setMedia(nextMedia);
+    await onUpdate(nextMedia);
   }
 
   async function handlePlanFieldChange(planIndex: number, field: keyof MasterPlanItem, value: string) {
@@ -463,49 +394,21 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
           </div>
           <div>
             <h2 style={{ fontSize: "18px", fontWeight: 700, color: "var(--admin-text-main)", margin: 0, letterSpacing: "-0.01em" }}>
-              Images & blueprints
+              Visuals &amp; Blueprints
             </h2>
             <p style={{ fontSize: "12.5px", color: "var(--admin-text-muted)", margin: "3px 0 0 0" }}>
-              Configure homepage hero carousel slides, section photos, blueprint schematics, and photo gallery.
+              Manage Overview Section photo, Master Plan blueprints, gallery assets, and brand logo. (Hero Slides are managed in Page Content → Hero Banner &amp; Slides.)
             </p>
           </div>
         </div>
-
-        {activeSection === "hero" && (
-          <button
-            type="button"
-            className="btn-gold"
-            onClick={handleAddNewHeroSlide}
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "8px",
-              padding: "9px 20px",
-              fontSize: "13.5px",
-              fontWeight: 700,
-              borderRadius: "6px",
-              boxShadow: "0 2px 10px rgba(212, 175, 55, 0.22)",
-              cursor: "pointer",
-            }}
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="5" x2="12" y2="19" />
-              <line x1="5" y1="12" x2="19" y2="12" />
-            </svg>
-            <span>+ Add New Slide</span>
-          </button>
-        )}
       </div>
 
       {/* Section Sub-Navigation Tabs */}
       <div style={{ marginBottom: "20px" }}>
         <AdminTabs
           tabs={[
-            { id: "hero", label: "🌟 Hero Carousel", count: media.heroSlides.length },
             { id: "overview", label: "🏢 Overview Photo" },
-            { id: "infra", label: "🏗️ Infrastructure Visual" },
             { id: "masterplan", label: "📐 Master Plan Blueprints", count: (media.masterplanPlans || []).length },
-            { id: "location", label: "📍 Location & Connectivity" },
             { id: "gallery", label: "🖼️ Project Gallery", count: media.gallery.length },
             { id: "logo", label: "✨ Brand Logo" },
           ]}
@@ -514,221 +417,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
         />
       </div>
 
-      {/* 1. HERO CAROUSEL STUDIO */}
-      {activeSection === "hero" && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "20px" }}>
-          {/* Slides List */}
-          {media.heroSlides.map((slide, idx) => (
-            <div
-              key={slide.id || idx}
-              className="admin-card-inner"
-              style={{
-                padding: "20px",
-                background: "var(--admin-bg-card-subtle)",
-                borderRadius: "10px",
-                border: "1px solid var(--admin-border-subtle)",
-              }}
-            >
-              {/* Slide Card Header */}
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "space-between",
-                  alignItems: "center",
-                  flexWrap: "wrap",
-                  gap: "10px",
-                  paddingBottom: "14px",
-                  marginBottom: "16px",
-                  borderBottom: "1px solid var(--admin-border-subtle)",
-                }}
-              >
-                <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-                  <span
-                    style={{
-                      fontSize: "11px",
-                      fontWeight: 700,
-                      color: "var(--admin-gold)",
-                      padding: "3px 8px",
-                      background: "rgba(212, 175, 55, 0.12)",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    SLIDE 0{idx + 1} OF 0{media.heroSlides.length}
-                  </span>
-                  <span style={{ fontSize: "13.5px", fontWeight: 600, color: "var(--admin-text-main)" }}>
-                    {slide.title || `Perspective #${idx + 1}`}
-                  </span>
-                </div>
-
-                <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                  {/* Reorder Up / Down */}
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    style={{ padding: "4px 8px", fontSize: "11px" }}
-                    onClick={() => handleMoveHeroSlide(idx, "up")}
-                    disabled={idx === 0}
-                    title="Move slide earlier in carousel"
-                  >
-                    ▲ Move Up
-                  </button>
-                  <button
-                    type="button"
-                    className="btn-secondary"
-                    style={{ padding: "4px 8px", fontSize: "11px" }}
-                    onClick={() => handleMoveHeroSlide(idx, "down")}
-                    disabled={idx === media.heroSlides.length - 1}
-                    title="Move slide later in carousel"
-                  >
-                    ▼ Move Down
-                  </button>
-                  {media.heroSlides.length > 1 && (
-                    <button
-                      type="button"
-                      className="btn-danger"
-                      style={{ padding: "4px 10px", fontSize: "11.5px" }}
-                      onClick={() => handleDeleteHeroSlide(idx)}
-                    >
-                      Delete Slide
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              {/* Slide Body: 2 Columns */}
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 260px), 1fr))", gap: "20px" }}>
-                {/* Left: Image Preview & Actions */}
-                <div>
-                  <div
-                    style={{
-                      position: "relative",
-                      width: "100%",
-                      height: "180px",
-                      borderRadius: "8px",
-                      overflow: "hidden",
-                      border: "1px solid var(--admin-border-subtle)",
-                      background: "#070a12",
-                    }}
-                  >
-                    <Image
-                      src={slide.src}
-                      alt={slide.alt || `Slide ${idx + 1}`}
-                      fill
-                      style={{ objectFit: "cover" }}
-                    />
-                    <div
-                      style={{
-                        position: "absolute",
-                        bottom: "8px",
-                        left: "8px",
-                        padding: "3px 8px",
-                        background: "rgba(0, 0, 0, 0.75)",
-                        borderRadius: "4px",
-                        fontSize: "10.5px",
-                        color: "#cbd5e1",
-                      }}
-                    >
-                      16:9 Hero Perspective
-                    </div>
-                  </div>
-
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "8px", marginTop: "12px" }}>
-                    <button
-                      type="button"
-                      className="btn-secondary"
-                      style={{ justifyContent: "center", fontSize: "12px", padding: "8px" }}
-                      onClick={() =>
-                        setPickerModal({
-                          isOpen: true,
-                          title: `Select Image for Hero Slide #${idx + 1}`,
-                          currentUrl: slide.src,
-                          onSelect: (url, alt) => {
-                            handleHeroSlideFieldChange(idx, "src", url);
-                            if (alt && !slide.alt) handleHeroSlideFieldChange(idx, "alt", alt);
-                          },
-                        })
-                      }
-                    >
-                      🖼️ Library
-                    </button>
-
-                    <label
-                      className="btn-secondary"
-                      style={{ justifyContent: "center", fontSize: "12px", padding: "8px", cursor: "pointer", textAlign: "center" }}
-                    >
-                      {uploadingField === `hero-${idx}` ? "Uploading…" : "📁 Upload New"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        style={{ display: "none" }}
-                        onChange={(e) => handleHeroSlideImageUpload(idx, e)}
-                        disabled={uploadingField === `hero-${idx}`}
-                      />
-                    </label>
-                  </div>
-                </div>
-
-                {/* Right: Slide Copy Inputs */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "12px" }}>
-                  <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
-                      Category Eyebrow Pill
-                    </label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={slide.eyebrow || ""}
-                      onChange={(e) => handleHeroSlideFieldChange(idx, "eyebrow", e.target.value)}
-                      placeholder="e.g. HIGH-CAPACITY INFRASTRUCTURE"
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
-                      Main Slide Headline
-                    </label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={slide.title}
-                      onChange={(e) => handleHeroSlideFieldChange(idx, "title", e.target.value)}
-                      placeholder="e.g. Developing Land. Building Opportunities."
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
-                      Subheading Copy
-                    </label>
-                    <textarea
-                      rows={2}
-                      className="admin-textarea"
-                      value={slide.subtitle}
-                      onChange={(e) => handleHeroSlideFieldChange(idx, "subtitle", e.target.value)}
-                      placeholder="Brief descriptive highlight..."
-                    />
-                  </div>
-
-                  <div>
-                    <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
-                      Image Alt Text (SEO &amp; Accessibility)
-                    </label>
-                    <input
-                      type="text"
-                      className="admin-input"
-                      value={slide.alt || ""}
-                      onChange={(e) => handleHeroSlideFieldChange(idx, "alt", e.target.value)}
-                      placeholder="e.g. MAAS Industrial infrastructure perspective"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* 2. OVERVIEW VISUAL */}
+      {/* 1. OVERVIEW VISUAL */}
       {activeSection === "overview" && (
         <div
           className="admin-card-inner"
@@ -853,134 +542,19 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                 />
               </div>
 
-              <div style={{ padding: "12px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--admin-border-subtle)", borderRadius: "6px" }}>
-                <span style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", display: "block" }}>
-                  💡 <strong>Display Placement:</strong> Renders inside the Company Story &amp; Proposition section alongside the 3 narrative paragraphs.
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 3. INFRASTRUCTURE FRAMEWORK */}
-      {activeSection === "infra" && (
-        <div
-          className="admin-card-inner"
-          style={{
-            padding: "24px",
-            background: "var(--admin-bg-card-subtle)",
-            borderRadius: "10px",
-            border: "1px solid var(--admin-border-subtle)",
-          }}
-        >
-          <div style={{ marginBottom: "20px" }}>
-            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>🏗️</span>
-              <span>Infrastructure Framework Visual</span>
-            </h3>
-            <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
-              Displayed in the 3rd pillar card (Utilities &amp; Heavy Operations).
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "24px", alignItems: "start" }}>
-            {/* Visual Preview */}
-            <div>
-              <div
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  height: "220px",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                  border: "1px solid var(--admin-border-subtle)",
-                  background: "#070a12",
-                }}
-              >
-                <Image
-                  src={media.infraImage.src}
-                  alt={media.infraImage.alt || "Infrastructure"}
-                  fill
-                  style={{ objectFit: "cover" }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    left: "8px",
-                    padding: "4px 8px",
-                    background: "rgba(0, 0, 0, 0.75)",
-                    borderRadius: "4px",
-                    fontSize: "10.5px",
-                    color: "#cbd5e1",
-                  }}
-                >
-                  Utilities Framework · 1920×1080 Recommended
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
-                <button
-                  type="button"
-                  className="btn-gold"
-                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px" }}
-                  onClick={() =>
-                    setPickerModal({
-                      isOpen: true,
-                      title: "Select Infrastructure Framework Visual",
-                      currentUrl: media.infraImage.src,
-                      onSelect: (url, alt) => handleDirectSectionUrlChange("infraImage", url, alt),
-                    })
-                  }
-                >
-                  🖼️ Library
-                </button>
-
-                <label
-                  className="btn-secondary"
-                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px", cursor: "pointer", textAlign: "center" }}
-                >
-                  {uploadingField === "infraImage" ? "Uploading…" : "📁 Upload New"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={(e) => handleSectionImageUpload("infraImage", e)}
-                    disabled={uploadingField === "infraImage"}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Inputs */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
               <div>
                 <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
-                  Direct Image URL
+                  Photo Caption Badge (Shown beneath Overview Photo)
                 </label>
                 <input
                   type="text"
                   className="admin-input"
-                  value={media.infraImage.src}
-                  onChange={(e) => handleDirectSectionUrlChange("infraImage", e.target.value)}
-                  placeholder="https://... or uploaded image URL"
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
-                  Image Alt Text (SEO &amp; Accessibility)
-                </label>
-                <input
-                  type="text"
-                  className="admin-input"
-                  value={media.infraImage.alt || ""}
-                  placeholder="e.g. High-voltage power sub-station and clean water feeds"
+                  value={media.overviewImage.caption || ""}
+                  placeholder="e.g. Thoughtfully planned industrial & residential land developments"
                   onChange={async (e) => {
                     const nextMedia = {
                       ...media,
-                      infraImage: { ...media.infraImage, alt: e.target.value },
+                      overviewImage: { ...media.overviewImage, caption: e.target.value },
                     };
                     setMedia(nextMedia);
                     await onUpdate(nextMedia);
@@ -990,7 +564,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
 
               <div style={{ padding: "12px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--admin-border-subtle)", borderRadius: "6px" }}>
                 <span style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", display: "block" }}>
-                  💡 <strong>Recommended:</strong> High-voltage substations, modern drainage networks, or clean manufacturing machinery.
+                  💡 <strong>Display Placement:</strong> Renders inside the Homepage Company Overview section alongside the narrative paragraphs and caption strip.
                 </span>
               </div>
             </div>
@@ -998,7 +572,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
         </div>
       )}
 
-      {/* 4. MASTER PLAN MULTI-PERSPECTIVE STUDIO */}
+      {/* 2. MASTER PLAN MULTI-PERSPECTIVE STUDIO */}
       {activeSection === "masterplan" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           {/* List of Configured Master Plans */}
@@ -1182,6 +756,68 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
                       placeholder="Details about zoning division, road widths, setbacks..."
                     />
                   </div>
+
+                  {/* Zoning Metric Specs Editor */}
+                  <div style={{ marginTop: "6px", padding: "12px", borderRadius: "8px", border: "1px solid var(--admin-border-subtle)", background: "var(--surface)" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "8px", marginBottom: "8px" }}>
+                      <span style={{ fontSize: "11.5px", fontWeight: 700, color: "var(--admin-text-main)" }}>
+                        Technical Zoning Metrics (6 Specs Grid)
+                      </span>
+                      <button
+                        type="button"
+                        className="btn-secondary"
+                        style={{ padding: "3px 9px", fontSize: "11px" }}
+                        onClick={() => {
+                          const currentSpecs = plan.specs && plan.specs.length > 0 ? plan.specs : DEFAULT_PLAN_SPEC_ROWS;
+                          handlePlanSpecsChange(pIdx, [...currentSpecs, { label: "Utility Spec", value: "Standard Allocation" }]);
+                        }}
+                      >
+                        + Add Metric
+                      </button>
+                    </div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                      {(plan.specs && plan.specs.length > 0 ? plan.specs : DEFAULT_PLAN_SPEC_ROWS).map((spec, sIdx) => (
+                        <div key={sIdx} style={{ display: "grid", gridTemplateColumns: "1fr 1.2fr auto", gap: "6px", alignItems: "center" }}>
+                          <input
+                            type="text"
+                            className="admin-input"
+                            style={{ padding: "5px 8px", fontSize: "12px" }}
+                            value={spec.label}
+                            placeholder="Label (e.g. Plot Area)"
+                            onChange={(e) => {
+                              const current = [...(plan.specs && plan.specs.length > 0 ? plan.specs : DEFAULT_PLAN_SPEC_ROWS)];
+                              current[sIdx] = { ...current[sIdx], label: e.target.value };
+                              handlePlanSpecsChange(pIdx, current);
+                            }}
+                          />
+                          <input
+                            type="text"
+                            className="admin-input"
+                            style={{ padding: "5px 8px", fontSize: "12px" }}
+                            value={spec.value}
+                            placeholder="Value (e.g. 150+ Acres)"
+                            onChange={(e) => {
+                              const current = [...(plan.specs && plan.specs.length > 0 ? plan.specs : DEFAULT_PLAN_SPEC_ROWS)];
+                              current[sIdx] = { ...current[sIdx], value: e.target.value };
+                              handlePlanSpecsChange(pIdx, current);
+                            }}
+                          />
+                          <button
+                            type="button"
+                            className="btn-danger"
+                            style={{ padding: "4px 8px", fontSize: "11px" }}
+                            onClick={() => {
+                              const current = (plan.specs && plan.specs.length > 0 ? plan.specs : DEFAULT_PLAN_SPEC_ROWS).filter((_, i) => i !== sIdx);
+                              handlePlanSpecsChange(pIdx, current);
+                            }}
+                            title="Remove Metric"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -1316,142 +952,7 @@ export function SectionImageManager({ initialMedia, onUpdate }: SectionImageMana
         </div>
       )}
 
-      {/* 5. LOCATION MAP */}
-      {activeSection === "location" && (
-        <div
-          className="admin-card-inner"
-          style={{
-            padding: "24px",
-            background: "var(--admin-bg-card-subtle)",
-            borderRadius: "10px",
-            border: "1px solid var(--admin-border-subtle)",
-          }}
-        >
-          <div style={{ marginBottom: "20px" }}>
-            <h3 style={{ fontSize: "15px", fontWeight: 700, color: "var(--admin-text-main)", margin: "0 0 4px 0", display: "flex", alignItems: "center", gap: "8px" }}>
-              <span>📍</span>
-              <span>Strategic Location &amp; Connectivity Map</span>
-            </h3>
-            <p style={{ fontSize: "12px", color: "var(--admin-text-muted)", margin: 0 }}>
-              Highway, freight corridors, and multi-modal port connectivity map displayed in the location section.
-            </p>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))", gap: "24px", alignItems: "start" }}>
-            {/* Visual Preview */}
-            <div>
-              <div
-                style={{
-                  position: "relative",
-                  width: "100%",
-                  height: "220px",
-                  borderRadius: "8px",
-                  overflow: "hidden",
-                  border: "1px solid var(--admin-border-subtle)",
-                  background: "#070a12",
-                }}
-              >
-                <Image
-                  src={media.locationImage.src || "https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&w=1200&q=82"}
-                  alt="Location Map"
-                  fill
-                  style={{ objectFit: "cover" }}
-                />
-                <div
-                  style={{
-                    position: "absolute",
-                    bottom: "8px",
-                    left: "8px",
-                    padding: "4px 8px",
-                    background: "rgba(0, 0, 0, 0.75)",
-                    borderRadius: "4px",
-                    fontSize: "10.5px",
-                    color: "#cbd5e1",
-                  }}
-                >
-                  Connectivity Map · 1920×1080 Recommended
-                </div>
-              </div>
-
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "10px", marginTop: "12px" }}>
-                <button
-                  type="button"
-                  className="btn-gold"
-                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px" }}
-                  onClick={() =>
-                    setPickerModal({
-                      isOpen: true,
-                      title: "Select Connectivity Map Image",
-                      currentUrl: media.locationImage.src,
-                      onSelect: (url, alt) => handleDirectSectionUrlChange("locationImage", url, alt),
-                    })
-                  }
-                >
-                  🖼️ Library
-                </button>
-
-                <label
-                  className="btn-secondary"
-                  style={{ justifyContent: "center", fontSize: "12.5px", padding: "8px", cursor: "pointer", textAlign: "center" }}
-                >
-                  {uploadingField === "locationImage" ? "Uploading…" : "📁 Upload New"}
-                  <input
-                    type="file"
-                    accept="image/*"
-                    style={{ display: "none" }}
-                    onChange={(e) => handleSectionImageUpload("locationImage", e)}
-                    disabled={uploadingField === "locationImage"}
-                  />
-                </label>
-              </div>
-            </div>
-
-            {/* Inputs */}
-            <div style={{ display: "flex", flexDirection: "column", gap: "14px" }}>
-              <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
-                  Direct Map URL
-                </label>
-                <input
-                  type="text"
-                  className="admin-input"
-                  value={media.locationImage.src}
-                  onChange={(e) => handleDirectSectionUrlChange("locationImage", e.target.value)}
-                  placeholder="https://... or uploaded image URL"
-                />
-              </div>
-
-              <div>
-                <label style={{ fontSize: "12px", fontWeight: 600, color: "var(--admin-text-main)", marginBottom: "4px", display: "block" }}>
-                  Image Alt Text (SEO &amp; Accessibility)
-                </label>
-                <input
-                  type="text"
-                  className="admin-input"
-                  value={media.locationImage.alt || ""}
-                  placeholder="e.g. Strategic Highway and Rail Freight Connectivity Map"
-                  onChange={async (e) => {
-                    const nextMedia = {
-                      ...media,
-                      locationImage: { ...media.locationImage, alt: e.target.value },
-                    };
-                    setMedia(nextMedia);
-                    await onUpdate(nextMedia);
-                  }}
-                />
-              </div>
-
-              <div style={{ padding: "12px", background: "rgba(255, 255, 255, 0.02)", border: "1px solid var(--admin-border-subtle)", borderRadius: "6px" }}>
-                <span style={{ fontSize: "11.5px", color: "var(--admin-text-muted)", display: "block" }}>
-                  💡 <strong>Best Practice:</strong> Annotated aerial maps highlighting National Highway access, railway sidings, and air cargo distances convert highest.
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* 6. PROJECT GALLERY & CATEGORIES STUDIO */}
+      {/* 3. PROJECT GALLERY & CATEGORIES STUDIO */}
       {activeSection === "gallery" && (
         <div style={{ display: "flex", flexDirection: "column", gap: "24px" }}>
           {/* Category Management Studio */}

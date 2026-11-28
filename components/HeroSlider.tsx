@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import Image from "next/image";
 import styles from "./HeroSlider.module.css";
 import { Arrow } from "@/components/ui/Arrow";
@@ -37,6 +37,7 @@ export function HeroSlider({
   ],
 }: HeroSliderProps) {
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
   const total = slides?.length || 0;
 
   const nextSlide = useCallback(() => {
@@ -49,41 +50,69 @@ export function HeroSlider({
     setCurrentIndex((prev) => (prev - 1 + total) % total);
   }, [total]);
 
+  useEffect(() => {
+    if (total <= 1 || isPaused) return;
+    if (
+      typeof window !== "undefined" &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches
+    ) {
+      return;
+    }
+    const timer = window.setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % total);
+    }, 6000);
+    return () => window.clearInterval(timer);
+  }, [total, isPaused, currentIndex]);
+
   if (!slides || slides.length === 0) return null;
 
   const activeSlide = slides[currentIndex];
 
   const displayEyebrow =
-    currentIndex === 0 && heroEyebrow
-      ? heroEyebrow
-      : activeSlide.eyebrow || heroEyebrow || `${brandShortName} · Land & Real Estate Developers`;
+    activeSlide.eyebrow || heroEyebrow || `${brandShortName} · Land & Real Estate Developers`;
 
   const displayTitle =
-    currentIndex === 0 && heroHeadline
-      ? heroHeadline
-      : activeSlide.title || heroHeadline || "Developing Land. Building Opportunities.";
+    activeSlide.title || heroHeadline || "Developing Land. Building Opportunities.";
 
   const displaySubtitle =
-    currentIndex === 0 && heroSubheadline
-      ? heroSubheadline
-      : activeSlide.subtitle || heroSubheadline || "Creating Industrial Hubs & Residential Developments for a Better Tomorrow.";
+    activeSlide.subtitle || heroSubheadline || "Creating Industrial Hubs & Residential Developments for a Better Tomorrow.";
 
   const displayDesc =
-    currentIndex === 0
-      ? heroDescription || "We are land and real estate developers focused on creating thoughtfully planned industrial hubs, industrial plots and residential developments. Transforming land into destinations for enterprise growth."
-      : undefined;
+    activeSlide.description !== undefined
+      ? activeSlide.description
+      : currentIndex === 0
+        ? heroDescription || "We are land and real estate developers focused on creating thoughtfully planned industrial hubs, industrial plots and residential developments. Transforming land into destinations for enterprise growth."
+        : undefined;
 
   const [firstSentence, ...rest] = displayTitle.split(/(?<=\.)\s+/);
   const seededPhoto = "https://images.unsplash.com/photo-1758304481470-e575d1d44efa?auto=format&fit=crop&w=2400&q=85";
 
   return (
-    <section className="hero hero-slider" aria-label="MAAS Industrial Ventures Hero Banner">
-      {/* Background Slides */}
-      <div className="hero-slide-layer is-active">
-        <Image className="hero-image"
-          src={activeSlide.src === seededPhoto ? "/images/industrial-hero.webp" : activeSlide.src}
-          alt={activeSlide.alt || "Industrial infrastructure"} fill priority={currentIndex === 0} sizes="100vw" />
-      </div>
+    <section
+      className="hero hero-slider"
+      aria-label="MAAS Industrial Ventures Hero Banner"
+      onMouseEnter={() => setIsPaused(true)}
+      onMouseLeave={() => setIsPaused(false)}
+      onFocusCapture={() => setIsPaused(true)}
+      onBlurCapture={() => setIsPaused(false)}
+    >
+      {/* Background Slides (Cross-fade) */}
+      {slides.map((slide, idx) => (
+        <div
+          key={slide.id || idx}
+          className={`hero-slide-layer ${idx === currentIndex ? "is-active" : ""}`}
+          aria-hidden={idx !== currentIndex}
+        >
+          <Image
+            className="hero-image"
+            src={slide.src === seededPhoto ? "/images/industrial-hero.webp" : slide.src}
+            alt={slide.alt || "Industrial infrastructure"}
+            fill
+            priority={idx === 0}
+            sizes="100vw"
+          />
+        </div>
+      ))}
 
       {/* Cinematic Architectural Scrim */}
       <div className="hero-shade" />

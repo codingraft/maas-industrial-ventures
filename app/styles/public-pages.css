@@ -970,7 +970,7 @@
 :where(body:not(.admin-body) h1, body:not(.admin-body) h2, body:not(.admin-body) h3, .blog-catalog-title, .blog-article-headline) { color: var(--ink); font-family: var(--serif); font-weight: 500; letter-spacing: -.035em; }
 :where(.button-gold, .btn-gold) { background: var(--ink); color: var(--white); border-color: var(--ink); }
 :where(.button-gold:hover, .btn-gold:hover) { background: var(--gold-dark); border-color: var(--gold-dark); }
-.hero-slider-heading { max-width: 1160px; font-family: var(--serif); font-size: clamp(3.5rem, 5.7vw, 5.4rem); font-weight: 500; letter-spacing: -.045em; }
+.hero-slider-heading { max-width: 880px; font-family: var(--serif); font-size: clamp(2.15rem, 3.6vw, 3.35rem); font-weight: 500; line-height: 1.1; letter-spacing: -.035em; }
 .hero .hero-slider-heading, .hero .hero-subheadline { color: var(--white); }
 .facts-strip { background: var(--ink); color: var(--white); }
 .facts-strip .facts-label, .facts-strip .fact span { color: color-mix(in srgb, var(--white) 70%, transparent); }
@@ -1125,18 +1125,27 @@
   color: var(--white);
   margin: 0 0 20px;
 }
+.footer-links-col {
+  min-width: 0;
+}
 .footer-nav-list {
   list-style: none;
   padding: 0;
   margin: 0;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 11px;
 }
 .footer-nav-list a {
-  color: color-mix(in srgb, var(--white) 65%, transparent);
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: color-mix(in srgb, var(--white) 68%, transparent);
   text-decoration: none;
   font-size: 13.5px;
+  line-height: 1.4;
   transition: color 0.2s;
 }
 .footer-nav-list a:hover {

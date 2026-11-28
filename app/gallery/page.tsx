@@ -99,6 +99,7 @@ export default async function GalleryPage() {
       <SiteFooter
         brandName={site_info.brandName}
         logoSrc={media.logo}
+        tagline={site_info.tagline}
         address={site_info.address}
         phone={site_info.phone}
         email={site_info.email}

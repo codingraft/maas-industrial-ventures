@@ -4,6 +4,7 @@ import Image from "next/image";
 interface SiteFooterProps {
   brandName?: string;
   logoSrc?: string;
+  tagline?: string;
   address?: string;
   phone?: string;
   email?: string;
@@ -14,15 +15,27 @@ interface SiteFooterProps {
     twitter?: string;
     youtube?: string;
   };
+  projects?: Array<{ id?: string; slug: string; title: string }>;
+  posts?: Array<{ id?: string; slug: string; title: string }>;
+}
+
+function formatCompactFooterTitle(title: string): string {
+  const cleaned = title.split(":")[0].trim();
+  const base = cleaned.length >= 10 ? cleaned : title.trim();
+  if (base.length <= 34) return base;
+  return `${base.slice(0, 32).trimEnd()}…`;
 }
 
 export function SiteFooter({
   brandName = "MAAS INDUSTRIAL VENTURES",
   logoSrc = "/images/maas-logo-white.svg",
+  tagline = "Developing Land. Building Opportunities. Creating thoughtfully planned industrial hubs and residential developments engineered for sustainable enterprise growth.",
   address = "Bhojpur, Modinagar / Hapur–Modinagar Road, Uttar Pradesh",
   phone = "+91 98765 43210",
   email = "enquiry@maasventures.com",
   socialLinks = {},
+  projects,
+  posts,
 }: SiteFooterProps) {
   const currentYear = new Date().getFullYear();
 
@@ -49,7 +62,7 @@ export function SiteFooter({
             </div>
           </Link>
           <p className="footer-tagline">
-            Developing Land. Building Opportunities. Creating thoughtfully planned industrial hubs and residential developments engineered for sustainable enterprise growth.
+            {tagline}
           </p>
           <div className="footer-contact-quick">
             <a href={`tel:${phone}`} className="footer-quick-link">
@@ -79,8 +92,18 @@ export function SiteFooter({
         <div className="footer-links-col">
           <h4 className="footer-col-title">Active Projects</h4>
           <ul className="footer-nav-list">
-            <li><Link href="/projects/gayatri-industrial-park">Gayatri Industrial Park</Link></li>
-            <li><Link href="/projects/shri-balaji-industrial-park">Shri Balaji Industrial Park</Link></li>
+            {projects && projects.length > 0 ? (
+              projects.slice(0, 3).map((proj) => (
+                <li key={proj.id || proj.slug}>
+                  <Link href={`/projects/${proj.slug}`}>{proj.title}</Link>
+                </li>
+              ))
+            ) : (
+              <>
+                <li><Link href="/projects/gayatri-industrial-park">Gayatri Industrial Park</Link></li>
+                <li><Link href="/projects/shri-balaji-industrial-park">Shri Balaji Industrial Park</Link></li>
+              </>
+            )}
             <li><Link href="/about#verticals">Industrial Plots</Link></li>
             <li><Link href="/about#verticals">Residential Developments</Link></li>
             <li><Link href="/contact">Book Site Inspection</Link></li>
@@ -88,11 +111,23 @@ export function SiteFooter({
         </div>
 
         <div className="footer-links-col">
-          <h4 className="footer-col-title">Statutory &amp; Policies</h4>
+          <h4 className="footer-col-title">Insights &amp; Policies</h4>
           <ul className="footer-nav-list">
-            <li><Link href="/blog/uttar-pradesh-msme-promotion-policy-2022-subsidies-benefits">UP MSME Policy 2022</Link></li>
-            <li><Link href="/blog/delhi-meerut-expressway-industrial-corridor-growth">Delhi–Meerut Corridor</Link></li>
-            <li><Link href="/blog/industrial-plot-buying-checklist-infrastructure-demarcation">Demarcation &amp; Approvals</Link></li>
+            {posts && posts.length > 0 ? (
+              posts.slice(0, 3).map((post) => (
+                <li key={post.id || post.slug}>
+                  <Link href={`/blog/${post.slug}`} title={post.title}>
+                    {formatCompactFooterTitle(post.title)}
+                  </Link>
+                </li>
+              ))
+            ) : (
+              <>
+                <li><Link href="/blog/uttar-pradesh-msme-promotion-policy-2022-subsidies-benefits">UP MSME Policy 2022</Link></li>
+                <li><Link href="/blog/delhi-meerut-expressway-industrial-corridor-growth">Delhi–Meerut Corridor</Link></li>
+                <li><Link href="/blog/industrial-plot-buying-checklist-infrastructure-demarcation">Demarcation &amp; Approvals</Link></li>
+              </>
+            )}
             <li><Link href="/admin">Portal Login</Link></li>
           </ul>
         </div>
@@ -101,7 +136,8 @@ export function SiteFooter({
       {/* Bottom Legal Bar */}
       <div className="page-wrap footer-bottom">
         <span>
-          © {currentYear} {brandName} Pvt. Limited. All rights reserved.
+          © {currentYear}{" "}
+          {/pvt\.?\s*lim/i.test(brandName) ? brandName : `${brandName} Pvt. Limited`}. All rights reserved.
         </span>
         <div className="footer-legal">
           {socialLinks.linkedin && (

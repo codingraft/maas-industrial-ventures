@@ -95,6 +95,9 @@ export default async function Home() {
         {sections.masterplan && media.masterplanPlans && media.masterplanPlans.length > 0 && (
           <MasterPlanViewer
             plans={media.masterplanPlans}
+            eyebrow={site_info.masterplanEyebrow}
+            headline={site_info.masterplanHeadline}
+            description={site_info.masterplanDescription}
           />
         )}
 
@@ -124,13 +127,16 @@ export default async function Home() {
           <FaqSection
             faqs={content?.faqs?.length ? content.faqs : defaultContent.faqs}
             sectionNumber="06"
+            eyebrow={site_info.faqEyebrow}
+            headline={site_info.faqHeadline}
+            description={site_info.faqDescription}
             phone={site_info?.phone}
             whatsapp={site_info?.whatsapp}
           />
         )}
 
         {/* 7. CONTACT / REQUEST DETAILS (ENQUIRY FORM, PHONE, EMAIL, WHATSAPP) */}
-        {(sections.contact !== false || sections.enquire !== false) && (
+        {sections.contact !== false && sections.enquire !== false && (
           <section className="enquire section-pad" id="contact">
             <div className="page-wrap">
               <div className="section-label">
@@ -225,10 +231,13 @@ export default async function Home() {
       <SiteFooter
         brandName={site_info.brandName}
         logoSrc={media.logo}
+        tagline={site_info.tagline}
         address={site_info.address}
         phone={site_info.phone}
         email={site_info.email}
         socialLinks={social_links}
+        projects={projects}
+        posts={blogs}
       />
 
       {/* FLOATING ACTION BAR FOR HIGH AD CONVERSIONS */}

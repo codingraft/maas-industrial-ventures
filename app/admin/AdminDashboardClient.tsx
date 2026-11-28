@@ -219,13 +219,13 @@ export function AdminDashboardClient({
     content: {
       title: "Page Content & Copy",
       category: "Website Content",
-      description: "Edit headline copy, core propositions, development verticals, and FAQs.",
+      description: "Unified editor for Hero Banner & Slides, Company Story, 4 Verticals, Vision, Section Headings, Facts, and FAQs.",
       icon: "✍️",
     },
     media: {
       title: "Visuals & Blueprints",
       category: "Website Content",
-      description: "Configure homepage hero carousel slides, section photos, and gallery categories.",
+      description: "Manage Overview Section photo, Master Plan Blueprints, Project Gallery, and Brand Logo.",
       icon: "🖼️",
     },
     sections: {

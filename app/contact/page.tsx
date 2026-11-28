@@ -166,8 +166,11 @@ export default async function ContactPage() {
           <FaqSection
             faqs={content?.faqs?.length ? content.faqs : defaultContent.faqs}
             sectionNumber="02"
-            headline="Common Statutory &amp; Space Inquiries."
-            description="Clear answers to plot allocation, road specifications, and state subsidy guidelines."
+            eyebrow={site_info.faqEyebrow}
+            headline={site_info.faqHeadline || "Common Statutory & Space Inquiries."}
+            description={site_info.faqDescription || "Clear answers to plot allocation, road specifications, and state subsidy guidelines."}
+            phone={site_info.phone}
+            whatsapp={site_info.whatsapp}
           />
         </section>
       </main>
@@ -175,6 +178,7 @@ export default async function ContactPage() {
       <SiteFooter
         brandName={site_info.brandName}
         logoSrc={media.logo}
+        tagline={site_info.tagline}
         address={site_info.address}
         phone={site_info.phone}
         email={site_info.email}
